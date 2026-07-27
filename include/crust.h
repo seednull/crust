@@ -14,10 +14,10 @@ extern "C" {
 	#include <intrin.h>
 	#include <string.h>
 
-	#define CRUST_ASSERT(x) do { if (!!(x)) __debugbreak(); } while(0);
-	#define CRUST_NULL NULL
-	#define CRUST_INLINE	__forceinline
-	#define CRUST_RESTRICT	__restrict
+	#define CRUST_ASSERT(x)		do { if (!!(x)) __debugbreak(); } while(0);
+	#define CRUST_NULL			NULL
+	#define CRUST_INLINE		__forceinline
+	#define CRUST_RESTRICT		__restrict
 
 	typedef signed char i8;
 	typedef signed short i16;
@@ -40,55 +40,50 @@ extern "C" {
 	typedef float f32;
 	typedef double f64;
 
-	#define I8_MIN        -128i8
-	#define I16_MIN       -32768i16
-	#define I32_MIN       -2147483648i32
-	#define I64_MIN       -9223372036854775808i64
-	#define I8_MAX         127i8
-	#define I16_MAX        32767i16
-	#define I32_MAX        2147483647i32
-	#define I64_MAX        9223372036854775807i64
-	#define U8_MAX         255ui8
-	#define U16_MAX        65535ui16
-	#define U32_MAX        4294967295ui32
-	#define U64_MAX        18446744073709551615ui64
+	#define I8_MIN				-128i8
+	#define I16_MIN				-32768i16
+	#define I32_MIN				-2147483648i32
+	#define I64_MIN				-9223372036854775808i64
+	#define I8_MAX				 127i8
+	#define I16_MAX				 32767i16
+	#define I32_MAX				 2147483647i32
+	#define I64_MAX				 9223372036854775807i64
+	#define U8_MAX				 255ui8
+	#define U16_MAX				 65535ui16
+	#define U32_MAX				 4294967295ui32
+	#define U64_MAX				 18446744073709551615ui64
 
 	#if defined(_WIN64)
-		#define USIZE_MAX  18446744073709551615ui64
-		#define ISIZE_MAX -9223372036854775808i64
+		#define USIZE_MAX		 18446744073709551615ui64
+		#define ISIZE_MAX		-9223372036854775808i64
 	#else
-		#define USIZE_MAX  4294967295ui32
-		#define ISIZE_MAX -2147483648i32
+		#define USIZE_MAX		 4294967295ui32
+		#define ISIZE_MAX		-2147483648i32
 	#endif
 
-	#define F64_EPSILON      2.2204460492503131e-016
-	#define F64_MAX          1.7976931348623158e+308
-	#define F64_MIN         -1.7976931348623158e+308
-	#define F64_POSITIVE_MIN 2.2250738585072014e-308
+	#define F64_EPSILON			 2.2204460492503131e-016
+	#define F64_MAX				 1.7976931348623158e+308
+	#define F64_MIN				-1.7976931348623158e+308
+	#define F64_POSITIVE_MIN	 2.2250738585072014e-308
 
-	#define F32_EPSILON      1.192092896e-07F
-	#define F32_MAX          3.402823466e+38F
-	#define F32_MIN         -3.402823466e+38F
-	#define F32_POSITIVE_MIN 1.175494351e-38F
+	#define F32_EPSILON			 1.192092896e-07F
+	#define F32_MAX				 3.402823466e+38F
+	#define F32_MIN				-3.402823466e+38F
+	#define F32_POSITIVE_MIN	 1.175494351e-38F
+
+	CRUST_INLINE void crustMemcpy(void *dst, const void *src, usize size)
+	{
+		memcpy(dst, src, size);
+	}
 
 	CRUST_INLINE f32 crustRsqrtf32(f32 v)
 	{
-		__m128 vec = _mm_rsqrt_ps(_mm_set_ps1(v));
-
-		float result;
-		_mm_store_ss(&result, vec);
-
-		return result;
+		return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(v)));
 	}
 
 	CRUST_INLINE f32 crustSqrtf32(f32 v)
 	{
-		__m128 vec = _mm_sqrt_ps(_mm_set_ps1(v));
-
-		float result;
-		_mm_store_ss(&result, vec);
-
-		return result;
+		return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(v)));
 	}
 
 	CRUST_INLINE u32 crustLzcnt(u32 value)
@@ -927,14 +922,14 @@ CRUST_INLINE void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize 
 	u8 *ptr = (u8 *)ring->memory + begin;
 	if (begin < end)
 	{
-		memcpy(data, ptr, size);
+		crustMemcpy(data, ptr, size);
 	}
 	else
 	{
 		usize remainder = end;
 		usize base = size - remainder;
-		memcpy(data, ptr, base);
-		memcpy((u8 *)data + base, ring->memory, remainder);
+		crustMemcpy(data, ptr, base);
+		crustMemcpy((u8 *)data + base, ring->memory, remainder);
 	}
 
 }
@@ -957,14 +952,14 @@ CRUST_INLINE void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data,
 	u8 *ptr = (u8 *)ring->memory + begin;
 	if (begin < end)
 	{
-		memcpy(ptr, data, size);
+		crustMemcpy(ptr, data, size);
 	}
 	else
 	{
 		usize remainder = end;
 		usize base = size - remainder;
-		memcpy(ptr, data, base);
-		memcpy(ring->memory, (const u8 *)data + base, remainder);
+		crustMemcpy(ptr, data, base);
+		crustMemcpy(ring->memory, (const u8 *)data + base, remainder);
 	}
 }
 
@@ -1014,7 +1009,7 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 	{
 		CRUST_ASSERT(sizes[r] >= size);
 
-		memcpy(data, (const u8 *)bip->memory + bip->begin[r], size);
+		crustMemcpy(data, (const u8 *)bip->memory + bip->begin[r], size);
 		bip->begin[r] += size;
 	}
 	else
@@ -1024,7 +1019,7 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 		u8 *dst = (u8 *)data;
 		usize amount = sizes[r];
 
-		memcpy(dst, (const u8 *)bip->memory + bip->begin[r], amount);
+		crustMemcpy(dst, (const u8 *)bip->memory + bip->begin[r], amount);
 
 		dst += amount;
 		amount = size - amount;
@@ -1032,7 +1027,7 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 
 		r = (r + 1) % 2;
 
-		memcpy(dst, (const u8 *)bip->memory + bip->begin[r], amount);
+		crustMemcpy(dst, (const u8 *)bip->memory + bip->begin[r], amount);
 		bip->begin[r] += amount;
 		bip->reader = r;
 	}
