@@ -14,7 +14,7 @@ extern "C" {
 	#include <intrin.h>
 	#include <string.h>
 
-	#define CRUST_ASSERT(x)		do { if (!!(x)) __debugbreak(); } while(0);
+	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0);
 	#define CRUST_NULL			NULL
 	#define CRUST_INLINE		__forceinline
 	#define CRUST_RESTRICT		__restrict
