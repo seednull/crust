@@ -997,6 +997,8 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 {
 	CRUST_ASSERT(bip != CRUST_NULL);
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
+	CRUST_ASSERT(bip->staged == 0);
+	CRUST_ASSERT(data != CRUST_NULL);
 
 	u16 r = bip->reader;
 	u16 w = bip->writer;
@@ -1005,15 +1007,14 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 	for (u32 i = 0; i < 2; ++i)
 		sizes[i] = bip->end[i] - bip->begin[i];
 
-	if (r == w)
+	if (sizes[r] >= size)
 	{
-		CRUST_ASSERT(sizes[r] >= size);
-
 		crustMemcpy(data, (const u8 *)bip->memory + bip->begin[r], size);
 		bip->begin[r] += size;
 	}
 	else
 	{
+		CRUST_ASSERT(r != w);
 		CRUST_ASSERT(sizes[r] + sizes[w] >= size);
 
 		u8 *dst = (u8 *)data;
@@ -1023,13 +1024,26 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 
 		dst += amount;
 		amount = size - amount;
-		bip->begin[r] += amount;
+		bip->begin[r] = 0;
+		bip->end[r] = 0;
 
 		r = (r + 1) % 2;
+		bip->reader = r;
 
 		crustMemcpy(dst, (const u8 *)bip->memory + bip->begin[r], amount);
 		bip->begin[r] += amount;
-		bip->reader = r;
+	}
+
+	if (bip->begin[r] == bip->end[r])
+	{
+		bip->begin[r] = 0;
+		bip->end[r] = 0;
+
+		if (r != w)
+		{
+			r = (r + 1) % 2;
+			bip->reader = r;
+		}
 	}
 }
 
@@ -1038,6 +1052,7 @@ CRUST_INLINE void *crustBipBufferStage(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip != CRUST_NULL);
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->staged == 0);
+	CRUST_ASSERT(size > 0);
 
 	u16 r = bip->reader;
 	u16 w = bip->writer;
@@ -1078,6 +1093,7 @@ CRUST_INLINE void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->staged != 0);
 	CRUST_ASSERT(bip->staged >= size);
+	CRUST_ASSERT(size > 0);
 
 	u16 w = bip->writer;
 
