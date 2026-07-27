@@ -999,6 +999,7 @@ CRUST_INLINE void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize 
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->staged == 0);
 	CRUST_ASSERT(data != CRUST_NULL);
+	CRUST_ASSERT(size > 0);
 
 	u16 r = bip->reader;
 	u16 w = bip->writer;
