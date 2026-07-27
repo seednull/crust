@@ -1,0 +1,112 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "msvc2022-common",
+            "hidden": true,
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "${workspaceFolder}/build",
+            "installDir": "${workspaceFolder}/build"
+        },
+        {
+            "name": "msvc2022-x64",
+            "inherits": "msvc2022-common",
+            "hidden": false,
+            "architecture": "x64",
+            "displayName": "Visual Studio 2022 | x64"
+        },
+        {
+            "name": "emscripten-ninja-common",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${workspaceFolder}/build",
+            "installDir": "${workspaceFolder}/build",
+            "toolchainFile": "$penv{EMROOT}/cmake/Modules/Platform/Emscripten.cmake"
+        },
+        {
+            "name": "emscripten-ninja",
+            "inherits": "emscripten-ninja-common",
+            "hidden": false,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "emscripten-ninja-debug",
+            "inherits": "emscripten-ninja-common",
+            "hidden": false,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "osx-clang-common",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "binaryDir": "${workspaceFolder}/build",
+            "installDir": "${workspaceFolder}/build",
+            "cacheVariables": {
+                "C": "/usr/bin/clang",
+                "CXX": "/usr/bin/clang++"
+            }
+        },
+        {
+            "name": "osx-clang-x64-debug",
+            "inherits": "osx-clang-common",
+            "hidden": false,
+            "displayName": "OSX Debug | x64",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "osx-clang-x64-release",
+            "inherits": "osx-clang-common",
+            "hidden": false,
+            "displayName": "OSX Release | x64",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-windows-debug",
+            "hidden": false,
+            "configurePreset": "msvc2022-x64",
+            "configuration": "Debug",
+            "targets": ["all_build", "install"]
+        },
+        {
+            "name": "build-windows-release",
+            "hidden": false,
+            "configurePreset": "msvc2022-x64",
+            "configuration": "Release",
+            "targets": ["all_build", "install"]
+        },
+        {
+            "name": "build-emscripten-debug",
+            "hidden": false,
+            "configurePreset": "emscripten-ninja-debug",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-emscripten-release",
+            "hidden": false,
+            "configurePreset": "emscripten-ninja",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-osx-debug",
+            "hidden": false,
+            "configurePreset": "osx-clang-x64-debug",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-osx-release",
+            "hidden": false,
+            "configurePreset": "osx-clang-x64-release",
+            "targets": ["all", "install"]
+        }
+    ]
+}

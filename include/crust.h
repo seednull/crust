@@ -1,0 +1,973 @@
+#pragma once
+
+// Version
+#define CRUST_VERSION_MAJOR 1
+#define CRUST_VERSION_MINOR 0
+#define CRUST_VERSION_PATCH 0
+#define CRUST_VERSION "1.0.0-dev"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(_MSC_VER)
+	#include <intrin.h>
+	#include <string.h>
+
+	#define CRUST_ASSERT(x) do { if (!!(x)) __debugbreak(); } while(0);
+	#define CRUST_NULL NULL
+	#define CRUST_INLINE	__forceinline
+	#define CRUST_RESTRICT	__restrict
+
+	typedef signed char i8;
+	typedef signed short i16;
+	typedef signed int i32;
+	typedef signed long long i64;
+
+	typedef unsigned char u8;
+	typedef unsigned short u16;
+	typedef unsigned int u32;
+	typedef unsigned long long u64;
+
+	#if defined(_WIN64)
+		typedef i64 isize;
+		typedef u64 usize;
+	#else
+		typedef i32 isize;
+		typedef u32 usize;
+	#endif
+
+	typedef float f32;
+	typedef double f64;
+
+	#define I8_MIN        -128i8
+	#define I16_MIN       -32768i16
+	#define I32_MIN       -2147483648i32
+	#define I64_MIN       -9223372036854775808i64
+	#define I8_MAX         127i8
+	#define I16_MAX        32767i16
+	#define I32_MAX        2147483647i32
+	#define I64_MAX        9223372036854775807i64
+	#define U8_MAX         255ui8
+	#define U16_MAX        65535ui16
+	#define U32_MAX        4294967295ui32
+	#define U64_MAX        18446744073709551615ui64
+
+	#if defined(_WIN64)
+		#define USIZE_MAX  18446744073709551615ui64
+		#define ISIZE_MAX -9223372036854775808i64
+	#else
+		#define USIZE_MAX  4294967295ui32
+		#define ISIZE_MAX -2147483648i32
+	#endif
+
+	#define F64_EPSILON      2.2204460492503131e-016
+	#define F64_MAX          1.7976931348623158e+308
+	#define F64_MIN         -1.7976931348623158e+308
+	#define F64_POSITIVE_MIN 2.2250738585072014e-308
+
+	#define F32_EPSILON      1.192092896e-07F
+	#define F32_MAX          3.402823466e+38F
+	#define F32_MIN         -3.402823466e+38F
+	#define F32_POSITIVE_MIN 1.175494351e-38F
+
+	CRUST_INLINE f32 crustRsqrtf32(f32 v)
+	{
+		__m128 vec = _mm_rsqrt_ps(_mm_set_ps1(v));
+
+		float result;
+		_mm_store_ss(&result, vec);
+
+		return result;
+	}
+
+	CRUST_INLINE f32 crustSqrtf32(f32 v)
+	{
+		__m128 vec = _mm_sqrt_ps(_mm_set_ps1(v));
+
+		float result;
+		_mm_store_ss(&result, vec);
+
+		return result;
+	}
+
+	CRUST_INLINE u32 crustLzcnt(u32 value)
+	{
+		unsigned long result = 0;
+		_BitScanReverse(&result, value);
+		return 31 - result;
+	}
+
+	CRUST_INLINE u32 crustTzcnt(u32 value)
+	{
+		unsigned long result = 0;
+		_BitScanForward(&result, value);
+		return result;
+	}
+
+	CRUST_INLINE u32 crustPopcnt(u32 value)
+	{
+		return __popcnt(value);
+	}
+#else
+	#error "Unsupported platform"
+#endif
+
+//
+CRUST_INLINE u8 crustIsPow2u8(u8 v)
+{
+	return (v & (v - 1)) == 0;
+}
+
+CRUST_INLINE u16 crustIsPow2u16(u16 v)
+{
+	return (v & (v - 1)) == 0;
+}
+
+CRUST_INLINE u32 crustIsPow2u32(u32 v)
+{
+	return (v & (v - 1)) == 0;
+}
+
+CRUST_INLINE u64 crustIsPow2u64(u64 v)
+{
+	return (v & (v - 1)) == 0;
+}
+
+CRUST_INLINE u8 crustIsAlignedu8(u8 v, u8 alignment)
+{
+	return (v & (alignment - 1)) == 0;
+}
+
+CRUST_INLINE u16 crustIsAlignedu16(u16 v, u16 alignment)
+{
+	return (v & (alignment - 1)) == 0;
+}
+
+CRUST_INLINE u32 crustIsAlignedu32(u32 v, u32 alignment)
+{
+	return (v & (alignment - 1)) == 0;
+}
+
+CRUST_INLINE u64 crustIsAlignedu64(u64 v, u64 alignment)
+{
+	return (v & (alignment - 1)) == 0;
+}
+
+CRUST_INLINE u8 crustAlignDownu8(u8 value, u8 alignment)
+{
+	return value & ~(alignment - 1);
+}
+
+CRUST_INLINE u16 crustAlignDownu16(u16 value, u16 alignment)
+{
+	return value & ~(alignment - 1);
+}
+
+CRUST_INLINE u32 crustAlignDownu32(u32 value, u32 alignment)
+{
+	return value & ~(alignment - 1);
+}
+
+CRUST_INLINE u64 crustAlignDownu64(u64 value, u64 alignment)
+{
+	return value & ~(alignment - 1);
+}
+
+CRUST_INLINE u8 crustAlignUpu8(u8 value, u8 alignment)
+{
+	u8 mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+CRUST_INLINE u16 crustAlignUpu16(u16 value, u16 alignment)
+{
+	u16 mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+CRUST_INLINE u32 crustAlignUpu32(u32 value, u32 alignment)
+{
+	u32 mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+CRUST_INLINE u64 crustAlignUpu64(u64 value, u64 alignment)
+{
+	u64 mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+CRUST_INLINE u8 crustMinu8(u8 a, u8 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE u16 crustMinu16(u16 a, u16 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE u32 crustMinu32(u32 a, u32 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE u64 crustMinu64(u64 a, u64 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE i8 crustMini8(i8 a, i8 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE i16 crustMini16(i16 a, i16 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE i32 crustMini32(i32 a, i32 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE i64 crustMini64(i64 a, i64 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE f32 crustMinf32(f32 a, f32 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE f64 crustMinf64(f64 a, f64 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE u8 crustMaxu8(u8 a, u8 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE u16 crustMaxu16(u16 a, u16 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE u32 crustMaxu32(u32 a, u32 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE u64 crustMaxu64(u64 a, u64 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE i8 crustMaxi8(i8 a, i8 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE i16 crustMaxi16(i16 a, i16 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE i32 crustMaxi32(i32 a, i32 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE i64 crustMaxi64(i64 a, i64 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE f32 crustMaxf32(f32 a, f32 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE f64 crustMaxf64(f64 a, f64 b)
+{
+	return (a < b) ? b : a;
+}
+
+//
+typedef struct Crust_Vec2_t
+{
+	f32 x, y;
+} Crust_Vec2;
+
+typedef struct Crust_Vec3_t
+{
+	f32 x, y, z;
+} Crust_Vec3;
+
+typedef struct Crust_Vec4_t
+{
+	f32 x, y, z, w;
+} Crust_Vec4;
+
+typedef struct Crust_Quat_t
+{
+	f32 x, y, z, w;
+} Crust_Quat;
+
+typedef struct Crust_Transform_t
+{
+	Crust_Vec3 position;
+	Crust_Quat rotation;
+	Crust_Vec3 scale;
+} Crust_Transform;
+
+//
+CRUST_INLINE Crust_Vec2 crustVec2Mad(Crust_Vec2 a, f32 s, Crust_Vec2 b)
+{
+	Crust_Vec2 result;
+	result.x = a.x * s + b.x;
+	result.y = a.y * s + b.y;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Adds(Crust_Vec2 a, f32 s)
+{
+	Crust_Vec2 result;
+	result.x = a.x + s;
+	result.y = a.y + s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Addv(Crust_Vec2 a, Crust_Vec2 b)
+{
+	Crust_Vec2 result;
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Subs(Crust_Vec2 a, f32 s)
+{
+	Crust_Vec2 result;
+	result.x = a.x - s;
+	result.y = a.y - s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Subv(Crust_Vec2 a, Crust_Vec2 b)
+{
+	Crust_Vec2 result;
+	result.x = a.x - b.x;
+	result.y = a.y - b.y;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Muls(Crust_Vec2 a, f32 s)
+{
+	Crust_Vec2 result;
+	result.x = a.x * s;
+	result.y = a.y * s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Mulv(Crust_Vec2 a, Crust_Vec2 b)
+{
+	Crust_Vec2 result;
+	result.x = a.x * b.x;
+	result.y = a.y * b.y;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Divs(Crust_Vec2 a, f32 s)
+{
+	float s_inv = 1.0f / s;
+
+	Crust_Vec2 result;
+	result.x = a.x * s_inv;
+	result.y = a.y * s_inv;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Divv(Crust_Vec2 a, Crust_Vec2 b)
+{
+	Crust_Vec2 result;
+	result.x = a.x / b.x;
+	result.y = a.y / b.y;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Lerp(Crust_Vec2 a, Crust_Vec2 b, f32 t)
+{
+	Crust_Vec2 result;
+	result.x = a.x + (b.x - a.x) * t;
+	result.y = a.y + (b.y - a.y) * t;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec2 crustVec2Normalize(Crust_Vec2 v)
+{
+	f32 len_inv = crustRsqrtf32(v.x * v.x + v.y * v.y);
+
+	Crust_Vec2 result;
+	result.x = v.x * len_inv;
+	result.y = v.y * len_inv;
+
+	return result;
+}
+
+CRUST_INLINE f32 crustVec2Dot(Crust_Vec2 a, Crust_Vec2 b)
+{
+	return a.x * b.x + a.y * b.y;
+}
+
+CRUST_INLINE f32 crustVec2Length(Crust_Vec2 v)
+{
+	return crustSqrtf32(v.x * v.x + v.y * v.y);
+}
+
+CRUST_INLINE f32 crustVec2Length2(Crust_Vec2 v)
+{
+	return v.x * v.x + v.y * v.y;
+}
+
+//
+CRUST_INLINE Crust_Vec3 crustVec3Mad(Crust_Vec3 a, f32 s, Crust_Vec3 b)
+{
+	Crust_Vec3 result;
+	result.x = a.x * s + b.x;
+	result.y = a.y * s + b.y;
+	result.z = a.z * s + b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Adds(Crust_Vec3 a, f32 s)
+{
+	Crust_Vec3 result;
+	result.x = a.x + s;
+	result.y = a.y + s;
+	result.z = a.z + s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Addv(Crust_Vec3 a, Crust_Vec3 b)
+{
+	Crust_Vec3 result;
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Subs(Crust_Vec3 a, f32 s)
+{
+	Crust_Vec3 result;
+	result.x = a.x - s;
+	result.y = a.y - s;
+	result.z = a.z - s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Subv(Crust_Vec3 a, Crust_Vec3 b)
+{
+	Crust_Vec3 result;
+	result.x = a.x - b.x;
+	result.y = a.y - b.y;
+	result.z = a.z - b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Muls(Crust_Vec3 a, f32 s)
+{
+	Crust_Vec3 result;
+	result.x = a.x * s;
+	result.y = a.y * s;
+	result.z = a.z * s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Mulv(Crust_Vec3 a, Crust_Vec3 b)
+{
+	Crust_Vec3 result;
+	result.x = a.x * b.x;
+	result.y = a.y * b.y;
+	result.z = a.z * b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Divs(Crust_Vec3 a, f32 s)
+{
+	float s_inv = 1.0f / s;
+
+	Crust_Vec3 result;
+	result.x = a.x * s_inv;
+	result.y = a.y * s_inv;
+	result.z = a.z * s_inv;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Divv(Crust_Vec3 a, Crust_Vec3 b)
+{
+	Crust_Vec3 result;
+	result.x = a.x / b.x;
+	result.y = a.y / b.y;
+	result.z = a.z / b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Lerp(Crust_Vec3 a, Crust_Vec3 b, f32 t)
+{
+	Crust_Vec3 result;
+	result.x = a.x + (b.x - a.x) * t;
+	result.y = a.y + (b.y - a.y) * t;
+	result.z = a.z + (b.z - a.z) * t;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Normalize(Crust_Vec3 v)
+{
+	f32 len_inv = crustRsqrtf32(v.x * v.x + v.y * v.y + v.z * v.z);
+
+	Crust_Vec3 result;
+	result.x = v.x * len_inv;
+	result.y = v.y * len_inv;
+	result.z = v.z * len_inv;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustVec3Cross(Crust_Vec3 a, Crust_Vec3 b)
+{
+	Crust_Vec3 result;
+	result.x = a.y * b.z - a.z * b.y;
+	result.y = a.z * b.x - a.x * b.z;
+	result.z = a.x * b.y - a.y * b.x;
+
+	return result;
+}
+
+CRUST_INLINE f32 crustVec3Dot(Crust_Vec3 a, Crust_Vec3 b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+CRUST_INLINE f32 crustVec3Length(Crust_Vec3 v)
+{
+	return crustSqrtf32(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+CRUST_INLINE f32 crustVec3Length2(Crust_Vec3 v)
+{
+	return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+//
+CRUST_INLINE Crust_Vec4 crustVec4Mad(Crust_Vec4 a, f32 s, Crust_Vec4 b)
+{
+	Crust_Vec4 result;
+	result.x = a.x * s + b.x;
+	result.y = a.y * s + b.y;
+	result.z = a.z * s + b.z;
+	result.w = a.w * s + b.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Adds(Crust_Vec4 a, f32 s)
+{
+	Crust_Vec4 result;
+	result.x = a.x + s;
+	result.y = a.y + s;
+	result.z = a.z + s;
+	result.w = a.w + s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Addv(Crust_Vec4 a, Crust_Vec4 b)
+{
+	Crust_Vec4 result;
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+	result.w = a.w + b.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Subs(Crust_Vec4 a, f32 s)
+{
+	Crust_Vec4 result;
+	result.x = a.x - s;
+	result.y = a.y - s;
+	result.z = a.z - s;
+	result.w = a.w - s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Subv(Crust_Vec4 a, Crust_Vec4 b)
+{
+	Crust_Vec4 result;
+	result.x = a.x - b.x;
+	result.y = a.y - b.y;
+	result.z = a.z - b.z;
+	result.w = a.w - b.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Muls(Crust_Vec4 a, f32 s)
+{
+	Crust_Vec4 result;
+	result.x = a.x * s;
+	result.y = a.y * s;
+	result.z = a.z * s;
+	result.w = a.w * s;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Mulv(Crust_Vec4 a, Crust_Vec4 b)
+{
+	Crust_Vec4 result;
+	result.x = a.x * b.x;
+	result.y = a.y * b.y;
+	result.z = a.z * b.z;
+	result.w = a.w * b.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Divs(Crust_Vec4 a, f32 s)
+{
+	float s_inv = 1.0f / s;
+
+	Crust_Vec4 result;
+	result.x = a.x * s_inv;
+	result.y = a.y * s_inv;
+	result.z = a.z * s_inv;
+	result.w = a.w * s_inv;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Divv(Crust_Vec4 a, Crust_Vec4 b)
+{
+	Crust_Vec4 result;
+	result.x = a.x / b.x;
+	result.y = a.y / b.y;
+	result.z = a.z / b.z;
+	result.w = a.w / b.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Lerp(Crust_Vec4 a, Crust_Vec4 b, f32 t)
+{
+	Crust_Vec4 result;
+	result.x = a.x + (b.x - a.x) * t;
+	result.y = a.y + (b.y - a.y) * t;
+	result.z = a.z + (b.z - a.z) * t;
+	result.w = a.w + (b.w - a.w) * t;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec4 crustVec4Normalize(Crust_Vec4 v)
+{
+	f32 len_inv = crustRsqrtf32(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+
+	Crust_Vec4 result;
+	result.x = v.x * len_inv;
+	result.y = v.y * len_inv;
+	result.z = v.z * len_inv;
+	result.w = v.w * len_inv;
+
+	return result;
+}
+
+CRUST_INLINE f32 crustVec4Dot(Crust_Vec4 a, Crust_Vec4 b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+CRUST_INLINE f32 crustVec4Length(Crust_Vec4 v)
+{
+	return crustSqrtf32(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+}
+
+CRUST_INLINE f32 crustVec4Length2(Crust_Vec4 v)
+{
+	return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
+}
+
+//
+CRUST_INLINE Crust_Quat crustQuatMad(Crust_Quat a, f32 s, Crust_Quat b)
+{
+	Crust_Quat result;
+	result.x = a.x * s + b.x;
+	result.y = a.y * s + b.y;
+	result.z = a.z * s + b.z;
+	result.w = a.w * s + b.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Quat crustQuatMul(Crust_Quat a, Crust_Quat b)
+{
+	Crust_Quat result;
+
+	//         linear combination    + cross product
+	result.x = a.w * b.x + b.w * a.x + a.y * b.z - a.z * b.y;
+	result.y = a.w * b.y + b.w * a.y + a.z * b.x - a.x * b.z;
+	result.z = a.w * b.z + b.w * a.z + a.x * b.y - a.y * b.x;
+
+	//         mul                   - dot product
+	result.w = a.w * b.w             - a.x * b.x - a.y * b.y - a.z * b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Quat crustQuatConjugate(Crust_Quat q)
+{
+	Crust_Quat result;
+	result.x = -q.x;
+	result.y = -q.y;
+	result.z = -q.z;
+	result.w =  q.w;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
+{
+	Crust_Quat result;
+	result.x = a.x + (b.x - a.x) * t;
+	result.y = a.y + (b.y - a.y) * t;
+	result.z = a.z + (b.z - a.z) * t;
+	result.w = a.w + (b.w - a.w) * t;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
+{
+	f32 len_inv = crustRsqrtf32(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+
+	Crust_Quat result;
+	result.x = q.x * len_inv;
+	result.y = q.y * len_inv;
+	result.z = q.z * len_inv;
+	result.w = q.w * len_inv;
+
+	return result;
+}
+
+// TODO: inline manually
+CRUST_INLINE Crust_Quat crustQuatMulVec3(Crust_Quat a, Crust_Vec3 b)
+{
+	Crust_Quat result;
+
+	//         linear combination    + cross product
+	result.x = a.w * b.x             + a.y * b.z - a.z * b.y;
+	result.y = a.w * b.y             + a.z * b.x - a.x * b.z;
+	result.z = a.w * b.z             + a.x * b.y - a.y * b.x;
+
+	//                               - dot product
+	result.w =                       - a.x * b.x - a.y * b.y - a.z * b.z;
+
+	return result;
+}
+
+CRUST_INLINE Crust_Vec3 crustQuatRotateVec3(Crust_Quat a, Crust_Vec3 v)
+{
+	Crust_Quat t = crustQuatMulVec3(a, v);
+	t = crustQuatMul(t, crustQuatConjugate(a));
+
+	Crust_Vec3 result;
+	result.x = t.x;
+	result.y = t.y;
+	result.z = t.z;
+	
+	return result;
+}
+
+CRUST_INLINE f32 crustQuatDot(Crust_Quat a, Crust_Quat b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+//
+CRUST_INLINE Crust_Transform crustInvertTransform(Crust_Transform t)
+{
+	Crust_Transform result;
+	result.scale = {1.0f / t.scale.x, 1.0f / t.scale.y, 1.0f / t.scale.z};
+	result.rotation = crustQuatConjugate(t.rotation);
+	result.position = crustQuatRotateVec3(result.rotation, crustVec3Mulv(result.scale, crustVec3Muls(t.position, -1.0f)));
+
+	return result;
+}
+
+CRUST_INLINE Crust_Transform crustMulTransform(Crust_Transform a, Crust_Transform b)
+{
+	Crust_Transform result;
+	result.scale = crustVec3Mulv(a.scale, b.scale);
+	result.rotation = crustQuatMul(a.rotation, b.rotation);
+	result.position = crustVec3Addv(a.position, crustQuatRotateVec3(a.rotation, crustVec3Mulv(a.scale, b.position)));
+
+	return result;
+}
+
+//
+typedef struct Crust_Arena_t
+{
+	void *memory;
+	usize size;
+	usize capacity;
+} Crust_Arena;
+
+CRUST_INLINE Crust_Arena crustArenaInit(void *memory, usize capacity)
+{
+	Crust_Arena result;
+	result.memory = memory;
+	result.capacity = capacity;
+	result.size = 0;
+
+	return result;
+}
+
+CRUST_INLINE void *crustArenaAlloc(Crust_Arena *arena, usize size)
+{
+	CRUST_ASSERT(arena);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+	CRUST_ASSERT(arena->size + size <= arena->capacity);
+
+	u8 *ptr = (u8 *)arena->memory + arena->size;
+	arena->size += size;
+
+	return ptr;
+}
+
+CRUST_INLINE void crustArenaReset(Crust_Arena *arena)
+{
+	CRUST_ASSERT(arena);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+
+	arena->size = 0;
+}
+
+//
+typedef struct Crust_RingBuffer_t
+{
+	void *memory;
+	usize capacity;
+	usize read;
+	usize write;
+} Crust_RingBuffer;
+
+CRUST_INLINE Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
+{
+	Crust_RingBuffer result;
+	result.memory = memory;
+	result.capacity = capacity;
+	result.read = 0;
+	result.write = 0;
+
+	return result;
+}
+
+CRUST_INLINE usize crustRingBufferSize(const Crust_RingBuffer *ring)
+{
+	CRUST_ASSERT(ring);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+
+	return (ring->write - ring->read + ring->capacity) % ring->capacity;
+}
+
+CRUST_INLINE void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size)
+{
+	CRUST_ASSERT(ring);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+	CRUST_ASSERT(crustRingBufferSize(ring) >= size);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	if (size == 0)
+		return;
+
+	usize begin = ring->read;
+	usize end = (begin + size) % ring->capacity;
+
+	ring->read = end;
+
+	u8 *ptr = (u8 *)ring->memory + begin;
+	if (begin < end)
+	{
+		memcpy(data, ptr, size);
+	}
+	else
+	{
+		usize remainder = end;
+		usize base = size - remainder;
+		memcpy(data, ptr, base);
+		memcpy((u8 *)data + base, ring->memory, remainder);
+	}
+
+}
+
+CRUST_INLINE void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size)
+{
+	CRUST_ASSERT(ring);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+	CRUST_ASSERT(crustRingBufferSize(ring) + size <= ring->capacity);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	if (size == 0)
+		return;
+
+	usize begin = ring->write;
+	usize end = (begin + size) % ring->capacity;
+
+	ring->write = end;
+
+	u8 *ptr = (u8 *)ring->memory + begin;
+	if (begin < end)
+	{
+		memcpy(ptr, data, size);
+	}
+	else
+	{
+		usize remainder = end;
+		usize base = size - remainder;
+		memcpy(ptr, data, base);
+		memcpy(ring->memory, (const u8 *)data + base, remainder);
+	}
+}
+
+#ifdef __cplusplus
+}
+#endif
