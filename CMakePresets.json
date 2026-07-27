@@ -16,6 +16,20 @@
             "displayName": "Visual Studio 2022 | x64"
         },
         {
+            "name": "msvc2026-common",
+            "hidden": true,
+            "generator": "Visual Studio 18 2026",
+            "binaryDir": "${workspaceFolder}/build",
+            "installDir": "${workspaceFolder}/build"
+        },
+        {
+            "name": "msvc2026-x64",
+            "inherits": "msvc2026-common",
+            "hidden": false,
+            "architecture": "x64",
+            "displayName": "Visual Studio 2026 | x64"
+        },
+        {
             "name": "emscripten-ninja-common",
             "hidden": true,
             "generator": "Ninja",
@@ -71,16 +85,30 @@
     ],
     "buildPresets": [
         {
-            "name": "build-windows-debug",
+            "name": "build-msvc2022-x64-debug",
             "hidden": false,
             "configurePreset": "msvc2022-x64",
             "configuration": "Debug",
             "targets": ["all_build", "install"]
         },
         {
-            "name": "build-windows-release",
+            "name": "build-msvc2022-x64-release",
             "hidden": false,
             "configurePreset": "msvc2022-x64",
+            "configuration": "Release",
+            "targets": ["all_build", "install"]
+        },
+        {
+            "name": "build-msvc2026-x64-debug",
+            "hidden": false,
+            "configurePreset": "msvc2026-x64",
+            "configuration": "Debug",
+            "targets": ["all_build", "install"]
+        },
+        {
+            "name": "build-msvc2026-x64-release",
+            "hidden": false,
+            "configurePreset": "msvc2026-x64",
             "configuration": "Release",
             "targets": ["all_build", "install"]
         },
