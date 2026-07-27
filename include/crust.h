@@ -19,57 +19,57 @@ extern "C" {
 	#define CRUST_INLINE		__forceinline
 	#define CRUST_RESTRICT		__restrict
 
-	typedef signed char i8;
-	typedef signed short i16;
-	typedef signed int i32;
-	typedef signed long long i64;
+	typedef signed char			i8;
+	typedef signed short		i16;
+	typedef signed int			i32;
+	typedef signed long long	i64;
 
-	typedef unsigned char u8;
-	typedef unsigned short u16;
-	typedef unsigned int u32;
-	typedef unsigned long long u64;
+	typedef unsigned char		u8;
+	typedef unsigned short		u16;
+	typedef unsigned int		u32;
+	typedef unsigned long long	u64;
 
 	#if defined(_WIN64)
-		typedef i64 isize;
-		typedef u64 usize;
+		typedef i64				isize;
+		typedef u64				usize;
 	#else
-		typedef i32 isize;
-		typedef u32 usize;
+		typedef i32				isize;
+		typedef u32				usize;
 	#endif
 
-	typedef float f32;
-	typedef double f64;
+	typedef float				f32;
+	typedef double				f64;
 
 	#define I8_MIN				-128i8
 	#define I16_MIN				-32768i16
 	#define I32_MIN				-2147483648i32
 	#define I64_MIN				-9223372036854775808i64
-	#define I8_MAX				 127i8
-	#define I16_MAX				 32767i16
-	#define I32_MAX				 2147483647i32
-	#define I64_MAX				 9223372036854775807i64
-	#define U8_MAX				 255ui8
-	#define U16_MAX				 65535ui16
-	#define U32_MAX				 4294967295ui32
-	#define U64_MAX				 18446744073709551615ui64
+	#define I8_MAX				127i8
+	#define I16_MAX				32767i16
+	#define I32_MAX				2147483647i32
+	#define I64_MAX				9223372036854775807i64
+	#define U8_MAX				255ui8
+	#define U16_MAX				65535ui16
+	#define U32_MAX				4294967295ui32
+	#define U64_MAX				18446744073709551615ui64
 
 	#if defined(_WIN64)
-		#define USIZE_MAX		 18446744073709551615ui64
+		#define USIZE_MAX		18446744073709551615ui64
 		#define ISIZE_MAX		-9223372036854775808i64
 	#else
-		#define USIZE_MAX		 4294967295ui32
+		#define USIZE_MAX		4294967295ui32
 		#define ISIZE_MAX		-2147483648i32
 	#endif
 
-	#define F64_EPSILON			 2.2204460492503131e-016
-	#define F64_MAX				 1.7976931348623158e+308
+	#define F64_EPSILON			2.2204460492503131e-016
+	#define F64_MAX				1.7976931348623158e+308
 	#define F64_MIN				-1.7976931348623158e+308
-	#define F64_POSITIVE_MIN	 2.2250738585072014e-308
+	#define F64_POSITIVE_MIN	2.2250738585072014e-308
 
-	#define F32_EPSILON			 1.192092896e-07F
-	#define F32_MAX				 3.402823466e+38F
+	#define F32_EPSILON			1.192092896e-07F
+	#define F32_MAX				3.402823466e+38F
 	#define F32_MIN				-3.402823466e+38F
-	#define F32_POSITIVE_MIN	 1.175494351e-38F
+	#define F32_POSITIVE_MIN	1.175494351e-38F
 
 	CRUST_INLINE void crustMemcpy(void *dst, const void *src, usize size)
 	{
