@@ -787,17 +787,6 @@ CRUST_INLINE Crust_Quat crustQuatConjugate(Crust_Quat q)
 	return result;
 }
 
-CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
-{
-	Crust_Quat result;
-	result.x = a.x + (b.x - a.x) * t;
-	result.y = a.y + (b.y - a.y) * t;
-	result.z = a.z + (b.z - a.z) * t;
-	result.w = a.w + (b.w - a.w) * t;
-
-	return result;
-}
-
 CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
 {
 	f32 len_inv = crustRsqrtf32(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
@@ -809,6 +798,17 @@ CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
 	result.w = q.w * len_inv;
 
 	return result;
+}
+
+CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
+{
+	Crust_Quat result;
+	result.x = a.x + (b.x - a.x) * t;
+	result.y = a.y + (b.y - a.y) * t;
+	result.z = a.z + (b.z - a.z) * t;
+	result.w = a.w + (b.w - a.w) * t;
+
+	return crustQuatNormalize(result);
 }
 
 // TODO: inline manually
