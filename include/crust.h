@@ -88,6 +88,36 @@ extern "C" {
 		return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(v)));
 	}
 
+	CRUST_INLINE f32 crustCosf32(f32 v)
+	{
+		return _mm_cvtss_f32(_mm_cos_ps(_mm_set_ss(v)));
+	}
+
+	CRUST_INLINE f32 crustAcosf32(f32 v)
+	{
+		return _mm_cvtss_f32(_mm_acos_ps(_mm_set_ss(v)));
+	}
+
+	CRUST_INLINE f32 crustSinf32(f32 v)
+	{
+		return _mm_cvtss_f32(_mm_sin_ps(_mm_set_ss(v)));
+	}
+
+	CRUST_INLINE f32 crustAsinf32(f32 v)
+	{
+		return _mm_cvtss_f32(_mm_asin_ps(_mm_set_ss(v)));
+	}
+
+	CRUST_INLINE f32 crustTanf32(f32 v)
+	{
+		return _mm_cvtss_f32(_mm_tan_ps(_mm_set_ss(v)));
+	}
+
+	CRUST_INLINE f32 crustAtan2f32(f32 y, f32 x)
+	{
+		_mm_cvtss_f32(_mm_atan2_ps(_mm_set_ss(y), _mm_set_ss(x)));
+	}
+
 	CRUST_INLINE u32 crustLzcnt(u32 value)
 	{
 		unsigned long result = 0;
