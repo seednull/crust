@@ -1130,6 +1130,218 @@ CRUST_INLINE void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
 	bip->staged = 0;
 }
 
+//
+typedef struct Crust_PoolHandle_t
+{
+	usize generation;
+	usize index;
+} Crust_PoolHandle;
+
+typedef struct Crust_Pool_t
+{
+	usize *generations;
+	usize *prevs;
+	usize *nexts;
+	usize free_head;
+	usize free_tail;
+	usize used_head;
+	usize used_tail;
+	usize capacity;
+	usize max_generation;
+} Crust_Pool;
+
+CRUST_INLINE void crustPoolAlloc(Crust_Pool *pool, usize capacity, usize max_generation)
+{
+	CRUST_UNUSED(pool);
+	CRUST_UNUSED(capacity);
+	CRUST_UNUSED(max_generation);
+
+	// TODO:
+}
+
+CRUST_INLINE void crustPoolRealloc(Crust_Pool *pool, usize capacity)
+{
+	CRUST_UNUSED(pool);
+	CRUST_UNUSED(capacity);
+
+	// TODO:
+}
+
+CRUST_INLINE void crustPoolFree(Crust_Pool *pool)
+{
+	CRUST_UNUSED(pool);
+
+	// TODO:
+}
+
+CRUST_INLINE u32 crustPoolCheck(const Crust_Pool *pool, Crust_PoolHandle handle)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(handle.index < pool->capacity);
+	CRUST_ASSERT(handle.generation < pool->max_generation);
+
+	usize generation = pool->generations[handle.index];
+
+	if (generation == 0 || generation != handle.generation)
+		return 0;
+
+	return 1;
+}
+
+CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->free_head != USIZE_MAX);
+
+	usize index = pool->free_head;
+	usize next = pool->nexts[index];
+	usize prev = pool->prevs[index];
+
+	pool->prevs[index] = USIZE_MAX;
+	pool->nexts[index] = USIZE_MAX;
+
+	if (prev != USIZE_MAX)
+		pool->nexts[prev] = next;
+
+	if (next != USIZE_MAX)
+		pool->prevs[next] = prev;
+
+	if (pool->free_head == index)
+		pool->free_head = next;
+
+	if (pool->free_tail == index)
+		pool->free_tail = prev;
+
+	usize generation = pool->generations[index];
+	generation = crustMaxus(1, (generation + 1) % pool->max_generation);
+
+	pool->generations[index] = generation;
+
+	if (pool->used_tail == USIZE_MAX)
+	{
+		CRUST_ASSERT(pool->used_head == USIZE_MAX);
+
+		pool->used_head = index;
+		pool->used_tail = index;
+	}
+	else
+	{
+		usize used_tail = pool->used_tail;
+
+		pool->nexts[used_tail] = index;
+		pool->prevs[index] = used_tail;
+
+		pool->used_tail = index;
+	}
+
+	Crust_PoolHandle result;
+	result.index = index;
+	result.generation = generation;
+
+	return result;
+}
+
+CRUST_INLINE void crustPoolRemove(Crust_Pool *pool, Crust_PoolHandle handle)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->used_tail != USIZE_MAX);
+	CRUST_ASSERT(crustPoolCheck(pool, handle) != 0);
+
+	usize index = handle.index;
+	usize next = pool->nexts[index];
+	usize prev = pool->prevs[index];
+
+	pool->nexts[index] = USIZE_MAX;
+	pool->prevs[index] = USIZE_MAX;
+
+	if (prev != USIZE_MAX)
+		pool->nexts[prev] = next;
+
+	if (next != USIZE_MAX)
+		pool->prevs[next] = prev;
+
+	if (pool->used_head == index)
+		pool->used_head = next;
+
+	if (pool->used_tail == index)
+		pool->used_tail = prev;
+
+	if (pool->free_head == USIZE_MAX)
+	{
+		CRUST_ASSERT(pool->free_tail == USIZE_MAX);
+
+		pool->free_head = index;
+		pool->free_tail = index;
+	}
+	else
+	{
+		usize free_head = pool->free_head;
+
+		pool->prevs[free_head] = index;
+		pool->nexts[index] = free_head;
+
+		pool->free_head = index;
+	}
+}
+
+CRUST_INLINE Crust_PoolHandle crustPoolHead(const Crust_Pool *pool)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+
+	Crust_PoolHandle result;
+	result.index = pool->used_head;
+	result.generation = 0;
+
+	if (result.index != USIZE_MAX)
+		result.generation = pool->generations[result.index];
+
+	return result;
+}
+
+CRUST_INLINE Crust_PoolHandle crustPoolTail(const Crust_Pool *pool)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+
+	Crust_PoolHandle result;
+	result.index = pool->used_tail;
+	result.generation = 0;
+
+	if (result.index != USIZE_MAX)
+		result.generation = pool->generations[result.index];
+
+	return result;
+}
+
+CRUST_INLINE Crust_PoolHandle crustPoolNext(const Crust_Pool *pool, Crust_PoolHandle handle)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(crustPoolCheck(pool, handle) != 0);
+
+	Crust_PoolHandle result;
+	result.index = pool->nexts[handle.index];
+	result.generation = 0;
+
+	if (result.index != USIZE_MAX)
+		result.generation = pool->generations[result.index];
+
+	return result;
+}
+
+CRUST_INLINE Crust_PoolHandle crustPoolPrev(const Crust_Pool *pool, Crust_PoolHandle handle)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(crustPoolCheck(pool, handle) != 0);
+
+	Crust_PoolHandle result;
+	result.index = pool->prevs[handle.index];
+	result.generation = 0;
+
+	if (result.index != USIZE_MAX)
+		result.generation = pool->generations[result.index];
+
+	return result;
+}
+
 #ifdef __cplusplus
 }
 #endif
