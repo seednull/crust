@@ -15,6 +15,8 @@ extern "C" {
 	#include <string.h>
 
 	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0);
+	#define CRUST_UNUSED(x)		do { (void)(x); } while(0)
+
 	#define CRUST_NULL			NULL
 	#define CRUST_INLINE		__forceinline
 	#define CRUST_RESTRICT		__restrict
@@ -129,6 +131,11 @@ CRUST_INLINE u64 crustIsPow2u64(u64 v)
 	return (v & (v - 1)) == 0;
 }
 
+CRUST_INLINE usize crustIsPow2us(usize v)
+{
+	return (v & (v - 1)) == 0;
+}
+
 CRUST_INLINE u8 crustIsAlignedu8(u8 v, u8 alignment)
 {
 	return (v & (alignment - 1)) == 0;
@@ -169,6 +176,11 @@ CRUST_INLINE u64 crustAlignDownu64(u64 value, u64 alignment)
 	return value & ~(alignment - 1);
 }
 
+CRUST_INLINE usize crustAlignDownus(usize value, usize alignment)
+{
+	return value & ~(alignment - 1);
+}
+
 CRUST_INLINE u8 crustAlignUpu8(u8 value, u8 alignment)
 {
 	u8 mask = alignment - 1;
@@ -190,6 +202,12 @@ CRUST_INLINE u32 crustAlignUpu32(u32 value, u32 alignment)
 CRUST_INLINE u64 crustAlignUpu64(u64 value, u64 alignment)
 {
 	u64 mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+CRUST_INLINE usize crustAlignUpus(usize value, usize alignment)
+{
+	usize mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
 
@@ -263,6 +281,11 @@ CRUST_INLINE u64 crustMaxu64(u64 a, u64 b)
 	return (a < b) ? b : a;
 }
 
+CRUST_INLINE usize crustMaxus(usize a, usize b)
+{
+	return (a < b) ? b : a;
+}
+
 CRUST_INLINE i8 crustMaxi8(i8 a, i8 b)
 {
 	return (a < b) ? b : a;
@@ -279,6 +302,11 @@ CRUST_INLINE i32 crustMaxi32(i32 a, i32 b)
 }
 
 CRUST_INLINE i64 crustMaxi64(i64 a, i64 b)
+{
+	return (a < b) ? b : a;
+}
+
+CRUST_INLINE isize crustMaxis(isize a, isize b)
 {
 	return (a < b) ? b : a;
 }
