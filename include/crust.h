@@ -817,9 +817,14 @@ CRUST_INLINE Crust_Quat crustQuatConjugate(Crust_Quat q)
 	return result;
 }
 
+CRUST_INLINE f32 crustQuatDot(Crust_Quat a, Crust_Quat b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
 CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
 {
-	f32 len_inv = crustRsqrtf32(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+	f32 len_inv = crustRsqrtf32(crustQuatDot(q, q));
 
 	Crust_Quat result;
 	result.x = q.x * len_inv;
@@ -839,6 +844,25 @@ CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
 	result.w = a.w + (b.w - a.w) * t;
 
 	return crustQuatNormalize(result);
+}
+
+CRUST_INLINE Crust_Quat crustQuatSlerp(Crust_Quat a, Crust_Quat b, f32 t)
+{
+	f32 cos_half_theta = crustQuatDot(a, b);
+
+	f32 half_theta = crustAcosf32(cos_half_theta);
+	f32 sin_half_theta = crustSqrtf32(1.0f - cos_half_theta * cos_half_theta);
+
+	f32 ra = crustSinf32((1.0f - t) * half_theta) / sin_half_theta;
+	f32 rb = crustSinf32(t * half_theta) / sin_half_theta;
+
+	Crust_Quat result;
+	result.x = a.x * ra + b.x * rb;
+	result.y = a.y * ra + b.y * rb;
+	result.z = a.z * ra + b.z * rb;
+	result.w = a.w * ra + b.w * rb;
+
+	return result;
 }
 
 // TODO: inline manually
@@ -868,11 +892,6 @@ CRUST_INLINE Crust_Vec3 crustQuatRotateVec3(Crust_Quat a, Crust_Vec3 v)
 	result.z = t.z;
 	
 	return result;
-}
-
-CRUST_INLINE f32 crustQuatDot(Crust_Quat a, Crust_Quat b)
-{
-	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
 //
