@@ -865,31 +865,21 @@ CRUST_INLINE Crust_Quat crustQuatSlerp(Crust_Quat a, Crust_Quat b, f32 t)
 	return result;
 }
 
-// TODO: inline manually
-CRUST_INLINE Crust_Quat crustQuatMulVec3(Crust_Quat a, Crust_Vec3 b)
+CRUST_INLINE Crust_Vec3 crustQuatRotate(Crust_Quat a, Crust_Vec3 v)
 {
-	Crust_Quat result;
+	Crust_Quat qv;
+	qv.x = v.x;
+	qv.y = v.y;
+	qv.z = v.z;
+	qv.w = 0.0f;
 
-	//         linear combination    + cross product
-	result.x = a.w * b.x             + a.y * b.z - a.z * b.y;
-	result.y = a.w * b.y             + a.z * b.x - a.x * b.z;
-	result.z = a.w * b.z             + a.x * b.y - a.y * b.x;
-
-	//                               - dot product
-	result.w =                       - a.x * b.x - a.y * b.y - a.z * b.z;
-
-	return result;
-}
-
-CRUST_INLINE Crust_Vec3 crustQuatRotateVec3(Crust_Quat a, Crust_Vec3 v)
-{
-	Crust_Quat t = crustQuatMulVec3(a, v);
-	t = crustQuatMul(t, crustQuatConjugate(a));
+	Crust_Quat q = crustQuatMul(a, qv);
+	q = crustQuatMul(q, crustQuatConjugate(a));
 
 	Crust_Vec3 result;
-	result.x = t.x;
-	result.y = t.y;
-	result.z = t.z;
+	result.x = q.x;
+	result.y = q.y;
+	result.z = q.z;
 	
 	return result;
 }
@@ -900,7 +890,7 @@ CRUST_INLINE Crust_Transform crustInvertTransform(Crust_Transform t)
 	Crust_Transform result;
 	result.scale = {1.0f / t.scale.x, 1.0f / t.scale.y, 1.0f / t.scale.z};
 	result.rotation = crustQuatConjugate(t.rotation);
-	result.position = crustQuatRotateVec3(result.rotation, crustVec3Mulv(result.scale, crustVec3Muls(t.position, -1.0f)));
+	result.position = crustQuatRotate(result.rotation, crustVec3Mulv(result.scale, crustVec3Muls(t.position, -1.0f)));
 
 	return result;
 }
@@ -910,7 +900,7 @@ CRUST_INLINE Crust_Transform crustMulTransform(Crust_Transform a, Crust_Transfor
 	Crust_Transform result;
 	result.scale = crustVec3Mulv(a.scale, b.scale);
 	result.rotation = crustQuatMul(a.rotation, b.rotation);
-	result.position = crustVec3Addv(a.position, crustQuatRotateVec3(a.rotation, crustVec3Mulv(a.scale, b.position)));
+	result.position = crustVec3Addv(a.position, crustQuatRotate(a.rotation, crustVec3Mulv(a.scale, b.position)));
 
 	return result;
 }
