@@ -1180,6 +1180,66 @@ CRUST_INLINE void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
 }
 
 //
+typedef struct Crust_Stack_t
+{
+	void *memory;
+	usize capacity;
+	usize head;
+} Crust_Stack;
+
+CRUST_INLINE Crust_Stack crustStackInit(void *memory, usize capacity)
+{
+	Crust_Stack result;
+	result.memory = memory;
+	result.capacity = capacity;
+	result.head = 0;
+
+	return result;
+}
+
+CRUST_INLINE void crustStackPush(Crust_Stack *stack, const void *data, usize size)
+{
+	CRUST_ASSERT(stack != CRUST_NULL);
+	CRUST_ASSERT(stack->memory != CRUST_NULL);
+	CRUST_ASSERT(stack->head + size <= stack->capacity);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	if (size == 0)
+		return;
+
+	u8 *ptr = (u8 *)stack->memory + stack->head;
+	memcpy(ptr, data, size);
+
+	stack->head += size;
+}
+
+CRUST_INLINE void crustStackPeek(const Crust_Stack *stack, void *data, usize size)
+{
+	CRUST_ASSERT(stack != CRUST_NULL);
+	CRUST_ASSERT(stack->memory != CRUST_NULL);
+	CRUST_ASSERT(stack->head >= size);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	usize offset = stack->head - size;
+
+	const u8 *ptr = (const u8 *)stack->memory + offset;
+	memcpy(data, ptr, size);
+}
+
+CRUST_INLINE void crustStackPop(Crust_Stack *stack, void *data, usize size)
+{
+	CRUST_ASSERT(stack != CRUST_NULL);
+	CRUST_ASSERT(stack->memory != CRUST_NULL);
+	CRUST_ASSERT(stack->head >= size);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	stack->head -= size;
+
+	u8 *ptr = (u8 *)stack->memory + stack->head;
+	memcpy(data, ptr, size);
+}
+
+//
 typedef struct Crust_PoolHandle_t
 {
 	usize generation;
