@@ -135,6 +135,8 @@ extern "C" {
 
 	CRUST_INLINE u32 crustLzcntu32(u32 value)
 	{
+		CRUST_ASSERT(value != 0);
+
 		unsigned long result = 0;
 		_BitScanReverse(&result, value);
 		return 31 - result;
@@ -142,6 +144,8 @@ extern "C" {
 
 	CRUST_INLINE u32 crustTzcntu32(u32 value)
 	{
+		CRUST_ASSERT(value != 0);
+
 		unsigned long result = 0;
 		_BitScanForward(&result, value);
 		return result;
@@ -149,6 +153,8 @@ extern "C" {
 
 	CRUST_INLINE u32 crustPopcntu32(u32 value)
 	{
+		CRUST_ASSERT(value != 0);
+
 		return __popcnt(value);
 	}
 #else
