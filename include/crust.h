@@ -2278,7 +2278,7 @@ CRUST_INLINE void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocatio
 		crustHeapRemoveNodeFromBin(heap, next_index);
 		crustHeapNodePoolRelease(pool, next_index);
 
-		next_index = prev_node->next_neighbour;
+		next_index = next_node->next_neighbour;
 	}
 
 	crustHeapAddNodeToBin(heap, allocation.index, size, offset);
