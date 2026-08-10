@@ -1263,6 +1263,7 @@ typedef struct Crust_RingBuffer_t
 {
 	void *memory;
 	usize capacity;
+	usize size;
 	usize read;
 	usize write;
 } Crust_RingBuffer;
@@ -1275,25 +1276,18 @@ CRUST_INLINE Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
 	Crust_RingBuffer result;
 	result.memory = memory;
 	result.capacity = capacity;
+	result.size = 0;
 	result.read = 0;
 	result.write = 0;
 
 	return result;
 }
 
-CRUST_INLINE usize crustRingBufferSize(const Crust_RingBuffer *ring)
-{
-	CRUST_ASSERT(ring != CRUST_NULL);
-	CRUST_ASSERT(ring->memory != CRUST_NULL);
-
-	return (ring->write - ring->read + ring->capacity) % ring->capacity;
-}
-
 CRUST_INLINE void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size)
 {
 	CRUST_ASSERT(ring != CRUST_NULL);
 	CRUST_ASSERT(ring->memory != CRUST_NULL);
-	CRUST_ASSERT(crustRingBufferSize(ring) >= size);
+	CRUST_ASSERT(ring->size >= size);
 	CRUST_ASSERT(data != CRUST_NULL);
 
 	if (size == 0)
@@ -1303,6 +1297,7 @@ CRUST_INLINE void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize 
 	usize end = (begin + size) % ring->capacity;
 
 	ring->read = end;
+	ring->size -= size;
 
 	u8 *ptr = (u8 *)ring->memory + begin;
 	if (begin < end)
@@ -1323,7 +1318,7 @@ CRUST_INLINE void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data,
 {
 	CRUST_ASSERT(ring != CRUST_NULL);
 	CRUST_ASSERT(ring->memory != CRUST_NULL);
-	CRUST_ASSERT(crustRingBufferSize(ring) + size <= ring->capacity);
+	CRUST_ASSERT(ring->size + size <= ring->capacity);
 	CRUST_ASSERT(data != CRUST_NULL);
 
 	if (size == 0)
@@ -1333,6 +1328,7 @@ CRUST_INLINE void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data,
 	usize end = (begin + size) % ring->capacity;
 
 	ring->write = end;
+	ring->size += size;
 
 	u8 *ptr = (u8 *)ring->memory + begin;
 	if (begin < end)
