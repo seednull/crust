@@ -158,100 +158,147 @@ extern "C" {
 //
 CRUST_INLINE u8 crustIsPow2u8(u8 v)
 {
+	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
 CRUST_INLINE u16 crustIsPow2u16(u16 v)
 {
+	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
 CRUST_INLINE u32 crustIsPow2u32(u32 v)
 {
+	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
 CRUST_INLINE u64 crustIsPow2u64(u64 v)
 {
+	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
 CRUST_INLINE usize crustIsPow2us(usize v)
 {
+	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
 CRUST_INLINE u8 crustIsAlignedu8(u8 v, u8 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u8(alignment) != 0);
+
 	return (v & (alignment - 1)) == 0;
 }
 
 CRUST_INLINE u16 crustIsAlignedu16(u16 v, u16 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u16(alignment) != 0);
+
 	return (v & (alignment - 1)) == 0;
 }
 
 CRUST_INLINE u32 crustIsAlignedu32(u32 v, u32 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u32(alignment) != 0);
+
 	return (v & (alignment - 1)) == 0;
 }
 
 CRUST_INLINE u64 crustIsAlignedu64(u64 v, u64 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u64(alignment) != 0);
+
 	return (v & (alignment - 1)) == 0;
 }
 
 CRUST_INLINE u8 crustAlignDownu8(u8 value, u8 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u8(alignment) != 0);
+
 	return value & ~(alignment - 1);
 }
 
 CRUST_INLINE u16 crustAlignDownu16(u16 value, u16 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u16(alignment) != 0);
+
 	return value & ~(alignment - 1);
 }
 
 CRUST_INLINE u32 crustAlignDownu32(u32 value, u32 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u32(alignment) != 0);
+
 	return value & ~(alignment - 1);
 }
 
 CRUST_INLINE u64 crustAlignDownu64(u64 value, u64 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u64(alignment) != 0);
+
 	return value & ~(alignment - 1);
 }
 
 CRUST_INLINE usize crustAlignDownus(usize value, usize alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2us(alignment) != 0);
+
 	return value & ~(alignment - 1);
 }
 
 CRUST_INLINE u8 crustAlignUpu8(u8 value, u8 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u8(alignment) != 0);
+
 	u8 mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
 
 CRUST_INLINE u16 crustAlignUpu16(u16 value, u16 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u16(alignment) != 0);
+
 	u16 mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
 
 CRUST_INLINE u32 crustAlignUpu32(u32 value, u32 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u32(alignment) != 0);
+
 	u32 mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
 
 CRUST_INLINE u64 crustAlignUpu64(u64 value, u64 alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2u64(alignment) != 0);
+
 	u64 mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
 
 CRUST_INLINE usize crustAlignUpus(usize value, usize alignment)
 {
+	CRUST_ASSERT(alignment != 0);
+	CRUST_ASSERT(crustIsPow2us(alignment) != 0);
+
 	usize mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
