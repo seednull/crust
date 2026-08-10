@@ -133,21 +133,21 @@ extern "C" {
 		_mm_cvtss_f32(_mm_atan2_ps(_mm_set_ss(y), _mm_set_ss(x)));
 	}
 
-	CRUST_INLINE u32 crustLzcnt(u32 value)
+	CRUST_INLINE u32 crustLzcntu32(u32 value)
 	{
 		unsigned long result = 0;
 		_BitScanReverse(&result, value);
 		return 31 - result;
 	}
 
-	CRUST_INLINE u32 crustTzcnt(u32 value)
+	CRUST_INLINE u32 crustTzcntu32(u32 value)
 	{
 		unsigned long result = 0;
 		_BitScanForward(&result, value);
 		return result;
 	}
 
-	CRUST_INLINE u32 crustPopcnt(u32 value)
+	CRUST_INLINE u32 crustPopcntu32(u32 value)
 	{
 		return __popcnt(value);
 	}
