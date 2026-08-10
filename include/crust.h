@@ -56,11 +56,13 @@ extern "C" {
 	#define U64_MAX				18446744073709551615ui64
 
 	#if defined(_WIN64)
-		#define USIZE_MAX		18446744073709551615ui64
-		#define ISIZE_MAX		-9223372036854775808i64
+		#define USIZE_MAX		U64_MAX
+		#define ISIZE_MAX		I64_MAX
+		#define ISIZE_MIN		I64_MIN
 	#else
-		#define USIZE_MAX		4294967295ui32
-		#define ISIZE_MAX		-2147483648i32
+		#define USIZE_MAX		U32_MAX
+		#define ISIZE_MAX		I32_MAX
+		#define ISIZE_MIN		I32_MIN
 	#endif
 
 	#define F64_EPSILON			2.2204460492503131e-016
