@@ -1396,43 +1396,93 @@ typedef struct Crust_Pool_t
 	usize *generations;
 	usize *prevs;
 	usize *nexts;
+	usize capacity;
 	usize free_head;
 	usize free_tail;
 	usize used_head;
 	usize used_tail;
-	usize capacity;
-	usize max_generation;
 } Crust_Pool;
 
-CRUST_INLINE void crustPoolAlloc(Crust_Pool *pool, usize capacity, usize max_generation)
+CRUST_INLINE void crustPoolAlloc(Crust_Allocator *allocator, Crust_Pool *pool, usize capacity)
 {
-	CRUST_UNUSED(pool);
-	CRUST_UNUSED(capacity);
-	CRUST_UNUSED(max_generation);
+	CRUST_ASSERT(allocator != CRUST_NULL);
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
 
-	// TODO:
+	pool->generations = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
+	pool->prevs = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
+	pool->nexts = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
+	pool->capacity = capacity;
+
+	for (usize i = 0; i < capacity; ++i)
+	{
+		usize next = (i + 1 < capacity) ? i + 1 : USIZE_MAX;
+		usize prev = (i > 0) ? i - 1 : USIZE_MAX;
+
+		pool->nexts[i] = next;
+		pool->prevs[i] = prev;
+		pool->generations[i] = 0;
+	}
+
+	pool->free_head = 0;
+	pool->free_tail = capacity - 1;
+
+	pool->used_head = USIZE_MAX;
+	pool->used_tail = USIZE_MAX;
 }
 
-CRUST_INLINE void crustPoolRealloc(Crust_Pool *pool, usize capacity)
+CRUST_INLINE void crustPoolFree(Crust_Allocator *allocator, Crust_Pool *pool)
 {
-	CRUST_UNUSED(pool);
-	CRUST_UNUSED(capacity);
+	CRUST_ASSERT(allocator != CRUST_NULL);
+	CRUST_ASSERT(pool != CRUST_NULL);
 
-	// TODO:
+	crustAllocatorFree(allocator, pool->generations);
+	crustAllocatorFree(allocator, pool->prevs);
+	crustAllocatorFree(allocator, pool->nexts);
+
+	pool->generations = CRUST_NULL;
+	pool->prevs = CRUST_NULL;
+	pool->nexts = CRUST_NULL;
+
+	pool->capacity = 0;
+
+	pool->free_head = USIZE_MAX;
+	pool->free_tail = USIZE_MAX;
+
+	pool->used_head = USIZE_MAX;
+	pool->used_tail = USIZE_MAX;
 }
 
-CRUST_INLINE void crustPoolFree(Crust_Pool *pool)
+CRUST_INLINE void crustPoolGrow(Crust_Allocator *allocator, Crust_Pool *pool, usize new_capacity)
 {
-	CRUST_UNUSED(pool);
+	CRUST_ASSERT(allocator != CRUST_NULL);
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity < new_capacity);
 
-	// TODO:
+	pool->generations = (usize *)crustAllocatorRealloc(allocator, pool->generations, sizeof(usize) * new_capacity);
+	pool->prevs = (usize *)crustAllocatorRealloc(allocator, pool->prevs, sizeof(usize) * new_capacity);
+	pool->nexts = (usize *)crustAllocatorRealloc(allocator, pool->nexts, sizeof(usize) * new_capacity);
+
+	for (usize i = pool->capacity; i < new_capacity; ++i)
+	{
+		usize next = (i + 1 < new_capacity) ? i + 1 : USIZE_MAX;
+		usize prev = (i > pool->capacity) ? i - 1 : pool->free_tail;
+
+		pool->nexts[i] = next;
+		pool->prevs[i] = prev;
+		pool->generations[i] = 0;
+	}
+
+	pool->nexts[pool->free_tail] = pool->capacity;
+	pool->free_tail = new_capacity - 1;
+
+	pool->capacity = new_capacity;
 }
 
 CRUST_INLINE u32 crustPoolCheck(const Crust_Pool *pool, Crust_PoolHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(handle.index < pool->capacity);
-	CRUST_ASSERT(handle.generation < pool->max_generation);
 
 	usize generation = pool->generations[handle.index];
 
@@ -1442,7 +1492,7 @@ CRUST_INLINE u32 crustPoolCheck(const Crust_Pool *pool, Crust_PoolHandle handle)
 	return 1;
 }
 
-CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool)
+CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool, usize max_generation)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->free_head != USIZE_MAX);
@@ -1467,7 +1517,7 @@ CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool)
 		pool->free_tail = prev;
 
 	usize generation = pool->generations[index];
-	generation = crustMaxus(1, (generation + 1) % pool->max_generation);
+	generation = crustMaxus(1, (generation + 1) % max_generation);
 
 	pool->generations[index] = generation;
 
