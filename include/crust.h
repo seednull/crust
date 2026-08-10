@@ -1524,9 +1524,10 @@ CRUST_INLINE void crustPoolGrow(Crust_Allocator *allocator, Crust_Pool *pool, us
 		pool->generations[i] = 0;
 	}
 
-	pool->nexts[pool->free_tail] = pool->capacity;
-	pool->free_tail = new_capacity - 1;
+	if (pool->free_tail != U32_MAX)
+		pool->nexts[pool->free_tail] = pool->capacity;
 
+	pool->free_tail = new_capacity - 1;
 	pool->capacity = new_capacity;
 }
 
