@@ -1561,6 +1561,7 @@ typedef struct Crust_Pool_t
 	usize *generations;
 	usize *prevs;
 	usize *nexts;
+	u32 *masks;
 	usize capacity;
 	usize free_head;
 	usize free_tail;
@@ -1574,9 +1575,12 @@ CRUST_INLINE void crustPoolAlloc(Crust_Allocator *allocator, Crust_Pool *pool, u
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
+	usize masks_capacity = crustAlignUpus(capacity, 32) / 32;
+
 	pool->generations = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
 	pool->prevs = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
 	pool->nexts = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
+	pool->masks = (u32 *)crustAllocatorAlloc(allocator, sizeof(u32) * masks_capacity);
 	pool->capacity = capacity;
 
 	for (usize i = 0; i < capacity; ++i)
@@ -1588,6 +1592,9 @@ CRUST_INLINE void crustPoolAlloc(Crust_Allocator *allocator, Crust_Pool *pool, u
 		pool->prevs[i] = prev;
 		pool->generations[i] = 0;
 	}
+
+	for (usize i = 0; i < masks_capacity; ++i)
+		pool->masks[i] = 0;
 
 	pool->free_head = 0;
 	pool->free_tail = capacity - 1;
@@ -1604,10 +1611,12 @@ CRUST_INLINE void crustPoolFree(Crust_Allocator *allocator, Crust_Pool *pool)
 	crustAllocatorFree(allocator, pool->generations);
 	crustAllocatorFree(allocator, pool->prevs);
 	crustAllocatorFree(allocator, pool->nexts);
+	crustAllocatorFree(allocator, pool->masks);
 
 	pool->generations = CRUST_NULL;
 	pool->prevs = CRUST_NULL;
 	pool->nexts = CRUST_NULL;
+	pool->masks = CRUST_NULL;
 
 	pool->capacity = 0;
 
@@ -1624,9 +1633,18 @@ CRUST_INLINE void crustPoolGrow(Crust_Allocator *allocator, Crust_Pool *pool, us
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity < new_capacity);
 
+	usize masks_capacity = crustAlignUpus(pool->capacity, 32) / 32;
+	usize new_masks_capacity = crustAlignUpus(new_capacity, 32) / 32;
+
 	pool->generations = (usize *)crustAllocatorRealloc(allocator, pool->generations, sizeof(usize) * new_capacity);
 	pool->prevs = (usize *)crustAllocatorRealloc(allocator, pool->prevs, sizeof(usize) * new_capacity);
 	pool->nexts = (usize *)crustAllocatorRealloc(allocator, pool->nexts, sizeof(usize) * new_capacity);
+
+	if (masks_capacity != new_masks_capacity)
+		pool->masks = (u32 *)crustAllocatorRealloc(allocator, pool->masks, sizeof(u32) * new_masks_capacity);
+
+	for (usize i = masks_capacity; i < new_masks_capacity; ++i)
+		pool->masks[i] = 0;
 
 	for (usize i = pool->capacity; i < new_capacity; ++i)
 	{
@@ -1648,6 +1666,42 @@ CRUST_INLINE void crustPoolGrow(Crust_Allocator *allocator, Crust_Pool *pool, us
 	pool->capacity = new_capacity;
 }
 
+CRUST_INLINE void crustPoolAddMask(Crust_Pool *pool, usize index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->masks != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity > index);
+
+	usize mask_index = index / 32;
+	usize bit_index = index % 32;
+
+	pool->masks[mask_index] |= (1u << bit_index);
+}
+
+CRUST_INLINE void crustPoolRemoveMask(Crust_Pool *pool, usize index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->masks != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity > index);
+
+	usize mask_index = index / 32;
+	usize bit_index = index % 32;
+
+	pool->masks[mask_index] &= ~(1u << bit_index);
+}
+
+CRUST_INLINE u8 crustPoolCheckMask(const Crust_Pool *pool, usize index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->masks != CRUST_NULL);
+	CRUST_ASSERT(index < pool->capacity);
+
+	usize mask_index = index / 32;
+	usize bit_index = index % 32;
+
+	return (pool->masks[mask_index] & (1u << bit_index)) != 0;
+}
+
 CRUST_INLINE u32 crustPoolCheck(const Crust_Pool *pool, Crust_PoolHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
@@ -1658,12 +1712,18 @@ CRUST_INLINE u32 crustPoolCheck(const Crust_Pool *pool, Crust_PoolHandle handle)
 	if (generation == 0 || generation != handle.generation)
 		return 0;
 
+	if (crustPoolCheckMask(pool, handle.index) == 0)
+		return 0;
+
 	return 1;
 }
 
 CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool, usize max_generation)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->prevs != CRUST_NULL);
+	CRUST_ASSERT(pool->nexts != CRUST_NULL);
+	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(pool->free_head != USIZE_MAX);
 
 	usize index = pool->free_head;
@@ -1684,6 +1744,8 @@ CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool, usize max_generatio
 
 	if (pool->free_tail == index)
 		pool->free_tail = prev;
+
+	crustPoolAddMask(pool, index);
 
 	usize generation = pool->generations[index];
 	generation = crustMaxus(1, (generation + 1) % max_generation);
@@ -1717,6 +1779,9 @@ CRUST_INLINE Crust_PoolHandle crustPoolAdd(Crust_Pool *pool, usize max_generatio
 CRUST_INLINE void crustPoolRemove(Crust_Pool *pool, Crust_PoolHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->prevs != CRUST_NULL);
+	CRUST_ASSERT(pool->nexts != CRUST_NULL);
+	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(pool->used_tail != USIZE_MAX);
 	CRUST_ASSERT(crustPoolCheck(pool, handle) != 0);
 
@@ -1755,11 +1820,14 @@ CRUST_INLINE void crustPoolRemove(Crust_Pool *pool, Crust_PoolHandle handle)
 
 		pool->free_head = index;
 	}
+
+	crustPoolRemoveMask(pool, index);
 }
 
 CRUST_INLINE Crust_PoolHandle crustPoolHead(const Crust_Pool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->generations != CRUST_NULL);
 
 	Crust_PoolHandle result;
 	result.index = pool->used_head;
@@ -1774,6 +1842,7 @@ CRUST_INLINE Crust_PoolHandle crustPoolHead(const Crust_Pool *pool)
 CRUST_INLINE Crust_PoolHandle crustPoolTail(const Crust_Pool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->generations != CRUST_NULL);
 
 	Crust_PoolHandle result;
 	result.index = pool->used_tail;
@@ -1788,6 +1857,8 @@ CRUST_INLINE Crust_PoolHandle crustPoolTail(const Crust_Pool *pool)
 CRUST_INLINE Crust_PoolHandle crustPoolNext(const Crust_Pool *pool, Crust_PoolHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->nexts != CRUST_NULL);
+	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(crustPoolCheck(pool, handle) != 0);
 
 	Crust_PoolHandle result;
@@ -1803,6 +1874,8 @@ CRUST_INLINE Crust_PoolHandle crustPoolNext(const Crust_Pool *pool, Crust_PoolHa
 CRUST_INLINE Crust_PoolHandle crustPoolPrev(const Crust_Pool *pool, Crust_PoolHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->prevs != CRUST_NULL);
+	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(crustPoolCheck(pool, handle) != 0);
 
 	Crust_PoolHandle result;
