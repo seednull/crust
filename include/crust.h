@@ -329,6 +329,11 @@ CRUST_INLINE u64 crustMinu64(u64 a, u64 b)
 	return (a < b) ? a : b;
 }
 
+CRUST_INLINE usize crustMinus(usize a, usize b)
+{
+	return (a < b) ? a : b;
+}
+
 CRUST_INLINE i8 crustMini8(i8 a, i8 b)
 {
 	return (a < b) ? a : b;
@@ -345,6 +350,11 @@ CRUST_INLINE i32 crustMini32(i32 a, i32 b)
 }
 
 CRUST_INLINE i64 crustMini64(i64 a, i64 b)
+{
+	return (a < b) ? a : b;
+}
+
+CRUST_INLINE isize crustMinis(isize a, isize b)
 {
 	return (a < b) ? a : b;
 }
@@ -417,6 +427,66 @@ CRUST_INLINE f32 crustMaxf32(f32 a, f32 b)
 CRUST_INLINE f64 crustMaxf64(f64 a, f64 b)
 {
 	return (a < b) ? b : a;
+}
+
+CRUST_INLINE u8 crustClampu8(u8 v, u8 v_min, u8 v_max)
+{
+	return crustMaxu8(v_min, crustMinu8(v, v_max));
+}
+
+CRUST_INLINE u16 crustClampu16(u16 v, u16 v_min, u16 v_max)
+{
+	return crustMaxu16(v_min, crustMinu16(v, v_max));
+}
+
+CRUST_INLINE u32 crustClampu32(u32 v, u32 v_min, u32 v_max)
+{
+	return crustMaxu32(v_min, crustMinu32(v, v_max));
+}
+
+CRUST_INLINE u64 crustClampu64(u64 v, u64 v_min, u64 v_max)
+{
+	return crustMaxu64(v_min, crustMinu64(v, v_max));
+}
+
+CRUST_INLINE usize crustClampus(usize v, usize v_min, usize v_max)
+{
+	return crustMaxus(v_min, crustMinus(v, v_max));
+}
+
+CRUST_INLINE i8 crustClampi8(i8 v, i8 v_min, i8 v_max)
+{
+	return crustMaxi8(v_min, crustMini8(v, v_max));
+}
+
+CRUST_INLINE i16 crustClampi16(i16 v, i16 v_min, i16 v_max)
+{
+	return crustMaxi16(v_min, crustMini16(v, v_max));
+}
+
+CRUST_INLINE i32 crustClampi32(i32 v, i32 v_min, i32 v_max)
+{
+	return crustMaxi32(v_min, crustMini32(v, v_max));
+}
+
+CRUST_INLINE i64 crustClampi64(i64 v, i64 v_min, i64 v_max)
+{
+	return crustMaxi64(v_min, crustMini64(v, v_max));
+}
+
+CRUST_INLINE isize crustClampis(isize v, isize v_min, isize v_max)
+{
+	return crustMaxis(v_min, crustMinis(v, v_max));
+}
+
+CRUST_INLINE f32 crustClampf32(f32 v, f32 v_min, f32 v_max)
+{
+	return crustMaxf32(v_min, crustMinf32(v, v_max));
+}
+
+CRUST_INLINE f64 crustClampf64(f64 v, f64 v_min, f64 v_max)
+{
+	return crustMaxf64(v_min, crustMinf64(v, v_max));
 }
 
 //
