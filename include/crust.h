@@ -1735,10 +1735,10 @@ CRUST_INLINE void crustHeapNodePoolAlloc(Crust_Allocator *allocator, Crust_HeapN
 	pool->capacity = capacity;
 
 	for (u32 i = 0; i < capacity; ++i)
-	{
-		pool->node_masks[i] = 0;
 		pool->free_indices[i] = capacity - i - 1;
-	}
+
+	for (u32 i = 0; i < masks_capacity; ++i)
+		pool->node_masks[i] = 0;
 }
 
 CRUST_INLINE void crustHeapNodePoolFree(Crust_Allocator *allocator, Crust_HeapNodePool *pool)
