@@ -1100,6 +1100,9 @@ typedef struct Crust_RingBuffer_t
 
 CRUST_INLINE Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
 {
+	CRUST_ASSERT(memory != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
+
 	Crust_RingBuffer result;
 	result.memory = memory;
 	result.capacity = capacity;
@@ -1190,6 +1193,9 @@ typedef struct Crust_BipBuffer_t
 
 CRUST_INLINE Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity)
 {
+	CRUST_ASSERT(memory != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
+
 	Crust_BipBuffer result;
 	result.memory = memory;
 	result.capacity = capacity;
@@ -1325,6 +1331,9 @@ typedef struct Crust_Stack_t
 
 CRUST_INLINE Crust_Stack crustStackInit(void *memory, usize capacity)
 {
+	CRUST_ASSERT(memory != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
+
 	Crust_Stack result;
 	result.memory = memory;
 	result.capacity = capacity;
