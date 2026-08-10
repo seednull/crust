@@ -130,7 +130,7 @@ extern "C" {
 
 	CRUST_INLINE f32 crustAtan2f32(f32 y, f32 x)
 	{
-		_mm_cvtss_f32(_mm_atan2_ps(_mm_set_ss(y), _mm_set_ss(x)));
+		return _mm_cvtss_f32(_mm_atan2_ps(_mm_set_ss(y), _mm_set_ss(x)));
 	}
 
 	CRUST_INLINE u32 crustLzcntu32(u32 value)
