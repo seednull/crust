@@ -489,6 +489,50 @@ CRUST_INLINE f64 crustClampf64(f64 v, f64 v_min, f64 v_max)
 	return crustMaxf64(v_min, crustMinf64(v, v_max));
 }
 
+CRUST_INLINE i8 crustAbsi8(i8 v)
+{
+	return (v < 0) ? -v : v;
+}
+
+CRUST_INLINE i16 crustAbsi16(i16 v)
+{
+	return (v < 0) ? -v : v;
+}
+
+CRUST_INLINE i32 crustAbsi32(i32 v)
+{
+	return (v < 0) ? -v : v;
+}
+
+CRUST_INLINE i64 crustAbsi64(i64 v)
+{
+	return (v < 0) ? -v : v;
+}
+
+CRUST_INLINE f32 crustAbsf32(f32 v)
+{
+	u32 bits;
+	crustMemcpy(&bits, &v, sizeof(u32));
+	bits &= 0x7FFFFFFF;
+
+	f32 result;
+	crustMemcpy(&result, &bits, sizeof(f32));
+
+	return result;
+}
+
+CRUST_INLINE f64 crustAbsf64(f64 v)
+{
+	u64 bits;
+	crustMemcpy(&bits, &v, sizeof(u64));
+	bits &= 0x7FFFFFFFFFFFFFFF;
+
+	f64 result;
+	crustMemcpy(&result, &bits, sizeof(f64));
+
+	return result;
+}
+
 //
 typedef struct Crust_Vec2_t
 {
