@@ -153,8 +153,6 @@ extern "C" {
 
 	CRUST_INLINE u32 crustPopcntu32(u32 value)
 	{
-		CRUST_ASSERT(value != 0);
-
 		return __popcnt(value);
 	}
 #else
