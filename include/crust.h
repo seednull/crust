@@ -1786,9 +1786,9 @@ CRUST_INLINE void crustHeapNodePoolSetMask(Crust_HeapNodePool *pool, u32 index, 
 	u32 bit_index = index % 32;
 
 	if (value > 0)
-		pool->node_masks[mask_index] |= (1 << bit_index);
+		pool->node_masks[mask_index] |= (1u << bit_index);
 	else
-		pool->node_masks[mask_index] &= ~(1 << bit_index);
+		pool->node_masks[mask_index] &= ~(1u << bit_index);
 }
 
 CRUST_INLINE u8 crustHeapNodePoolGetMask(const Crust_HeapNodePool *pool, u32 index)
@@ -1874,7 +1874,7 @@ CRUST_INLINE u8 crustHeapToBinIndexRoundUp(u32 size)
 	u32 exponent = mantissa_bit + 1;
 	u32 mantissa = (size >> mantissa_bit) & CRUST_HEAP_PARAMETERS_MANTISSA_MASK;
 
-	u32 lower_bits_mask = (1 << mantissa_bit) - 1;
+	u32 lower_bits_mask = (1u << mantissa_bit) - 1;
 
 	if ((size & lower_bits_mask) != 0)
 		mantissa++;
@@ -1884,7 +1884,7 @@ CRUST_INLINE u8 crustHeapToBinIndexRoundUp(u32 size)
 
 CRUST_INLINE u8 crustHeapFindBin(u32 bin_mask, u8 index)
 {
-	u32 mask = (1 << index) - 1;
+	u32 mask = (1u << index) - 1;
 
 	u32 masked_bins = bin_mask & ~mask;
 	if (masked_bins == 0)
@@ -1951,8 +1951,8 @@ CRUST_INLINE void crustHeapAddNodeToBin(Crust_Heap *heap, u32 index, u32 size, u
 	u8 sparse_bin_index = bin_index >> CRUST_HEAP_PARAMETERS_MANTISSA_BITS;
 	u8 linear_bin_index = bin_index & CRUST_HEAP_PARAMETERS_MANTISSA_MASK;
 
-	heap->used_sparse_bins |= 1 << sparse_bin_index;
-	heap->used_linear_bins[sparse_bin_index] |= 1 << linear_bin_index;
+	heap->used_sparse_bins |= 1u << sparse_bin_index;
+	heap->used_linear_bins[sparse_bin_index] |= 1u << linear_bin_index;
 
 	Crust_HeapNode *node = &pool->nodes[index];
 
@@ -2025,9 +2025,9 @@ CRUST_INLINE void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 		u8 linear_bin_mask = heap->used_linear_bins[sparse_bin_index];
 		u32 sparse_bin_mask = heap->used_sparse_bins;
 
-		linear_bin_mask &= ~(1 << linear_bin_index);
+		linear_bin_mask &= ~(1u << linear_bin_index);
 		if (linear_bin_mask == 0)
-			sparse_bin_mask &= ~(1 << sparse_bin_index);
+			sparse_bin_mask &= ~(1u << sparse_bin_index);
 
 		heap->used_linear_bins[sparse_bin_index] = linear_bin_mask;
 		heap->used_sparse_bins = sparse_bin_mask;
