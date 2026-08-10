@@ -956,7 +956,9 @@ CRUST_INLINE Crust_Vec3 crustQuatRotate(Crust_Quat a, Crust_Vec3 v)
 CRUST_INLINE Crust_Transform crustInvertTransform(Crust_Transform t)
 {
 	Crust_Transform result;
-	result.scale = {1.0f / t.scale.x, 1.0f / t.scale.y, 1.0f / t.scale.z};
+	result.scale.x = 1.0f / t.scale.x;
+	result.scale.y = 1.0f / t.scale.y;
+	result.scale.z = 1.0f / t.scale.z;
 	result.rotation = crustQuatConjugate(t.rotation);
 	result.position = crustQuatRotate(result.rotation, crustVec3Mulv(result.scale, crustVec3Muls(t.position, -1.0f)));
 
