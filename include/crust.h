@@ -1646,7 +1646,7 @@ CRUST_INLINE void crustPoolGrow(Crust_Allocator *allocator, Crust_Pool *pool, us
 		pool->nexts[pool->free_tail] = pool->capacity;
 
 	if (pool->free_head == USIZE_MAX)
-		pool->free_head = new_capacity - 1;
+		pool->free_head = pool->capacity;
 
 	pool->free_tail = new_capacity - 1;
 	pool->capacity = new_capacity;
