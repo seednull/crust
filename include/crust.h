@@ -1725,7 +1725,7 @@ CRUST_INLINE void crustHeapNodePoolAlloc(Crust_Allocator *allocator, Crust_HeapN
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
-	usize masks_capacity = crustAlignUpus(capacity, 32);
+	usize masks_capacity = crustAlignUpus(capacity, 32) / 32;
 
 	pool->nodes = (Crust_HeapNode *)crustAllocatorAlloc(allocator, sizeof(Crust_HeapNode) * capacity);
 	pool->node_masks = (u32 *)crustAllocatorAlloc(allocator, sizeof(u32) * masks_capacity);
