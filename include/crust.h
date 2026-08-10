@@ -1800,7 +1800,7 @@ CRUST_INLINE u8 crustHeapNodePoolGetMask(const Crust_HeapNodePool *pool, u32 ind
 	u32 mask_index = index / 32;
 	u32 bit_index = index % 32;
 
-	return pool->node_masks[mask_index] & (1 << bit_index);
+	return (pool->node_masks[mask_index] & (1u << bit_index)) != 0;
 }
 
 //
