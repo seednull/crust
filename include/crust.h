@@ -12,6 +12,7 @@ extern "C" {
 
 #if defined(_MSC_VER)
 	#include <intrin.h>
+	#include <malloc.h>
 	#include <string.h>
 
 	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0)
