@@ -16,6 +16,7 @@ extern "C" {
 
 	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0);
 	#define CRUST_UNUSED(x)		do { (void)(x); } while(0)
+	#define CRUST_ALIGNOF(x)	alignof(x)
 
 	#define CRUST_NULL			NULL
 	#define CRUST_INLINE		__forceinline
@@ -80,19 +81,24 @@ extern "C" {
 		memcpy(dst, src, size);
 	}
 
-	CRUST_INLINE void *crustMalloc(usize size)
+	CRUST_INLINE void crustMemset(void *dst, u8 value, usize size)
 	{
-		return malloc(size);
+		memset(dst, value, size);
 	}
 
-	CRUST_INLINE void *crustRealloc(void *ptr, usize size)
+	CRUST_INLINE void *crustAlignedMalloc(usize size, usize alignment)
 	{
-		return realloc(ptr, size);
+		return _aligned_malloc(size, alignment);
 	}
 
-	CRUST_INLINE void crustFree(void *ptr)
+	CRUST_INLINE void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
 	{
-		free(ptr);
+		return _aligned_realloc(ptr, size, alignment);
+	}
+
+	CRUST_INLINE void crustAlignedFree(void *ptr)
+	{
+		_aligned_free(ptr);
 	}
 
 	CRUST_INLINE f32 crustRsqrtf32(f32 v)
@@ -1090,175 +1096,6 @@ CRUST_INLINE Crust_Transform crustMulTransform(Crust_Transform a, Crust_Transfor
 }
 
 //
-typedef enum Crust_AllocatorType_t
-{
-	CRUST_ALLOCATOR_TYPE_SYSTEM = 0,
-	CRUST_ALLOCATOR_TYPE_ARENA,
-
-	CRUST_ALLOCATOR_TYPE_ENUM_MAX,
-	CRUST_ALLOCATOR_TYPE_ENUM_FORCE32 = 0x7FFFFFFF,
-} Crust_AllocatorType;
-
-typedef void *(*PFN_crustAlloc)(void *allocator, usize size);
-typedef void *(*PFN_crustRealloc)(void *allocator, void *ptr, usize size);
-typedef void (*PFN_crustFree)(void *allocator, void *ptr);
-
-typedef struct Crust_AllocatorVtbl_t
-{
-	PFN_crustAlloc alloc;
-	PFN_crustRealloc realloc;
-	PFN_crustFree free;
-} Crust_AllocatorVtbl;
-
-typedef struct Crust_Allocator_t
-{
-	Crust_AllocatorVtbl vtbl;
-	Crust_AllocatorType type;
-} Crust_Allocator;
-
-CRUST_INLINE void *crustAllocatorAlloc(Crust_Allocator *allocator, usize size)
-{
-	CRUST_ASSERT(allocator != CRUST_NULL);
-	return allocator->vtbl.alloc(allocator, size);
-}
-
-CRUST_INLINE void *crustAllocatorRealloc(Crust_Allocator *allocator, void *ptr, usize size)
-{
-	CRUST_ASSERT(allocator != CRUST_NULL);
-	return allocator->vtbl.realloc(allocator, ptr, size);
-}
-
-CRUST_INLINE void crustAllocatorFree(Crust_Allocator *allocator, void *ptr)
-{
-	CRUST_ASSERT(allocator != CRUST_NULL);
-	return allocator->vtbl.free(allocator, ptr);
-}
-
-//
-typedef struct Crust_SystemAllocator_t
-{
-	Crust_AllocatorVtbl vtbl;
-	Crust_AllocatorType type;
-} Crust_SystemAllocator;
-
-CRUST_INLINE void *crustSystemAllocatorAlloc(void *allocator, usize size)
-{
-	Crust_SystemAllocator *system = (Crust_SystemAllocator *)allocator;
-	
-	CRUST_ASSERT(system != CRUST_NULL);
-	CRUST_ASSERT(system->type == CRUST_ALLOCATOR_TYPE_SYSTEM);
-	CRUST_UNUSED(system);
-
-	return crustMalloc(size);
-}
-
-CRUST_INLINE void *crustSystemAllocatorRealloc(void *allocator, void *ptr, usize size)
-{
-	Crust_SystemAllocator *system = (Crust_SystemAllocator *)allocator;
-	
-	CRUST_ASSERT(system != CRUST_NULL);
-	CRUST_ASSERT(system->type == CRUST_ALLOCATOR_TYPE_SYSTEM);
-	CRUST_UNUSED(system);
-
-	return crustRealloc(ptr, size);
-}
-
-CRUST_INLINE void crustSystemAllocatorFree(void *allocator, void *ptr)
-{
-	Crust_SystemAllocator *system = (Crust_SystemAllocator *)allocator;
-	
-	CRUST_ASSERT(system != CRUST_NULL);
-	CRUST_ASSERT(system->type == CRUST_ALLOCATOR_TYPE_SYSTEM);
-	CRUST_UNUSED(system);
-
-	crustFree(ptr);
-}
-
-CRUST_INLINE Crust_SystemAllocator crustSystemAllocatorInit()
-{
-	Crust_SystemAllocator result;
-	result.vtbl.alloc = crustSystemAllocatorAlloc;
-	result.vtbl.realloc = crustSystemAllocatorRealloc;
-	result.vtbl.free = crustSystemAllocatorFree;
-	result.type = CRUST_ALLOCATOR_TYPE_SYSTEM;
-
-	return result;
-}
-
-//
-typedef struct Crust_ArenaAllocator_t
-{
-	Crust_AllocatorVtbl vtbl;
-	Crust_AllocatorType type;
-
-	void *memory;
-	usize size;
-	usize capacity;
-} Crust_ArenaAllocator;
-
-CRUST_INLINE void *crustArenaAllocatorAlloc(void *allocator, usize size)
-{
-	Crust_ArenaAllocator *arena = (Crust_ArenaAllocator *)allocator;
-
-	CRUST_ASSERT(arena != CRUST_NULL);
-	CRUST_ASSERT(arena->type == CRUST_ALLOCATOR_TYPE_ARENA);
-	CRUST_ASSERT(arena->memory != CRUST_NULL);
-	CRUST_ASSERT(arena->capacity > 0);
-	CRUST_ASSERT(arena->size + size <= arena->capacity);
-
-	u8 *ptr = (u8 *)arena->memory + arena->size;
-	arena->size += size;
-
-	return ptr;
-}
-
-CRUST_INLINE void *crustArenaAllocatorRealloc(void *allocator, void *ptr, usize size)
-{
-	CRUST_UNUSED(ptr);
-	return crustArenaAllocatorAlloc(allocator, size);
-}
-
-CRUST_INLINE void crustArenaAllocatorFree(void *allocator, void *ptr)
-{
-	Crust_ArenaAllocator *arena = (Crust_ArenaAllocator *)allocator;
-
-	CRUST_ASSERT(arena != CRUST_NULL);
-	CRUST_ASSERT(arena->type == CRUST_ALLOCATOR_TYPE_ARENA);
-	CRUST_ASSERT(arena->memory != CRUST_NULL);
-	CRUST_ASSERT(arena->capacity > 0);
-
-	CRUST_UNUSED(arena);
-	CRUST_UNUSED(ptr);
-}
-
-CRUST_INLINE Crust_ArenaAllocator crustArenaAllocatorInit(void *memory, usize capacity)
-{
-	CRUST_ASSERT(memory != CRUST_NULL);
-	CRUST_ASSERT(capacity > 0);
-
-	Crust_ArenaAllocator result;
-	result.vtbl.alloc = crustArenaAllocatorAlloc;
-	result.vtbl.realloc = crustArenaAllocatorRealloc;
-	result.vtbl.free = crustArenaAllocatorFree;
-
-	result.type = CRUST_ALLOCATOR_TYPE_ARENA;
-	result.memory = memory;
-	result.capacity = capacity;
-	result.size = 0;
-
-	return result;
-}
-
-CRUST_INLINE void crustArenaAllocatorReset(Crust_ArenaAllocator *arena)
-{
-	CRUST_ASSERT(arena != CRUST_NULL);
-	CRUST_ASSERT(arena->memory != CRUST_NULL);
-	CRUST_ASSERT(arena->capacity > 0);
-
-	arena->size = 0;
-}
-
-//
 typedef struct Crust_RingBuffer_t
 {
 	void *memory;
@@ -1550,6 +1387,275 @@ CRUST_INLINE void crustStackPop(Crust_Stack *stack, void *data, usize size)
 }
 
 //
+typedef struct Crust_Arena_t
+{
+	void *memory;
+	usize capacity;
+	usize size;
+} Crust_Arena;
+
+CRUST_INLINE Crust_Arena crustArenaInit(void *memory, usize capacity)
+{
+	CRUST_ASSERT(memory != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
+
+	Crust_Arena result;
+	result.memory = memory;
+	result.capacity = capacity;
+	result.size = 0;
+
+	return result;
+}
+
+CRUST_INLINE void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment)
+{
+	CRUST_ASSERT(arena != CRUST_NULL);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2us(alignment));
+
+	u8 *base = (u8 *)arena->memory;
+	usize offset = crustAlignUpus(arena->size, alignment);
+
+	if (offset > arena->capacity)
+		return CRUST_NULL;
+
+	if (size > arena->capacity - offset)
+		return CRUST_NULL;
+
+	arena->size = offset + size;
+	return base + offset;
+}
+
+CRUST_INLINE void crustArenaReset(Crust_Arena *arena)
+{
+	CRUST_ASSERT(arena != CRUST_NULL);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+
+	arena->size = 0;
+}
+
+//
+typedef void *(*PFN_crustAllocatorAlloc)(void *context, usize size, usize alignment);
+typedef void *(*PFN_crustAllocatorRealloc)(void *context, void *ptr, usize old_size, usize new_size, usize alignment);
+typedef void (*PFN_crustAllocatorFree)(void *allocator, void *ptr, usize size, usize alignment);
+
+typedef struct Crust_AllocatorVtbl_t
+{
+	PFN_crustAllocatorAlloc alloc;
+	PFN_crustAllocatorRealloc realloc;
+	PFN_crustAllocatorFree free;
+} Crust_AllocatorVtbl;
+
+typedef struct Crust_Allocator_t
+{
+	void *context;
+	const Crust_AllocatorVtbl *vtbl;
+} Crust_Allocator;
+
+CRUST_INLINE void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, usize alignment)
+{
+	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->alloc != CRUST_NULL);
+
+	CRUST_ASSERT(size > 0);
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2us(alignment));
+
+	return allocator.vtbl->alloc(allocator.context, size, alignment);
+}
+
+CRUST_INLINE void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment)
+{
+	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->realloc != CRUST_NULL);
+
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2us(alignment));
+	
+	if (ptr == CRUST_NULL)
+	{
+		CRUST_ASSERT(old_size == 0);
+
+		if (new_size == 0)
+			return CRUST_NULL;
+
+		return allocator.vtbl->alloc(allocator.context, new_size, alignment);
+	}
+
+	CRUST_ASSERT(old_size > 0);
+
+	if (new_size == 0)
+	{
+		allocator.vtbl->free(allocator.context, ptr, old_size, alignment);
+		return CRUST_NULL;
+	}
+
+	return allocator.vtbl->realloc(allocator.context, ptr, old_size, new_size, alignment);
+}
+
+CRUST_INLINE void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize size, usize alignment)
+{
+	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->free != CRUST_NULL);
+
+	if (ptr == CRUST_NULL)
+		return;
+
+	CRUST_ASSERT(size > 0);
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2us(alignment));
+
+	return allocator.vtbl->free(allocator.context, ptr, size, alignment);
+}
+
+CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
+{
+	CRUST_ASSERT(a == 0 || b <= USIZE_MAX / a);
+	return a * b;
+}
+
+#define crustAlloc(allocator, T)                                     \
+	((T *)crustAllocatorAlloc(                                       \
+		(allocator),                                                 \
+		sizeof(T),                                                   \
+		CRUST_ALIGNOF(T)))
+
+#define crustAllocArray(allocator, T, count)                         \
+	((T *)crustAllocatorAlloc(                                       \
+		(allocator),                                                 \
+		crustAllocatorSizeMul(sizeof(T), (count)),                   \
+		CRUST_ALIGNOF(T)))
+
+#define crustReallocArray(allocator, ptr, T, old_count, new_count)   \
+	((T *)crustAllocatorRealloc(                                     \
+		(allocator),                                                 \
+		(ptr),                                                       \
+		crustAllocatorSizeMul(sizeof(T), (old_count)),               \
+		crustAllocatorSizeMul(sizeof(T), (new_count)),               \
+		CRUST_ALIGNOF(T)))
+
+#define crustFree(allocator, ptr, T)                                 \
+	crustAllocatorFree(                                              \
+		(allocator),                                                 \
+		(ptr),                                                       \
+		sizeof(T),                                                   \
+		CRUST_ALIGNOF(T))
+
+#define crustFreeArray(allocator, ptr, T, count)                     \
+	crustAllocatorFree(                                              \
+		(allocator),                                                 \
+		(ptr),                                                       \
+		crustAllocatorSizeMul(sizeof(T), (count)),                   \
+		CRUST_ALIGNOF(T))
+
+//
+CRUST_INLINE void *crustSystemAllocatorAlloc(void *context, usize size, usize alignment)
+{
+	CRUST_UNUSED(context);
+
+	return crustAlignedMalloc(size, alignment);
+}
+
+CRUST_INLINE void *crustSystemAllocatorRealloc(void *context, void *ptr, usize old_size, usize new_size, usize alignment)
+{
+	CRUST_UNUSED(context);
+	CRUST_UNUSED(old_size);
+
+	return crustAlignedRealloc(ptr, new_size, alignment);
+}
+
+CRUST_INLINE void crustSystemAllocatorFree(void *context, void *ptr, usize size, usize alignment)
+{
+	CRUST_UNUSED(context);
+	CRUST_UNUSED(size);
+	CRUST_UNUSED(alignment);
+
+	crustAlignedFree(ptr);
+}
+
+static const Crust_AllocatorVtbl crustSystemAllocatorVtbl =
+{
+	crustSystemAllocatorAlloc,
+	crustSystemAllocatorRealloc,
+	crustSystemAllocatorFree,
+};
+
+CRUST_INLINE Crust_Allocator crustSystemAllocatorInit()
+{
+	Crust_Allocator result;
+	result.context = CRUST_NULL;
+	result.vtbl = &crustSystemAllocatorVtbl;
+
+	return result;
+}
+
+//
+CRUST_INLINE void *crustArenaAllocatorAlloc(void *context, usize size, usize alignment)
+{
+	return crustArenaAlloc((Crust_Arena *)context, size, alignment);
+}
+
+CRUST_INLINE void *crustArenaAllocatorRealloc(void *context, void *ptr, usize old_size, usize new_size, usize alignment)
+{
+	Crust_Arena *arena = (Crust_Arena *)context;
+	CRUST_ASSERT(arena != CRUST_NULL);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+
+	u8 *base = (u8 *)arena->memory;
+
+	u8 *end = base + arena->size;
+	u8 *allocation_end = (u8 *)ptr + old_size;
+
+	if (allocation_end == end)
+	{
+		usize offset = (usize)((u8 *)ptr - base);
+
+		if (new_size < arena->capacity - offset)
+		{
+			arena->size = offset + new_size;
+			return ptr;
+		}
+
+		return NULL;
+	}
+
+	void *new_ptr = crustArenaAlloc(arena, new_size, alignment);
+	if (new_ptr == CRUST_NULL)
+		return CRUST_NULL;
+
+	crustMemcpy(new_ptr, ptr, crustMinus(old_size, new_size));
+	return new_ptr;
+}
+
+CRUST_INLINE void crustArenaAllocatorFree(void *context, void *ptr, usize size, usize alignment)
+{
+	CRUST_UNUSED(context);
+	CRUST_UNUSED(ptr);
+	CRUST_UNUSED(size);
+	CRUST_UNUSED(alignment);
+}
+
+static const Crust_AllocatorVtbl crustArenaAllocatorVtbl =
+{
+	crustArenaAllocatorAlloc,
+	crustArenaAllocatorRealloc,
+	crustArenaAllocatorFree,
+};
+
+CRUST_INLINE Crust_Allocator crustArenaAllocatorInit(Crust_Arena *arena)
+{
+	CRUST_ASSERT(arena != CRUST_NULL);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+
+	Crust_Allocator result;
+	result.context = arena;
+	result.vtbl = &crustArenaAllocatorVtbl;
+
+	return result;
+}
+
+//
 typedef struct Crust_PoolHandle_t
 {
 	usize generation;
@@ -1569,18 +1675,17 @@ typedef struct Crust_Pool_t
 	usize used_tail;
 } Crust_Pool;
 
-CRUST_INLINE void crustPoolAlloc(Crust_Allocator *allocator, Crust_Pool *pool, usize capacity)
+CRUST_INLINE void crustPoolAlloc(Crust_Allocator allocator, Crust_Pool *pool, usize capacity)
 {
-	CRUST_ASSERT(allocator != CRUST_NULL);
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
 	usize masks_capacity = crustAlignUpus(capacity, 32) / 32;
 
-	pool->generations = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
-	pool->prevs = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
-	pool->nexts = (usize *)crustAllocatorAlloc(allocator, sizeof(usize) * capacity);
-	pool->masks = (u32 *)crustAllocatorAlloc(allocator, sizeof(u32) * masks_capacity);
+	pool->generations = crustAllocArray(allocator, usize, capacity);
+	pool->prevs = crustAllocArray(allocator, usize, capacity);
+	pool->nexts = crustAllocArray(allocator, usize, capacity);
+	pool->masks = crustAllocArray(allocator, u32, masks_capacity);
 	pool->capacity = capacity;
 
 	for (usize i = 0; i < capacity; ++i)
@@ -1603,15 +1708,16 @@ CRUST_INLINE void crustPoolAlloc(Crust_Allocator *allocator, Crust_Pool *pool, u
 	pool->used_tail = USIZE_MAX;
 }
 
-CRUST_INLINE void crustPoolFree(Crust_Allocator *allocator, Crust_Pool *pool)
+CRUST_INLINE void crustPoolFree(Crust_Allocator allocator, Crust_Pool *pool)
 {
-	CRUST_ASSERT(allocator != CRUST_NULL);
 	CRUST_ASSERT(pool != CRUST_NULL);
 
-	crustAllocatorFree(allocator, pool->generations);
-	crustAllocatorFree(allocator, pool->prevs);
-	crustAllocatorFree(allocator, pool->nexts);
-	crustAllocatorFree(allocator, pool->masks);
+	usize masks_capacity = crustAlignUpus(pool->capacity, 32) / 32;
+
+	crustFreeArray(allocator, pool->generations, usize, pool->capacity);
+	crustFreeArray(allocator, pool->prevs, usize, pool->capacity);
+	crustFreeArray(allocator, pool->nexts, usize, pool->capacity);
+	crustFreeArray(allocator, pool->masks, u32, masks_capacity);
 
 	pool->generations = CRUST_NULL;
 	pool->prevs = CRUST_NULL;
@@ -1627,21 +1733,20 @@ CRUST_INLINE void crustPoolFree(Crust_Allocator *allocator, Crust_Pool *pool)
 	pool->used_tail = USIZE_MAX;
 }
 
-CRUST_INLINE void crustPoolGrow(Crust_Allocator *allocator, Crust_Pool *pool, usize new_capacity)
+CRUST_INLINE void crustPoolGrow(Crust_Allocator allocator, Crust_Pool *pool, usize new_capacity)
 {
-	CRUST_ASSERT(allocator != CRUST_NULL);
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity < new_capacity);
 
 	usize masks_capacity = crustAlignUpus(pool->capacity, 32) / 32;
 	usize new_masks_capacity = crustAlignUpus(new_capacity, 32) / 32;
 
-	pool->generations = (usize *)crustAllocatorRealloc(allocator, pool->generations, sizeof(usize) * new_capacity);
-	pool->prevs = (usize *)crustAllocatorRealloc(allocator, pool->prevs, sizeof(usize) * new_capacity);
-	pool->nexts = (usize *)crustAllocatorRealloc(allocator, pool->nexts, sizeof(usize) * new_capacity);
+	pool->generations = crustReallocArray(allocator, pool->generations, usize, pool->capacity, new_capacity);
+	pool->prevs = crustReallocArray(allocator, pool->prevs, usize, pool->capacity, new_capacity);
+	pool->nexts = crustReallocArray(allocator, pool->nexts, usize, pool->capacity, new_capacity);
 
 	if (masks_capacity != new_masks_capacity)
-		pool->masks = (u32 *)crustAllocatorRealloc(allocator, pool->masks, sizeof(u32) * new_masks_capacity);
+		pool->masks = crustReallocArray(allocator, pool->masks, u32, masks_capacity, new_masks_capacity);
 
 	for (usize i = masks_capacity; i < new_masks_capacity; ++i)
 		pool->masks[i] = 0;
@@ -1908,17 +2013,16 @@ typedef struct Crust_HeapNodePool_t
 	u32 capacity;
 } Crust_HeapNodePool;
 
-CRUST_INLINE void crustHeapNodePoolAlloc(Crust_Allocator *allocator, Crust_HeapNodePool *pool, u32 capacity)
+CRUST_INLINE void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity)
 {
-	CRUST_ASSERT(allocator != CRUST_NULL);
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
 	usize masks_capacity = crustAlignUpus(capacity, 32) / 32;
 
-	pool->nodes = (Crust_HeapNode *)crustAllocatorAlloc(allocator, sizeof(Crust_HeapNode) * capacity);
-	pool->node_masks = (u32 *)crustAllocatorAlloc(allocator, sizeof(u32) * masks_capacity);
-	pool->free_indices = (u32 *)crustAllocatorAlloc(allocator, sizeof(u32) * capacity);
+	pool->nodes = crustAllocArray(allocator, Crust_HeapNode, capacity);
+	pool->node_masks = crustAllocArray(allocator, u32, masks_capacity);
+	pool->free_indices = crustAllocArray(allocator, u32, capacity);
 	pool->num_free_indices = capacity;
 	pool->capacity = capacity;
 
@@ -1929,14 +2033,15 @@ CRUST_INLINE void crustHeapNodePoolAlloc(Crust_Allocator *allocator, Crust_HeapN
 		pool->node_masks[i] = 0;
 }
 
-CRUST_INLINE void crustHeapNodePoolFree(Crust_Allocator *allocator, Crust_HeapNodePool *pool)
+CRUST_INLINE void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool)
 {
-	CRUST_ASSERT(allocator != CRUST_NULL);
 	CRUST_ASSERT(pool != CRUST_NULL);
 
-	crustAllocatorFree(allocator, pool->nodes);
-	crustAllocatorFree(allocator, pool->node_masks);
-	crustAllocatorFree(allocator, pool->free_indices);
+	usize masks_capacity = crustAlignUpus(pool->capacity, 32) / 32;
+
+	crustFreeArray(allocator, pool->nodes, Crust_HeapNode, pool->capacity);
+	crustFreeArray(allocator, pool->node_masks, u32, masks_capacity);
+	crustFreeArray(allocator, pool->free_indices, u32, pool->capacity);
 
 	pool->nodes = CRUST_NULL;
 	pool->node_masks = CRUST_NULL;
