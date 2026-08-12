@@ -1471,7 +1471,9 @@ CRUST_INLINE void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, us
 CRUST_INLINE void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment)
 {
 	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->alloc != CRUST_NULL);
 	CRUST_ASSERT(allocator.vtbl->realloc != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->free != CRUST_NULL);
 
 	CRUST_ASSERT(alignment > 0);
 	CRUST_ASSERT(crustIsPow2us(alignment));
