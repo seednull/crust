@@ -1415,7 +1415,10 @@ CRUST_INLINE void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignme
 	CRUST_ASSERT(crustIsPow2us(alignment));
 
 	u8 *base = (u8 *)arena->memory;
-	usize offset = crustAlignUpus(arena->size, alignment);
+	u8 *current = base + arena->size;
+	u8 *aligned = (u8 *)crustAlignUpus((usize)current, alignment);
+
+	usize offset = (usize)(aligned - base);
 
 	if (offset > arena->capacity)
 		return CRUST_NULL;
@@ -1424,7 +1427,7 @@ CRUST_INLINE void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignme
 		return CRUST_NULL;
 
 	arena->size = offset + size;
-	return base + offset;
+	return (void *)aligned;
 }
 
 CRUST_INLINE void crustArenaReset(Crust_Arena *arena)
