@@ -1614,7 +1614,7 @@ CRUST_INLINE void *crustArenaAllocatorRealloc(void *context, void *ptr, usize ol
 	{
 		usize offset = (usize)((u8 *)ptr - base);
 
-		if (new_size < arena->capacity - offset)
+		if (new_size <= arena->capacity - offset)
 		{
 			arena->size = offset + new_size;
 			return ptr;
