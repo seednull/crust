@@ -1620,7 +1620,7 @@ CRUST_INLINE void *crustArenaAllocatorRealloc(void *context, void *ptr, usize ol
 			return ptr;
 		}
 
-		return NULL;
+		return CRUST_NULL;
 	}
 
 	void *new_ptr = crustArenaAlloc(arena, new_size, alignment);
