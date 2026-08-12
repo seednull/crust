@@ -16,7 +16,7 @@ extern "C" {
 
 	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0);
 	#define CRUST_UNUSED(x)		do { (void)(x); } while(0)
-	#define CRUST_ALIGNOF(x)	alignof(x)
+	#define CRUST_ALIGNOF(x)	__alignof(x)
 
 	#define CRUST_NULL			NULL
 	#define CRUST_INLINE		__forceinline
