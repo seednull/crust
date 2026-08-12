@@ -1509,7 +1509,7 @@ CRUST_INLINE void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize
 	CRUST_ASSERT(alignment > 0);
 	CRUST_ASSERT(crustIsPow2us(alignment));
 
-	return allocator.vtbl->free(allocator.context, ptr, size, alignment);
+	allocator.vtbl->free(allocator.context, ptr, size, alignment);
 }
 
 CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
