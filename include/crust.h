@@ -14,7 +14,7 @@ extern "C" {
 	#include <intrin.h>
 	#include <string.h>
 
-	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0);
+	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0)
 	#define CRUST_UNUSED(x)		do { (void)(x); } while(0)
 	#define CRUST_ALIGNOF(x)	__alignof(x)
 
