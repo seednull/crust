@@ -1662,11 +1662,11 @@ CRUST_INLINE Crust_Allocator crustArenaAllocatorInit(Crust_Arena *arena)
 }
 
 //
-typedef struct Crust_SlotPoolHandle_t
+typedef struct Crust_SlotHandle_t
 {
 	usize generation;
 	usize index;
-} Crust_SlotPoolHandle;
+} Crust_SlotHandle;
 
 typedef struct Crust_SlotPool_t
 {
@@ -1813,7 +1813,7 @@ CRUST_INLINE u8 crustSlotPoolCheckMask(const Crust_SlotPool *pool, usize index)
 	return (pool->masks[mask_index] & (1u << bit_index)) != 0;
 }
 
-CRUST_INLINE u32 crustSlotPoolCheck(const Crust_SlotPool *pool, Crust_SlotPoolHandle handle)
+CRUST_INLINE u32 crustSlotPoolCheck(const Crust_SlotPool *pool, Crust_SlotHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(handle.index < pool->capacity);
@@ -1829,7 +1829,7 @@ CRUST_INLINE u32 crustSlotPoolCheck(const Crust_SlotPool *pool, Crust_SlotPoolHa
 	return 1;
 }
 
-CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolAdd(Crust_SlotPool *pool, usize max_generation)
+CRUST_INLINE Crust_SlotHandle crustSlotPoolAdd(Crust_SlotPool *pool, usize max_generation)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
@@ -1880,14 +1880,14 @@ CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolAdd(Crust_SlotPool *pool, usize m
 		pool->used_tail = index;
 	}
 
-	Crust_SlotPoolHandle result;
+	Crust_SlotHandle result;
 	result.index = index;
 	result.generation = generation;
 
 	return result;
 }
 
-CRUST_INLINE void crustSlotPoolRemove(Crust_SlotPool *pool, Crust_SlotPoolHandle handle)
+CRUST_INLINE void crustSlotPoolRemove(Crust_SlotPool *pool, Crust_SlotHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
@@ -1935,12 +1935,12 @@ CRUST_INLINE void crustSlotPoolRemove(Crust_SlotPool *pool, Crust_SlotPoolHandle
 	crustSlotPoolRemoveMask(pool, index);
 }
 
-CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolHead(const Crust_SlotPool *pool)
+CRUST_INLINE Crust_SlotHandle crustSlotPoolHead(const Crust_SlotPool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 
-	Crust_SlotPoolHandle result;
+	Crust_SlotHandle result;
 	result.index = pool->used_head;
 	result.generation = 0;
 
@@ -1950,12 +1950,12 @@ CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolHead(const Crust_SlotPool *pool)
 	return result;
 }
 
-CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolTail(const Crust_SlotPool *pool)
+CRUST_INLINE Crust_SlotHandle crustSlotPoolTail(const Crust_SlotPool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 
-	Crust_SlotPoolHandle result;
+	Crust_SlotHandle result;
 	result.index = pool->used_tail;
 	result.generation = 0;
 
@@ -1965,14 +1965,14 @@ CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolTail(const Crust_SlotPool *pool)
 	return result;
 }
 
-CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolNext(const Crust_SlotPool *pool, Crust_SlotPoolHandle handle)
+CRUST_INLINE Crust_SlotHandle crustSlotPoolNext(const Crust_SlotPool *pool, Crust_SlotHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(crustSlotPoolCheck(pool, handle) != 0);
 
-	Crust_SlotPoolHandle result;
+	Crust_SlotHandle result;
 	result.index = pool->nexts[handle.index];
 	result.generation = 0;
 
@@ -1982,14 +1982,14 @@ CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolNext(const Crust_SlotPool *pool, 
 	return result;
 }
 
-CRUST_INLINE Crust_SlotPoolHandle crustSlotPoolPrev(const Crust_SlotPool *pool, Crust_SlotPoolHandle handle)
+CRUST_INLINE Crust_SlotHandle crustSlotPoolPrev(const Crust_SlotPool *pool, Crust_SlotHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(crustSlotPoolCheck(pool, handle) != 0);
 
-	Crust_SlotPoolHandle result;
+	Crust_SlotHandle result;
 	result.index = pool->prevs[handle.index];
 	result.generation = 0;
 
