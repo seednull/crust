@@ -10,6 +10,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Global options
 # ==================================================================================================
 option(CRUST_BUILD_SAMPLES "Build samples" TRUE)
+option(CRUST_BUILD_STATIC "Build static library" TRUE)
 
 # ==================================================================================================
 # Global Variables
@@ -68,7 +69,7 @@ endif()
 # ==================================================================================================
 # Sub-projects
 # ==================================================================================================
-# add_subdirectory(src)
+add_subdirectory(src)
 
 if (CRUST_BUILD_SAMPLES)
 	add_subdirectory(samples/01_math)
