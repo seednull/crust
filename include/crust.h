@@ -6,10 +6,6 @@
 #define CRUST_VERSION_PATCH 0
 #define CRUST_VERSION "1.0.0-dev"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if defined(_MSC_VER)
 	#include <intrin.h>
 
@@ -28,12 +24,12 @@ extern "C" {
 
 	#if defined(CRUST_SHARED_LIBRARY)
 		#if defined (CRUST_IMPLEMENTATION)
-			#define CRUST_APIENTRY extern __declspec(dllexport)
+			#define CRUST_APIENTRY __declspec(dllexport)
 		#else
-			#define CRUST_APIENTRY extern __declspec(dllimport)
+			#define CRUST_APIENTRY __declspec(dllimport)
 		#endif
 	#else
-		#define CRUST_APIENTRY extern
+		#define CRUST_APIENTRY
 	#endif
 
 	typedef signed char			i8;
@@ -89,7 +85,15 @@ extern "C" {
 	#define F32_MAX				3.402823466e+38F
 	#define F32_MIN				-3.402823466e+38F
 	#define F32_POSITIVE_MIN	1.175494351e-38F
+#else
+	#error "Unsupported platform"
+#endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(_MSC_VER)
 	static CRUST_INLINE f32 crustRsqrtF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(v)));

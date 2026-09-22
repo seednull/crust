@@ -6,30 +6,32 @@
 #undef CRUST_IMPLEMENTATION
 
 //
-CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
-{
-    memcpy(dst, src, size);
-}
+#if defined(_MSC_VER)
+	CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
+	{
+		memcpy(dst, src, size);
+	}
 
-CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
-{
-    memset(dst, value, size);
-}
+	CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
+	{
+		memset(dst, value, size);
+	}
 
-CRUST_APIENTRY void *crustAlignedMalloc(usize size, usize alignment)
-{
-    return _aligned_malloc(size, alignment);
-}
+	CRUST_APIENTRY void *crustAlignedMalloc(usize size, usize alignment)
+	{
+		return _aligned_malloc(size, alignment);
+	}
 
-CRUST_APIENTRY void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
-{
-    return _aligned_realloc(ptr, size, alignment);
-}
+	CRUST_APIENTRY void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
+	{
+		return _aligned_realloc(ptr, size, alignment);
+	}
 
-CRUST_APIENTRY void crustAlignedFree(void *ptr)
-{
-    _aligned_free(ptr);
-}
+	CRUST_APIENTRY void crustAlignedFree(void *ptr)
+	{
+		_aligned_free(ptr);
+	}
+#endif
 
 //
 CRUST_APIENTRY Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
