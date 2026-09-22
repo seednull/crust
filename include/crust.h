@@ -94,6 +94,18 @@ extern "C" {
 #endif
 
 #if defined(_MSC_VER)
+	static CRUST_INLINE f32 crustAbsF32(f32 v)
+	{
+		__m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));
+		return _mm_cvtss_f32(_mm_and_ps(_mm_set_ss(v), mask));
+	}
+
+	static CRUST_INLINE f64 crustAbsF64(f64 v)
+	{
+		__m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7FFFFFFFFFFFFFFFi64));
+		return _mm_cvtsd_f64(_mm_and_pd(_mm_set_sd(v), mask));
+	}
+
 	static CRUST_INLINE f32 crustRsqrtF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(v)));
@@ -526,30 +538,6 @@ static CRUST_INLINE i64 crustAbsI64(i64 v)
 static CRUST_INLINE isize crustAbsISize(isize v)
 {
 	return (v < 0) ? -v : v;
-}
-
-static CRUST_INLINE f32 crustAbsF32(f32 v)
-{
-	u32 bits;
-	crustMemcpy(&bits, &v, sizeof(u32));
-	bits &= 0x7FFFFFFF;
-
-	f32 result;
-	crustMemcpy(&result, &bits, sizeof(f32));
-
-	return result;
-}
-
-static CRUST_INLINE f64 crustAbsF64(f64 v)
-{
-	u64 bits;
-	crustMemcpy(&bits, &v, sizeof(u64));
-	bits &= 0x7FFFFFFFFFFFFFFF;
-
-	f64 result;
-	crustMemcpy(&result, &bits, sizeof(f64));
-
-	return result;
 }
 
 //
