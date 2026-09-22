@@ -695,7 +695,7 @@ CRUST_INLINE f32 crustVec2Length(Crust_Vec2 v)
 	return crustSqrtF32(v.x * v.x + v.y * v.y);
 }
 
-CRUST_INLINE f32 crustVec2Length2(Crust_Vec2 v)
+CRUST_INLINE f32 crustVec2LengthSquared(Crust_Vec2 v)
 {
 	return v.x * v.x + v.y * v.y;
 }
@@ -835,7 +835,7 @@ CRUST_INLINE f32 crustVec3Length(Crust_Vec3 v)
 	return crustSqrtF32(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-CRUST_INLINE f32 crustVec3Length2(Crust_Vec3 v)
+CRUST_INLINE f32 crustVec3LengthSquared(Crust_Vec3 v)
 {
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
@@ -976,7 +976,7 @@ CRUST_INLINE f32 crustVec4Length(Crust_Vec4 v)
 	return crustSqrtF32(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
 }
 
-CRUST_INLINE f32 crustVec4Length2(Crust_Vec4 v)
+CRUST_INLINE f32 crustVec4LengthSquared(Crust_Vec4 v)
 {
 	return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
 }
