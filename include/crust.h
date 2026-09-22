@@ -2042,13 +2042,13 @@ CRUST_INLINE usize crustHashIndexMapRemove(Crust_HashIndexMap *hash_map, const v
 }
 
 //
-typedef struct Crust_Slot_t
+typedef struct Crust_GenerationalHandle_t
 {
 	usize generation;
 	usize index;
-} Crust_Slot;
+} Crust_GenerationalHandle;
 
-typedef struct Crust_SlotPool_t
+typedef struct Crust_GenerationalHandlePool_t
 {
 	usize *generations;
 	usize *prevs;
@@ -2059,9 +2059,9 @@ typedef struct Crust_SlotPool_t
 	usize free_tail;
 	usize used_head;
 	usize used_tail;
-} Crust_SlotPool;
+} Crust_GenerationalHandlePool;
 
-CRUST_INLINE void crustSlotPoolAlloc(Crust_Allocator allocator, Crust_SlotPool *pool, usize capacity)
+CRUST_INLINE void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -2094,7 +2094,7 @@ CRUST_INLINE void crustSlotPoolAlloc(Crust_Allocator allocator, Crust_SlotPool *
 	pool->used_tail = USIZE_MAX;
 }
 
-CRUST_INLINE void crustSlotPoolFree(Crust_Allocator allocator, Crust_SlotPool *pool)
+CRUST_INLINE void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 
@@ -2119,7 +2119,7 @@ CRUST_INLINE void crustSlotPoolFree(Crust_Allocator allocator, Crust_SlotPool *p
 	pool->used_tail = USIZE_MAX;
 }
 
-CRUST_INLINE void crustSlotPoolGrow(Crust_Allocator allocator, Crust_SlotPool *pool, usize new_capacity)
+CRUST_INLINE void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize new_capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity < new_capacity);
@@ -2157,7 +2157,7 @@ CRUST_INLINE void crustSlotPoolGrow(Crust_Allocator allocator, Crust_SlotPool *p
 	pool->capacity = new_capacity;
 }
 
-CRUST_INLINE void crustSlotPoolAddMask(Crust_SlotPool *pool, usize index)
+CRUST_INLINE void crustGenerationalHandlePoolAddMask(Crust_GenerationalHandlePool *pool, usize index)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->masks != CRUST_NULL);
@@ -2169,7 +2169,7 @@ CRUST_INLINE void crustSlotPoolAddMask(Crust_SlotPool *pool, usize index)
 	pool->masks[mask_index] |= (1u << bit_index);
 }
 
-CRUST_INLINE void crustSlotPoolRemoveMask(Crust_SlotPool *pool, usize index)
+CRUST_INLINE void crustGenerationalHandlePoolRemoveMask(Crust_GenerationalHandlePool *pool, usize index)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->masks != CRUST_NULL);
@@ -2181,7 +2181,7 @@ CRUST_INLINE void crustSlotPoolRemoveMask(Crust_SlotPool *pool, usize index)
 	pool->masks[mask_index] &= ~(1u << bit_index);
 }
 
-CRUST_INLINE u8 crustSlotPoolCheckMask(const Crust_SlotPool *pool, usize index)
+CRUST_INLINE u8 crustGenerationalHandlePoolCheckMask(const Crust_GenerationalHandlePool *pool, usize index)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->masks != CRUST_NULL);
@@ -2193,23 +2193,23 @@ CRUST_INLINE u8 crustSlotPoolCheckMask(const Crust_SlotPool *pool, usize index)
 	return (pool->masks[mask_index] & (1u << bit_index)) != 0;
 }
 
-CRUST_INLINE u32 crustSlotPoolCheck(const Crust_SlotPool *pool, Crust_Slot slot)
+CRUST_INLINE u32 crustGenerationalHandlePoolCheck(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(slot.index < pool->capacity);
+	CRUST_ASSERT(handle.index < pool->capacity);
 
-	usize generation = pool->generations[slot.index];
+	usize generation = pool->generations[handle.index];
 
-	if (generation == 0 || generation != slot.generation)
+	if (generation == 0 || generation != handle.generation)
 		return 0;
 
-	if (crustSlotPoolCheckMask(pool, slot.index) == 0)
+	if (crustGenerationalHandlePoolCheckMask(pool, handle.index) == 0)
 		return 0;
 
 	return 1;
 }
 
-CRUST_INLINE Crust_Slot crustSlotPoolAdd(Crust_SlotPool *pool, usize max_generation)
+CRUST_INLINE Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_GenerationalHandlePool *pool, usize max_generation)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
@@ -2236,7 +2236,7 @@ CRUST_INLINE Crust_Slot crustSlotPoolAdd(Crust_SlotPool *pool, usize max_generat
 	if (pool->free_tail == index)
 		pool->free_tail = prev;
 
-	crustSlotPoolAddMask(pool, index);
+	crustGenerationalHandlePoolAddMask(pool, index);
 
 	usize generation = pool->generations[index];
 	generation = crustMaxus(1, (generation + 1) % max_generation);
@@ -2260,23 +2260,23 @@ CRUST_INLINE Crust_Slot crustSlotPoolAdd(Crust_SlotPool *pool, usize max_generat
 		pool->used_tail = index;
 	}
 
-	Crust_Slot result;
+	Crust_GenerationalHandle result;
 	result.index = index;
 	result.generation = generation;
 
 	return result;
 }
 
-CRUST_INLINE void crustSlotPoolRemove(Crust_SlotPool *pool, Crust_Slot slot)
+CRUST_INLINE void crustGenerationalHandlePoolRemove(Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(pool->used_tail != USIZE_MAX);
-	CRUST_ASSERT(crustSlotPoolCheck(pool, slot) != 0);
+	CRUST_ASSERT(crustGenerationalHandlePoolCheck(pool, handle) != 0);
 
-	usize index = slot.index;
+	usize index = handle.index;
 	usize next = pool->nexts[index];
 	usize prev = pool->prevs[index];
 
@@ -2312,15 +2312,15 @@ CRUST_INLINE void crustSlotPoolRemove(Crust_SlotPool *pool, Crust_Slot slot)
 		pool->free_head = index;
 	}
 
-	crustSlotPoolRemoveMask(pool, index);
+	crustGenerationalHandlePoolRemoveMask(pool, index);
 }
 
-CRUST_INLINE Crust_Slot crustSlotPoolHead(const Crust_SlotPool *pool)
+CRUST_INLINE Crust_GenerationalHandle crustGenerationalHandlePoolHead(const Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 
-	Crust_Slot result;
+	Crust_GenerationalHandle result;
 	result.index = pool->used_head;
 	result.generation = 0;
 
@@ -2330,12 +2330,12 @@ CRUST_INLINE Crust_Slot crustSlotPoolHead(const Crust_SlotPool *pool)
 	return result;
 }
 
-CRUST_INLINE Crust_Slot crustSlotPoolTail(const Crust_SlotPool *pool)
+CRUST_INLINE Crust_GenerationalHandle crustGenerationalHandlePoolTail(const Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 
-	Crust_Slot result;
+	Crust_GenerationalHandle result;
 	result.index = pool->used_tail;
 	result.generation = 0;
 
@@ -2345,15 +2345,15 @@ CRUST_INLINE Crust_Slot crustSlotPoolTail(const Crust_SlotPool *pool)
 	return result;
 }
 
-CRUST_INLINE Crust_Slot crustSlotPoolNext(const Crust_SlotPool *pool, Crust_Slot slot)
+CRUST_INLINE Crust_GenerationalHandle crustGenerationalHandlePoolNext(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
-	CRUST_ASSERT(crustSlotPoolCheck(pool, slot) != 0);
+	CRUST_ASSERT(crustGenerationalHandlePoolCheck(pool, handle) != 0);
 
-	Crust_Slot result;
-	result.index = pool->nexts[slot.index];
+	Crust_GenerationalHandle result;
+	result.index = pool->nexts[handle.index];
 	result.generation = 0;
 
 	if (result.index != USIZE_MAX)
@@ -2362,15 +2362,15 @@ CRUST_INLINE Crust_Slot crustSlotPoolNext(const Crust_SlotPool *pool, Crust_Slot
 	return result;
 }
 
-CRUST_INLINE Crust_Slot crustSlotPoolPrev(const Crust_SlotPool *pool, Crust_Slot slot)
+CRUST_INLINE Crust_GenerationalHandle crustGenerationalHandlePoolPrev(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
-	CRUST_ASSERT(crustSlotPoolCheck(pool, slot) != 0);
+	CRUST_ASSERT(crustGenerationalHandlePoolCheck(pool, handle) != 0);
 
-	Crust_Slot result;
-	result.index = pool->prevs[slot.index];
+	Crust_GenerationalHandle result;
+	result.index = pool->prevs[handle.index];
 	result.generation = 0;
 
 	if (result.index != USIZE_MAX)
