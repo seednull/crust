@@ -4,33 +4,33 @@
 #include <string.h>
 
 //
-void crustMemcpy(void *dst, const void *src, usize size)
+CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
 {
     memcpy(dst, src, size);
 }
 
-void crustMemset(void *dst, u8 value, usize size)
+CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
 {
     memset(dst, value, size);
 }
 
-void *crustAlignedMalloc(usize size, usize alignment)
+CRUST_APIENTRY void *crustAlignedMalloc(usize size, usize alignment)
 {
     return _aligned_malloc(size, alignment);
 }
 
-void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
+CRUST_APIENTRY void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
 {
     return _aligned_realloc(ptr, size, alignment);
 }
 
-void crustAlignedFree(void *ptr)
+CRUST_APIENTRY void crustAlignedFree(void *ptr)
 {
     _aligned_free(ptr);
 }
 
 //
-Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -45,7 +45,7 @@ Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
 	return result;
 }
 
-void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size)
+CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size)
 {
 	CRUST_ASSERT(ring != CRUST_NULL);
 	CRUST_ASSERT(ring->memory != CRUST_NULL);
@@ -76,7 +76,7 @@ void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size)
 
 }
 
-void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size)
+CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size)
 {
 	CRUST_ASSERT(ring != CRUST_NULL);
 	CRUST_ASSERT(ring->memory != CRUST_NULL);
@@ -107,7 +107,7 @@ void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size)
 }
 
 //
-Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -128,7 +128,7 @@ Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity)
 	return result;
 }
 
-void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize size)
+CRUST_APIENTRY void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize size)
 {
 	CRUST_ASSERT(bip != CRUST_NULL);
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
@@ -183,7 +183,7 @@ void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize size)
 	}
 }
 
-void *crustBipBufferStage(Crust_BipBuffer *bip, usize size)
+CRUST_APIENTRY void *crustBipBufferStage(Crust_BipBuffer *bip, usize size)
 {
 	CRUST_ASSERT(bip != CRUST_NULL);
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
@@ -223,7 +223,7 @@ void *crustBipBufferStage(Crust_BipBuffer *bip, usize size)
 	return (u8 *)bip->memory + bip->end[w];
 }
 
-void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
+CRUST_APIENTRY void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
 {
 	CRUST_ASSERT(bip != CRUST_NULL);
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
@@ -238,7 +238,7 @@ void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
 }
 
 //
-Crust_Stack crustStackInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_Stack crustStackInit(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -251,7 +251,7 @@ Crust_Stack crustStackInit(void *memory, usize capacity)
 	return result;
 }
 
-void crustStackPush(Crust_Stack *stack, const void *data, usize size)
+CRUST_APIENTRY void crustStackPush(Crust_Stack *stack, const void *data, usize size)
 {
 	CRUST_ASSERT(stack != CRUST_NULL);
 	CRUST_ASSERT(stack->memory != CRUST_NULL);
@@ -267,7 +267,7 @@ void crustStackPush(Crust_Stack *stack, const void *data, usize size)
 	stack->head += size;
 }
 
-void crustStackPeek(const Crust_Stack *stack, void *data, usize size)
+CRUST_APIENTRY void crustStackPeek(const Crust_Stack *stack, void *data, usize size)
 {
 	CRUST_ASSERT(stack != CRUST_NULL);
 	CRUST_ASSERT(stack->memory != CRUST_NULL);
@@ -280,7 +280,7 @@ void crustStackPeek(const Crust_Stack *stack, void *data, usize size)
 	crustMemcpy(data, ptr, size);
 }
 
-void crustStackPop(Crust_Stack *stack, void *data, usize size)
+CRUST_APIENTRY void crustStackPop(Crust_Stack *stack, void *data, usize size)
 {
 	CRUST_ASSERT(stack != CRUST_NULL);
 	CRUST_ASSERT(stack->memory != CRUST_NULL);
@@ -294,7 +294,7 @@ void crustStackPop(Crust_Stack *stack, void *data, usize size)
 }
 
 //
-Crust_Arena crustArenaInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_Arena crustArenaInit(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -307,7 +307,7 @@ Crust_Arena crustArenaInit(void *memory, usize capacity)
 	return result;
 }
 
-void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment)
+CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment)
 {
 	CRUST_ASSERT(arena != CRUST_NULL);
 	CRUST_ASSERT(arena->memory != CRUST_NULL);
@@ -330,7 +330,7 @@ void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment)
 	return (void *)aligned;
 }
 
-void crustArenaReset(Crust_Arena *arena)
+CRUST_APIENTRY void crustArenaReset(Crust_Arena *arena)
 {
 	CRUST_ASSERT(arena != CRUST_NULL);
 	CRUST_ASSERT(arena->memory != CRUST_NULL);
@@ -339,7 +339,7 @@ void crustArenaReset(Crust_Arena *arena)
 }
 
 //
-void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, usize alignment)
+CRUST_APIENTRY void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, usize alignment)
 {
 	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
 	CRUST_ASSERT(allocator.vtbl->alloc != CRUST_NULL);
@@ -351,7 +351,7 @@ void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, usize alignment
 	return allocator.vtbl->alloc(allocator.context, size, alignment);
 }
 
-void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment)
+CRUST_APIENTRY void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment)
 {
 	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
 	CRUST_ASSERT(allocator.vtbl->alloc != CRUST_NULL);
@@ -382,7 +382,7 @@ void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size
 	return allocator.vtbl->realloc(allocator.context, ptr, old_size, new_size, alignment);
 }
 
-void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize size, usize alignment)
+CRUST_APIENTRY void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize size, usize alignment)
 {
 	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
 	CRUST_ASSERT(allocator.vtbl->free != CRUST_NULL);
@@ -430,7 +430,7 @@ static const Crust_AllocatorVtbl crustSystemAllocatorVtbl =
 	crustSystemAllocatorFree,
 };
 
-Crust_Allocator crustSystemAllocatorInit()
+CRUST_APIENTRY Crust_Allocator crustSystemAllocatorInit(void)
 {
 	Crust_Allocator result;
 	result.context = CRUST_NULL;
@@ -492,7 +492,7 @@ static const Crust_AllocatorVtbl crustArenaAllocatorVtbl =
 	crustArenaAllocatorFree,
 };
 
-Crust_Allocator crustArenaAllocatorInit(Crust_Arena *arena)
+CRUST_APIENTRY Crust_Allocator crustArenaAllocatorInit(Crust_Arena *arena)
 {
 	CRUST_ASSERT(arena != CRUST_NULL);
 	CRUST_ASSERT(arena->memory != CRUST_NULL);
@@ -636,7 +636,7 @@ static usize crustHashIndexMapFindFreeBucket(const Crust_HashIndexMap *hash_map,
 	return USIZE_MAX;
 }
 
-Crust_HashIndexMap crustHashIndexMapInit(void *context, const Crust_HashIndexMapVtbl *vtbl, usize key_size, usize key_alignment)
+CRUST_APIENTRY Crust_HashIndexMap crustHashIndexMapInit(void *context, const Crust_HashIndexMapVtbl *vtbl, usize key_size, usize key_alignment)
 {
 	CRUST_ASSERT(vtbl != CRUST_NULL);
 	CRUST_ASSERT(vtbl->hash != CRUST_NULL);
@@ -667,7 +667,7 @@ Crust_HashIndexMap crustHashIndexMapInit(void *context, const Crust_HashIndexMap
 	return result;
 }
 
-void crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity)
+CRUST_APIENTRY void crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 	CRUST_ASSERT(hash_map->capacity == 0);
@@ -687,7 +687,7 @@ void crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_
 		hash_map->masks[i] = 0;
 }
 
-void crustHashIndexMapFree(Crust_Allocator allocator, Crust_HashIndexMap *hash_map)
+CRUST_APIENTRY void crustHashIndexMapFree(Crust_Allocator allocator, Crust_HashIndexMap *hash_map)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 
@@ -703,7 +703,7 @@ void crustHashIndexMapFree(Crust_Allocator allocator, Crust_HashIndexMap *hash_m
 	crustHashIndexMapFreeStorage(allocator, hash_map);
 }
 
-void crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize new_capacity)
+CRUST_APIENTRY void crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize new_capacity)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 
@@ -738,7 +738,7 @@ void crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashIndexMap *hash_m
 	*hash_map = new_hash_map;
 }
 
-usize crustHashIndexMapFind(const Crust_HashIndexMap *hash_map, const void *key, usize key_size)
+CRUST_APIENTRY usize crustHashIndexMapFind(const Crust_HashIndexMap *hash_map, const void *key, usize key_size)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 
@@ -757,7 +757,7 @@ usize crustHashIndexMapFind(const Crust_HashIndexMap *hash_map, const void *key,
 	return hash_map->indices[probe.bucket];
 }
 
-usize crustHashIndexMapAdd(Crust_HashIndexMap *hash_map, const void *key, usize key_size, usize index)
+CRUST_APIENTRY usize crustHashIndexMapAdd(Crust_HashIndexMap *hash_map, const void *key, usize key_size, usize index)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 	CRUST_ASSERT(hash_map->capacity > 0);
@@ -795,7 +795,7 @@ usize crustHashIndexMapAdd(Crust_HashIndexMap *hash_map, const void *key, usize 
 	return index;
 }
 
-usize crustHashIndexMapRemove(Crust_HashIndexMap *hash_map, const void *key, usize key_size)
+CRUST_APIENTRY usize crustHashIndexMapRemove(Crust_HashIndexMap *hash_map, const void *key, usize key_size)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 
@@ -889,7 +889,7 @@ static u8 crustGenerationalHandlePoolCheckMask(const Crust_GenerationalHandlePoo
 	return (pool->masks[mask_index] & (1u << bit_index)) != 0;
 }
 
-void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
+CRUST_APIENTRY void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -922,7 +922,7 @@ void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_Generatio
 	pool->used_tail = USIZE_MAX;
 }
 
-void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool)
+CRUST_APIENTRY void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 
@@ -947,7 +947,7 @@ void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_Generation
 	pool->used_tail = USIZE_MAX;
 }
 
-void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize new_capacity)
+CRUST_APIENTRY void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize new_capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity < new_capacity);
@@ -985,7 +985,7 @@ void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_Generation
 	pool->capacity = new_capacity;
 }
 
-u32 crustGenerationalHandlePoolCheck(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
+CRUST_APIENTRY u32 crustGenerationalHandlePoolCheck(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(handle.index < pool->capacity);
@@ -1001,7 +1001,7 @@ u32 crustGenerationalHandlePoolCheck(const Crust_GenerationalHandlePool *pool, C
 	return 1;
 }
 
-Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_GenerationalHandlePool *pool, usize max_generation)
+CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_GenerationalHandlePool *pool, usize max_generation)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
@@ -1059,7 +1059,7 @@ Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_GenerationalHandle
 	return result;
 }
 
-void crustGenerationalHandlePoolRemove(Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
+CRUST_APIENTRY void crustGenerationalHandlePoolRemove(Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
@@ -1107,7 +1107,7 @@ void crustGenerationalHandlePoolRemove(Crust_GenerationalHandlePool *pool, Crust
 	crustGenerationalHandlePoolRemoveMask(pool, index);
 }
 
-Crust_GenerationalHandle crustGenerationalHandlePoolHead(const Crust_GenerationalHandlePool *pool)
+CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolHead(const Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
@@ -1122,7 +1122,7 @@ Crust_GenerationalHandle crustGenerationalHandlePoolHead(const Crust_Generationa
 	return result;
 }
 
-Crust_GenerationalHandle crustGenerationalHandlePoolTail(const Crust_GenerationalHandlePool *pool)
+CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolTail(const Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
@@ -1137,7 +1137,7 @@ Crust_GenerationalHandle crustGenerationalHandlePoolTail(const Crust_Generationa
 	return result;
 }
 
-Crust_GenerationalHandle crustGenerationalHandlePoolNext(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
+CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolNext(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
@@ -1154,7 +1154,7 @@ Crust_GenerationalHandle crustGenerationalHandlePoolNext(const Crust_Generationa
 	return result;
 }
 
-Crust_GenerationalHandle crustGenerationalHandlePoolPrev(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
+CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolPrev(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
@@ -1172,7 +1172,62 @@ Crust_GenerationalHandle crustGenerationalHandlePoolPrev(const Crust_Generationa
 }
 
 //
-void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity)
+static u32 crustHeapNodePoolAcquire(Crust_HeapNodePool *pool)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->free_indices != CRUST_NULL);
+	CRUST_ASSERT(pool->num_free_indices > 0);
+
+	return pool->free_indices[--pool->num_free_indices];
+}
+
+static void crustHeapNodePoolRelease(Crust_HeapNodePool *pool, u32 index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->free_indices != CRUST_NULL);
+	CRUST_ASSERT(pool->num_free_indices < pool->capacity);
+	CRUST_ASSERT(pool->capacity > index);
+
+	pool->free_indices[pool->num_free_indices++] = index;
+}
+
+static void crustHeapNodePoolAddMask(Crust_HeapNodePool *pool, u32 index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity > index);
+
+	u32 mask_index = index / 32;
+	u32 bit_index = index % 32;
+
+	pool->node_masks[mask_index] |= (1u << bit_index);
+}
+
+static void crustHeapNodePoolRemoveMask(Crust_HeapNodePool *pool, u32 index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity > index);
+
+	u32 mask_index = index / 32;
+	u32 bit_index = index % 32;
+
+	pool->node_masks[mask_index] &= ~(1u << bit_index);
+}
+
+static u8 crustHeapNodePoolCheckMask(const Crust_HeapNodePool *pool, u32 index)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity > index);
+
+	u32 mask_index = index / 32;
+	u32 bit_index = index % 32;
+
+	return (pool->node_masks[mask_index] & (1u << bit_index)) != 0;
+}
+
+CRUST_APIENTRY void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -1192,7 +1247,7 @@ void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool,
 		pool->node_masks[i] = 0;
 }
 
-void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool)
+CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 
@@ -1208,61 +1263,6 @@ void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool)
 
 	pool->num_free_indices = 0;
 	pool->capacity = 0;
-}
-
-u32 crustHeapNodePoolAcquire(Crust_HeapNodePool *pool)
-{
-	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->free_indices != CRUST_NULL);
-	CRUST_ASSERT(pool->num_free_indices > 0);
-
-	return pool->free_indices[--pool->num_free_indices];
-}
-
-void crustHeapNodePoolRelease(Crust_HeapNodePool *pool, u32 index)
-{
-	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->free_indices != CRUST_NULL);
-	CRUST_ASSERT(pool->num_free_indices < pool->capacity);
-	CRUST_ASSERT(pool->capacity > index);
-
-	pool->free_indices[pool->num_free_indices++] = index;
-}
-
-void crustHeapNodePoolAddMask(Crust_HeapNodePool *pool, u32 index)
-{
-	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
-	CRUST_ASSERT(pool->capacity > index);
-
-	u32 mask_index = index / 32;
-	u32 bit_index = index % 32;
-
-	pool->node_masks[mask_index] |= (1u << bit_index);
-}
-
-void crustHeapNodePoolRemoveMask(Crust_HeapNodePool *pool, u32 index)
-{
-	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
-	CRUST_ASSERT(pool->capacity > index);
-
-	u32 mask_index = index / 32;
-	u32 bit_index = index % 32;
-
-	pool->node_masks[mask_index] &= ~(1u << bit_index);
-}
-
-u8 crustHeapNodePoolCheckMask(const Crust_HeapNodePool *pool, u32 index)
-{
-	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
-	CRUST_ASSERT(pool->capacity > index);
-
-	u32 mask_index = index / 32;
-	u32 bit_index = index % 32;
-
-	return (pool->node_masks[mask_index] & (1u << bit_index)) != 0;
 }
 
 //
@@ -1468,7 +1468,7 @@ static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 	heap->heads[bin_index] = bin_head_index;
 }
 
-Crust_Heap crustHeapInit(Crust_HeapNodePool *pool, u32 size)
+CRUST_APIENTRY Crust_Heap crustHeapInit(Crust_HeapNodePool *pool, u32 size)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(size > 0);
@@ -1490,7 +1490,7 @@ Crust_Heap crustHeapInit(Crust_HeapNodePool *pool, u32 size)
 	return result;
 }
 
-Crust_HeapAllocation crustHeapStageAlloc(const Crust_Heap *heap, u32 size)
+CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAlloc(const Crust_Heap *heap, u32 size)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 	CRUST_ASSERT(heap->size >= size);
@@ -1523,7 +1523,7 @@ Crust_HeapAllocation crustHeapStageAlloc(const Crust_Heap *heap, u32 size)
 	return result;
 }
 
-Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap *heap, u32 size, u32 alignment)
+CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap *heap, u32 size, u32 alignment)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 	CRUST_ASSERT(heap->size >= size);
@@ -1581,7 +1581,7 @@ Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap *heap, u32 size
 	return result;
 }
 
-void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation allocation, u32 size)
+CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation allocation, u32 size)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 	CRUST_ASSERT(heap->size >= size);
@@ -1687,7 +1687,7 @@ void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation allocation, u32
 	}
 }
 
-Crust_HeapAllocation crustHeapAlloc(Crust_Heap *heap, u32 size)
+CRUST_APIENTRY Crust_HeapAllocation crustHeapAlloc(Crust_Heap *heap, u32 size)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 	CRUST_ASSERT(heap->size >= size);
@@ -1701,7 +1701,7 @@ Crust_HeapAllocation crustHeapAlloc(Crust_Heap *heap, u32 size)
 	return result;
 }
 
-Crust_HeapAllocation crustHeapAllocAligned(Crust_Heap *heap, u32 size, u32 alignment)
+CRUST_APIENTRY Crust_HeapAllocation crustHeapAllocAligned(Crust_Heap *heap, u32 size, u32 alignment)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 	CRUST_ASSERT(heap->size >= size);
@@ -1716,7 +1716,7 @@ Crust_HeapAllocation crustHeapAllocAligned(Crust_Heap *heap, u32 size, u32 align
 	return result;
 }
 
-void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocation)
+CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocation)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 

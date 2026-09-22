@@ -90,47 +90,47 @@ extern "C" {
 	#define F32_MIN				-3.402823466e+38F
 	#define F32_POSITIVE_MIN	1.175494351e-38F
 
-	CRUST_INLINE f32 crustRsqrtF32(f32 v)
+	static CRUST_INLINE f32 crustRsqrtF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustSqrtF32(f32 v)
+	static CRUST_INLINE f32 crustSqrtF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustCosF32(f32 v)
+	static CRUST_INLINE f32 crustCosF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_cos_ps(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustAcosF32(f32 v)
+	static CRUST_INLINE f32 crustAcosF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_acos_ps(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustSinF32(f32 v)
+	static CRUST_INLINE f32 crustSinF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_sin_ps(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustAsinF32(f32 v)
+	static CRUST_INLINE f32 crustAsinF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_asin_ps(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustTanF32(f32 v)
+	static CRUST_INLINE f32 crustTanF32(f32 v)
 	{
 		return _mm_cvtss_f32(_mm_tan_ps(_mm_set_ss(v)));
 	}
 
-	CRUST_INLINE f32 crustAtan2F32(f32 y, f32 x)
+	static CRUST_INLINE f32 crustAtan2F32(f32 y, f32 x)
 	{
 		return _mm_cvtss_f32(_mm_atan2_ps(_mm_set_ss(y), _mm_set_ss(x)));
 	}
 
-	CRUST_INLINE u32 crustLzcntU32(u32 value)
+	static CRUST_INLINE u32 crustLzcntU32(u32 value)
 	{
 		CRUST_ASSERT(value != 0);
 
@@ -139,7 +139,7 @@ extern "C" {
 		return 31 - result;
 	}
 
-	CRUST_INLINE u32 crustTzcntU32(u32 value)
+	static CRUST_INLINE u32 crustTzcntU32(u32 value)
 	{
 		CRUST_ASSERT(value != 0);
 
@@ -148,7 +148,7 @@ extern "C" {
 		return result;
 	}
 
-	CRUST_INLINE u32 crustPopcntU32(u32 value)
+	static CRUST_INLINE u32 crustPopcntU32(u32 value)
 	{
 		return __popcnt(value);
 	}
@@ -164,37 +164,37 @@ CRUST_APIENTRY void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
 CRUST_APIENTRY void crustAlignedFree(void *ptr);
 
 //
-CRUST_INLINE u8 crustIsPow2U8(u8 v)
+static CRUST_INLINE u8 crustIsPow2U8(u8 v)
 {
 	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
-CRUST_INLINE u16 crustIsPow2U16(u16 v)
+static CRUST_INLINE u16 crustIsPow2U16(u16 v)
 {
 	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
-CRUST_INLINE u32 crustIsPow2U32(u32 v)
+static CRUST_INLINE u32 crustIsPow2U32(u32 v)
 {
 	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
-CRUST_INLINE u64 crustIsPow2U64(u64 v)
+static CRUST_INLINE u64 crustIsPow2U64(u64 v)
 {
 	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
-CRUST_INLINE usize crustIsPow2USize(usize v)
+static CRUST_INLINE usize crustIsPow2USize(usize v)
 {
 	CRUST_ASSERT(v != 0);
 	return (v & (v - 1)) == 0;
 }
 
-CRUST_INLINE u8 crustIsAlignedU8(u8 v, u8 alignment)
+static CRUST_INLINE u8 crustIsAlignedU8(u8 v, u8 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U8(alignment) != 0);
@@ -202,7 +202,7 @@ CRUST_INLINE u8 crustIsAlignedU8(u8 v, u8 alignment)
 	return (v & (alignment - 1)) == 0;
 }
 
-CRUST_INLINE u16 crustIsAlignedU16(u16 v, u16 alignment)
+static CRUST_INLINE u16 crustIsAlignedU16(u16 v, u16 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U16(alignment) != 0);
@@ -210,7 +210,7 @@ CRUST_INLINE u16 crustIsAlignedU16(u16 v, u16 alignment)
 	return (v & (alignment - 1)) == 0;
 }
 
-CRUST_INLINE u32 crustIsAlignedU32(u32 v, u32 alignment)
+static CRUST_INLINE u32 crustIsAlignedU32(u32 v, u32 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U32(alignment) != 0);
@@ -218,7 +218,7 @@ CRUST_INLINE u32 crustIsAlignedU32(u32 v, u32 alignment)
 	return (v & (alignment - 1)) == 0;
 }
 
-CRUST_INLINE u64 crustIsAlignedU64(u64 v, u64 alignment)
+static CRUST_INLINE u64 crustIsAlignedU64(u64 v, u64 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U64(alignment) != 0);
@@ -226,7 +226,7 @@ CRUST_INLINE u64 crustIsAlignedU64(u64 v, u64 alignment)
 	return (v & (alignment - 1)) == 0;
 }
 
-CRUST_INLINE usize crustIsAlignedUSize(usize v, usize alignment)
+static CRUST_INLINE usize crustIsAlignedUSize(usize v, usize alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
@@ -234,7 +234,7 @@ CRUST_INLINE usize crustIsAlignedUSize(usize v, usize alignment)
 	return (v & (alignment - 1)) == 0;
 }
 
-CRUST_INLINE u8 crustAlignDownU8(u8 value, u8 alignment)
+static CRUST_INLINE u8 crustAlignDownU8(u8 value, u8 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U8(alignment) != 0);
@@ -242,7 +242,7 @@ CRUST_INLINE u8 crustAlignDownU8(u8 value, u8 alignment)
 	return value & ~(alignment - 1);
 }
 
-CRUST_INLINE u16 crustAlignDownU16(u16 value, u16 alignment)
+static CRUST_INLINE u16 crustAlignDownU16(u16 value, u16 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U16(alignment) != 0);
@@ -250,7 +250,7 @@ CRUST_INLINE u16 crustAlignDownU16(u16 value, u16 alignment)
 	return value & ~(alignment - 1);
 }
 
-CRUST_INLINE u32 crustAlignDownU32(u32 value, u32 alignment)
+static CRUST_INLINE u32 crustAlignDownU32(u32 value, u32 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U32(alignment) != 0);
@@ -258,7 +258,7 @@ CRUST_INLINE u32 crustAlignDownU32(u32 value, u32 alignment)
 	return value & ~(alignment - 1);
 }
 
-CRUST_INLINE u64 crustAlignDownU64(u64 value, u64 alignment)
+static CRUST_INLINE u64 crustAlignDownU64(u64 value, u64 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U64(alignment) != 0);
@@ -266,7 +266,7 @@ CRUST_INLINE u64 crustAlignDownU64(u64 value, u64 alignment)
 	return value & ~(alignment - 1);
 }
 
-CRUST_INLINE usize crustAlignDownUSize(usize value, usize alignment)
+static CRUST_INLINE usize crustAlignDownUSize(usize value, usize alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
@@ -274,7 +274,7 @@ CRUST_INLINE usize crustAlignDownUSize(usize value, usize alignment)
 	return value & ~(alignment - 1);
 }
 
-CRUST_INLINE u8 crustAlignUpU8(u8 value, u8 alignment)
+static CRUST_INLINE u8 crustAlignUpU8(u8 value, u8 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U8(alignment) != 0);
@@ -283,7 +283,7 @@ CRUST_INLINE u8 crustAlignUpU8(u8 value, u8 alignment)
 	return (value + mask) & ~mask;
 }
 
-CRUST_INLINE u16 crustAlignUpU16(u16 value, u16 alignment)
+static CRUST_INLINE u16 crustAlignUpU16(u16 value, u16 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U16(alignment) != 0);
@@ -292,7 +292,7 @@ CRUST_INLINE u16 crustAlignUpU16(u16 value, u16 alignment)
 	return (value + mask) & ~mask;
 }
 
-CRUST_INLINE u32 crustAlignUpU32(u32 value, u32 alignment)
+static CRUST_INLINE u32 crustAlignUpU32(u32 value, u32 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U32(alignment) != 0);
@@ -301,7 +301,7 @@ CRUST_INLINE u32 crustAlignUpU32(u32 value, u32 alignment)
 	return (value + mask) & ~mask;
 }
 
-CRUST_INLINE u64 crustAlignUpU64(u64 value, u64 alignment)
+static CRUST_INLINE u64 crustAlignUpU64(u64 value, u64 alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2U64(alignment) != 0);
@@ -310,7 +310,7 @@ CRUST_INLINE u64 crustAlignUpU64(u64 value, u64 alignment)
 	return (value + mask) & ~mask;
 }
 
-CRUST_INLINE usize crustAlignUpUSize(usize value, usize alignment)
+static CRUST_INLINE usize crustAlignUpUSize(usize value, usize alignment)
 {
 	CRUST_ASSERT(alignment != 0);
 	CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
@@ -319,212 +319,212 @@ CRUST_INLINE usize crustAlignUpUSize(usize value, usize alignment)
 	return (value + mask) & ~mask;
 }
 
-CRUST_INLINE u8 crustMinU8(u8 a, u8 b)
+static CRUST_INLINE u8 crustMinU8(u8 a, u8 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE u16 crustMinU16(u16 a, u16 b)
+static CRUST_INLINE u16 crustMinU16(u16 a, u16 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE u32 crustMinU32(u32 a, u32 b)
+static CRUST_INLINE u32 crustMinU32(u32 a, u32 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE u64 crustMinU64(u64 a, u64 b)
+static CRUST_INLINE u64 crustMinU64(u64 a, u64 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE usize crustMinUSize(usize a, usize b)
+static CRUST_INLINE usize crustMinUSize(usize a, usize b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE i8 crustMinI8(i8 a, i8 b)
+static CRUST_INLINE i8 crustMinI8(i8 a, i8 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE i16 crustMinI16(i16 a, i16 b)
+static CRUST_INLINE i16 crustMinI16(i16 a, i16 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE i32 crustMinI32(i32 a, i32 b)
+static CRUST_INLINE i32 crustMinI32(i32 a, i32 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE i64 crustMinI64(i64 a, i64 b)
+static CRUST_INLINE i64 crustMinI64(i64 a, i64 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE isize crustMinISize(isize a, isize b)
+static CRUST_INLINE isize crustMinISize(isize a, isize b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE f32 crustMinF32(f32 a, f32 b)
+static CRUST_INLINE f32 crustMinF32(f32 a, f32 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE f64 crustMinF64(f64 a, f64 b)
+static CRUST_INLINE f64 crustMinF64(f64 a, f64 b)
 {
 	return (a < b) ? a : b;
 }
 
-CRUST_INLINE u8 crustMaxU8(u8 a, u8 b)
+static CRUST_INLINE u8 crustMaxU8(u8 a, u8 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE u16 crustMaxU16(u16 a, u16 b)
+static CRUST_INLINE u16 crustMaxU16(u16 a, u16 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE u32 crustMaxU32(u32 a, u32 b)
+static CRUST_INLINE u32 crustMaxU32(u32 a, u32 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE u64 crustMaxU64(u64 a, u64 b)
+static CRUST_INLINE u64 crustMaxU64(u64 a, u64 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE usize crustMaxUSize(usize a, usize b)
+static CRUST_INLINE usize crustMaxUSize(usize a, usize b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE i8 crustMaxI8(i8 a, i8 b)
+static CRUST_INLINE i8 crustMaxI8(i8 a, i8 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE i16 crustMaxI16(i16 a, i16 b)
+static CRUST_INLINE i16 crustMaxI16(i16 a, i16 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE i32 crustMaxI32(i32 a, i32 b)
+static CRUST_INLINE i32 crustMaxI32(i32 a, i32 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE i64 crustMaxI64(i64 a, i64 b)
+static CRUST_INLINE i64 crustMaxI64(i64 a, i64 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE isize crustMaxISize(isize a, isize b)
+static CRUST_INLINE isize crustMaxISize(isize a, isize b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE f32 crustMaxF32(f32 a, f32 b)
+static CRUST_INLINE f32 crustMaxF32(f32 a, f32 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE f64 crustMaxF64(f64 a, f64 b)
+static CRUST_INLINE f64 crustMaxF64(f64 a, f64 b)
 {
 	return (a < b) ? b : a;
 }
 
-CRUST_INLINE u8 crustClampU8(u8 v, u8 v_min, u8 v_max)
+static CRUST_INLINE u8 crustClampU8(u8 v, u8 v_min, u8 v_max)
 {
 	return crustMaxU8(v_min, crustMinU8(v, v_max));
 }
 
-CRUST_INLINE u16 crustClampU16(u16 v, u16 v_min, u16 v_max)
+static CRUST_INLINE u16 crustClampU16(u16 v, u16 v_min, u16 v_max)
 {
 	return crustMaxU16(v_min, crustMinU16(v, v_max));
 }
 
-CRUST_INLINE u32 crustClampU32(u32 v, u32 v_min, u32 v_max)
+static CRUST_INLINE u32 crustClampU32(u32 v, u32 v_min, u32 v_max)
 {
 	return crustMaxU32(v_min, crustMinU32(v, v_max));
 }
 
-CRUST_INLINE u64 crustClampU64(u64 v, u64 v_min, u64 v_max)
+static CRUST_INLINE u64 crustClampU64(u64 v, u64 v_min, u64 v_max)
 {
 	return crustMaxU64(v_min, crustMinU64(v, v_max));
 }
 
-CRUST_INLINE usize crustClampUSize(usize v, usize v_min, usize v_max)
+static CRUST_INLINE usize crustClampUSize(usize v, usize v_min, usize v_max)
 {
 	return crustMaxUSize(v_min, crustMinUSize(v, v_max));
 }
 
-CRUST_INLINE i8 crustClampI8(i8 v, i8 v_min, i8 v_max)
+static CRUST_INLINE i8 crustClampI8(i8 v, i8 v_min, i8 v_max)
 {
 	return crustMaxI8(v_min, crustMinI8(v, v_max));
 }
 
-CRUST_INLINE i16 crustClampI16(i16 v, i16 v_min, i16 v_max)
+static CRUST_INLINE i16 crustClampI16(i16 v, i16 v_min, i16 v_max)
 {
 	return crustMaxI16(v_min, crustMinI16(v, v_max));
 }
 
-CRUST_INLINE i32 crustClampI32(i32 v, i32 v_min, i32 v_max)
+static CRUST_INLINE i32 crustClampI32(i32 v, i32 v_min, i32 v_max)
 {
 	return crustMaxI32(v_min, crustMinI32(v, v_max));
 }
 
-CRUST_INLINE i64 crustClampI64(i64 v, i64 v_min, i64 v_max)
+static CRUST_INLINE i64 crustClampI64(i64 v, i64 v_min, i64 v_max)
 {
 	return crustMaxI64(v_min, crustMinI64(v, v_max));
 }
 
-CRUST_INLINE isize crustClampISize(isize v, isize v_min, isize v_max)
+static CRUST_INLINE isize crustClampISize(isize v, isize v_min, isize v_max)
 {
 	return crustMaxISize(v_min, crustMinISize(v, v_max));
 }
 
-CRUST_INLINE f32 crustClampF32(f32 v, f32 v_min, f32 v_max)
+static CRUST_INLINE f32 crustClampF32(f32 v, f32 v_min, f32 v_max)
 {
 	return crustMaxF32(v_min, crustMinF32(v, v_max));
 }
 
-CRUST_INLINE f64 crustClampF64(f64 v, f64 v_min, f64 v_max)
+static CRUST_INLINE f64 crustClampF64(f64 v, f64 v_min, f64 v_max)
 {
 	return crustMaxF64(v_min, crustMinF64(v, v_max));
 }
 
-CRUST_INLINE i8 crustAbsI8(i8 v)
+static CRUST_INLINE i8 crustAbsI8(i8 v)
 {
 	return (v < 0) ? -v : v;
 }
 
-CRUST_INLINE i16 crustAbsI16(i16 v)
+static CRUST_INLINE i16 crustAbsI16(i16 v)
 {
 	return (v < 0) ? -v : v;
 }
 
-CRUST_INLINE i32 crustAbsI32(i32 v)
+static CRUST_INLINE i32 crustAbsI32(i32 v)
 {
 	return (v < 0) ? -v : v;
 }
 
-CRUST_INLINE i64 crustAbsI64(i64 v)
+static CRUST_INLINE i64 crustAbsI64(i64 v)
 {
 	return (v < 0) ? -v : v;
 }
 
-CRUST_INLINE isize crustAbsISize(isize v)
+static CRUST_INLINE isize crustAbsISize(isize v)
 {
 	return (v < 0) ? -v : v;
 }
 
-CRUST_INLINE f32 crustAbsF32(f32 v)
+static CRUST_INLINE f32 crustAbsF32(f32 v)
 {
 	u32 bits;
 	crustMemcpy(&bits, &v, sizeof(u32));
@@ -536,7 +536,7 @@ CRUST_INLINE f32 crustAbsF32(f32 v)
 	return result;
 }
 
-CRUST_INLINE f64 crustAbsF64(f64 v)
+static CRUST_INLINE f64 crustAbsF64(f64 v)
 {
 	u64 bits;
 	crustMemcpy(&bits, &v, sizeof(u64));
@@ -554,7 +554,7 @@ typedef struct Crust_Vec2_t
 	f32 x, y;
 } Crust_Vec2;
 
-CRUST_INLINE Crust_Vec2 crustVec2Mad(Crust_Vec2 a, f32 s, Crust_Vec2 b)
+static CRUST_INLINE Crust_Vec2 crustVec2Mad(Crust_Vec2 a, f32 s, Crust_Vec2 b)
 {
 	Crust_Vec2 result;
 	result.x = a.x * s + b.x;
@@ -563,7 +563,7 @@ CRUST_INLINE Crust_Vec2 crustVec2Mad(Crust_Vec2 a, f32 s, Crust_Vec2 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2AddS(Crust_Vec2 a, f32 s)
+static CRUST_INLINE Crust_Vec2 crustVec2AddS(Crust_Vec2 a, f32 s)
 {
 	Crust_Vec2 result;
 	result.x = a.x + s;
@@ -572,7 +572,7 @@ CRUST_INLINE Crust_Vec2 crustVec2AddS(Crust_Vec2 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2AddV(Crust_Vec2 a, Crust_Vec2 b)
+static CRUST_INLINE Crust_Vec2 crustVec2AddV(Crust_Vec2 a, Crust_Vec2 b)
 {
 	Crust_Vec2 result;
 	result.x = a.x + b.x;
@@ -581,7 +581,7 @@ CRUST_INLINE Crust_Vec2 crustVec2AddV(Crust_Vec2 a, Crust_Vec2 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2SubS(Crust_Vec2 a, f32 s)
+static CRUST_INLINE Crust_Vec2 crustVec2SubS(Crust_Vec2 a, f32 s)
 {
 	Crust_Vec2 result;
 	result.x = a.x - s;
@@ -590,7 +590,7 @@ CRUST_INLINE Crust_Vec2 crustVec2SubS(Crust_Vec2 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2SubV(Crust_Vec2 a, Crust_Vec2 b)
+static CRUST_INLINE Crust_Vec2 crustVec2SubV(Crust_Vec2 a, Crust_Vec2 b)
 {
 	Crust_Vec2 result;
 	result.x = a.x - b.x;
@@ -599,7 +599,7 @@ CRUST_INLINE Crust_Vec2 crustVec2SubV(Crust_Vec2 a, Crust_Vec2 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2MulS(Crust_Vec2 a, f32 s)
+static CRUST_INLINE Crust_Vec2 crustVec2MulS(Crust_Vec2 a, f32 s)
 {
 	Crust_Vec2 result;
 	result.x = a.x * s;
@@ -608,7 +608,7 @@ CRUST_INLINE Crust_Vec2 crustVec2MulS(Crust_Vec2 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2MulV(Crust_Vec2 a, Crust_Vec2 b)
+static CRUST_INLINE Crust_Vec2 crustVec2MulV(Crust_Vec2 a, Crust_Vec2 b)
 {
 	Crust_Vec2 result;
 	result.x = a.x * b.x;
@@ -617,7 +617,7 @@ CRUST_INLINE Crust_Vec2 crustVec2MulV(Crust_Vec2 a, Crust_Vec2 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2DivS(Crust_Vec2 a, f32 s)
+static CRUST_INLINE Crust_Vec2 crustVec2DivS(Crust_Vec2 a, f32 s)
 {
 	float s_inv = 1.0f / s;
 
@@ -628,7 +628,7 @@ CRUST_INLINE Crust_Vec2 crustVec2DivS(Crust_Vec2 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2DivV(Crust_Vec2 a, Crust_Vec2 b)
+static CRUST_INLINE Crust_Vec2 crustVec2DivV(Crust_Vec2 a, Crust_Vec2 b)
 {
 	Crust_Vec2 result;
 	result.x = a.x / b.x;
@@ -637,7 +637,7 @@ CRUST_INLINE Crust_Vec2 crustVec2DivV(Crust_Vec2 a, Crust_Vec2 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2Lerp(Crust_Vec2 a, Crust_Vec2 b, f32 t)
+static CRUST_INLINE Crust_Vec2 crustVec2Lerp(Crust_Vec2 a, Crust_Vec2 b, f32 t)
 {
 	Crust_Vec2 result;
 	result.x = a.x + (b.x - a.x) * t;
@@ -646,7 +646,7 @@ CRUST_INLINE Crust_Vec2 crustVec2Lerp(Crust_Vec2 a, Crust_Vec2 b, f32 t)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec2 crustVec2Normalize(Crust_Vec2 v)
+static CRUST_INLINE Crust_Vec2 crustVec2Normalize(Crust_Vec2 v)
 {
 	f32 len_inv = crustRsqrtF32(v.x * v.x + v.y * v.y);
 
@@ -657,17 +657,17 @@ CRUST_INLINE Crust_Vec2 crustVec2Normalize(Crust_Vec2 v)
 	return result;
 }
 
-CRUST_INLINE f32 crustVec2Dot(Crust_Vec2 a, Crust_Vec2 b)
+static CRUST_INLINE f32 crustVec2Dot(Crust_Vec2 a, Crust_Vec2 b)
 {
 	return a.x * b.x + a.y * b.y;
 }
 
-CRUST_INLINE f32 crustVec2Length(Crust_Vec2 v)
+static CRUST_INLINE f32 crustVec2Length(Crust_Vec2 v)
 {
 	return crustSqrtF32(v.x * v.x + v.y * v.y);
 }
 
-CRUST_INLINE f32 crustVec2LengthSquared(Crust_Vec2 v)
+static CRUST_INLINE f32 crustVec2LengthSquared(Crust_Vec2 v)
 {
 	return v.x * v.x + v.y * v.y;
 }
@@ -678,7 +678,7 @@ typedef struct Crust_Vec3_t
 	f32 x, y, z;
 } Crust_Vec3;
 
-CRUST_INLINE Crust_Vec3 crustVec3Mad(Crust_Vec3 a, f32 s, Crust_Vec3 b)
+static CRUST_INLINE Crust_Vec3 crustVec3Mad(Crust_Vec3 a, f32 s, Crust_Vec3 b)
 {
 	Crust_Vec3 result;
 	result.x = a.x * s + b.x;
@@ -688,7 +688,7 @@ CRUST_INLINE Crust_Vec3 crustVec3Mad(Crust_Vec3 a, f32 s, Crust_Vec3 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3AddS(Crust_Vec3 a, f32 s)
+static CRUST_INLINE Crust_Vec3 crustVec3AddS(Crust_Vec3 a, f32 s)
 {
 	Crust_Vec3 result;
 	result.x = a.x + s;
@@ -698,7 +698,7 @@ CRUST_INLINE Crust_Vec3 crustVec3AddS(Crust_Vec3 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3AddV(Crust_Vec3 a, Crust_Vec3 b)
+static CRUST_INLINE Crust_Vec3 crustVec3AddV(Crust_Vec3 a, Crust_Vec3 b)
 {
 	Crust_Vec3 result;
 	result.x = a.x + b.x;
@@ -708,7 +708,7 @@ CRUST_INLINE Crust_Vec3 crustVec3AddV(Crust_Vec3 a, Crust_Vec3 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3SubS(Crust_Vec3 a, f32 s)
+static CRUST_INLINE Crust_Vec3 crustVec3SubS(Crust_Vec3 a, f32 s)
 {
 	Crust_Vec3 result;
 	result.x = a.x - s;
@@ -718,7 +718,7 @@ CRUST_INLINE Crust_Vec3 crustVec3SubS(Crust_Vec3 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3SubV(Crust_Vec3 a, Crust_Vec3 b)
+static CRUST_INLINE Crust_Vec3 crustVec3SubV(Crust_Vec3 a, Crust_Vec3 b)
 {
 	Crust_Vec3 result;
 	result.x = a.x - b.x;
@@ -728,7 +728,7 @@ CRUST_INLINE Crust_Vec3 crustVec3SubV(Crust_Vec3 a, Crust_Vec3 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3MulS(Crust_Vec3 a, f32 s)
+static CRUST_INLINE Crust_Vec3 crustVec3MulS(Crust_Vec3 a, f32 s)
 {
 	Crust_Vec3 result;
 	result.x = a.x * s;
@@ -738,7 +738,7 @@ CRUST_INLINE Crust_Vec3 crustVec3MulS(Crust_Vec3 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3MulV(Crust_Vec3 a, Crust_Vec3 b)
+static CRUST_INLINE Crust_Vec3 crustVec3MulV(Crust_Vec3 a, Crust_Vec3 b)
 {
 	Crust_Vec3 result;
 	result.x = a.x * b.x;
@@ -748,7 +748,7 @@ CRUST_INLINE Crust_Vec3 crustVec3MulV(Crust_Vec3 a, Crust_Vec3 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3DivS(Crust_Vec3 a, f32 s)
+static CRUST_INLINE Crust_Vec3 crustVec3DivS(Crust_Vec3 a, f32 s)
 {
 	float s_inv = 1.0f / s;
 
@@ -760,7 +760,7 @@ CRUST_INLINE Crust_Vec3 crustVec3DivS(Crust_Vec3 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3DivV(Crust_Vec3 a, Crust_Vec3 b)
+static CRUST_INLINE Crust_Vec3 crustVec3DivV(Crust_Vec3 a, Crust_Vec3 b)
 {
 	Crust_Vec3 result;
 	result.x = a.x / b.x;
@@ -770,7 +770,7 @@ CRUST_INLINE Crust_Vec3 crustVec3DivV(Crust_Vec3 a, Crust_Vec3 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3Lerp(Crust_Vec3 a, Crust_Vec3 b, f32 t)
+static CRUST_INLINE Crust_Vec3 crustVec3Lerp(Crust_Vec3 a, Crust_Vec3 b, f32 t)
 {
 	Crust_Vec3 result;
 	result.x = a.x + (b.x - a.x) * t;
@@ -780,7 +780,7 @@ CRUST_INLINE Crust_Vec3 crustVec3Lerp(Crust_Vec3 a, Crust_Vec3 b, f32 t)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3Normalize(Crust_Vec3 v)
+static CRUST_INLINE Crust_Vec3 crustVec3Normalize(Crust_Vec3 v)
 {
 	f32 len_inv = crustRsqrtF32(v.x * v.x + v.y * v.y + v.z * v.z);
 
@@ -792,7 +792,7 @@ CRUST_INLINE Crust_Vec3 crustVec3Normalize(Crust_Vec3 v)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustVec3Cross(Crust_Vec3 a, Crust_Vec3 b)
+static CRUST_INLINE Crust_Vec3 crustVec3Cross(Crust_Vec3 a, Crust_Vec3 b)
 {
 	Crust_Vec3 result;
 	result.x = a.y * b.z - a.z * b.y;
@@ -802,17 +802,17 @@ CRUST_INLINE Crust_Vec3 crustVec3Cross(Crust_Vec3 a, Crust_Vec3 b)
 	return result;
 }
 
-CRUST_INLINE f32 crustVec3Dot(Crust_Vec3 a, Crust_Vec3 b)
+static CRUST_INLINE f32 crustVec3Dot(Crust_Vec3 a, Crust_Vec3 b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-CRUST_INLINE f32 crustVec3Length(Crust_Vec3 v)
+static CRUST_INLINE f32 crustVec3Length(Crust_Vec3 v)
 {
 	return crustSqrtF32(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-CRUST_INLINE f32 crustVec3LengthSquared(Crust_Vec3 v)
+static CRUST_INLINE f32 crustVec3LengthSquared(Crust_Vec3 v)
 {
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
@@ -823,7 +823,7 @@ typedef struct Crust_Vec4_t
 	f32 x, y, z, w;
 } Crust_Vec4;
 
-CRUST_INLINE Crust_Vec4 crustVec4Mad(Crust_Vec4 a, f32 s, Crust_Vec4 b)
+static CRUST_INLINE Crust_Vec4 crustVec4Mad(Crust_Vec4 a, f32 s, Crust_Vec4 b)
 {
 	Crust_Vec4 result;
 	result.x = a.x * s + b.x;
@@ -834,7 +834,7 @@ CRUST_INLINE Crust_Vec4 crustVec4Mad(Crust_Vec4 a, f32 s, Crust_Vec4 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4AddS(Crust_Vec4 a, f32 s)
+static CRUST_INLINE Crust_Vec4 crustVec4AddS(Crust_Vec4 a, f32 s)
 {
 	Crust_Vec4 result;
 	result.x = a.x + s;
@@ -845,7 +845,7 @@ CRUST_INLINE Crust_Vec4 crustVec4AddS(Crust_Vec4 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4AddV(Crust_Vec4 a, Crust_Vec4 b)
+static CRUST_INLINE Crust_Vec4 crustVec4AddV(Crust_Vec4 a, Crust_Vec4 b)
 {
 	Crust_Vec4 result;
 	result.x = a.x + b.x;
@@ -856,7 +856,7 @@ CRUST_INLINE Crust_Vec4 crustVec4AddV(Crust_Vec4 a, Crust_Vec4 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4SubS(Crust_Vec4 a, f32 s)
+static CRUST_INLINE Crust_Vec4 crustVec4SubS(Crust_Vec4 a, f32 s)
 {
 	Crust_Vec4 result;
 	result.x = a.x - s;
@@ -867,7 +867,7 @@ CRUST_INLINE Crust_Vec4 crustVec4SubS(Crust_Vec4 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4SubV(Crust_Vec4 a, Crust_Vec4 b)
+static CRUST_INLINE Crust_Vec4 crustVec4SubV(Crust_Vec4 a, Crust_Vec4 b)
 {
 	Crust_Vec4 result;
 	result.x = a.x - b.x;
@@ -878,7 +878,7 @@ CRUST_INLINE Crust_Vec4 crustVec4SubV(Crust_Vec4 a, Crust_Vec4 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4MulS(Crust_Vec4 a, f32 s)
+static CRUST_INLINE Crust_Vec4 crustVec4MulS(Crust_Vec4 a, f32 s)
 {
 	Crust_Vec4 result;
 	result.x = a.x * s;
@@ -889,7 +889,7 @@ CRUST_INLINE Crust_Vec4 crustVec4MulS(Crust_Vec4 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4MulV(Crust_Vec4 a, Crust_Vec4 b)
+static CRUST_INLINE Crust_Vec4 crustVec4MulV(Crust_Vec4 a, Crust_Vec4 b)
 {
 	Crust_Vec4 result;
 	result.x = a.x * b.x;
@@ -900,7 +900,7 @@ CRUST_INLINE Crust_Vec4 crustVec4MulV(Crust_Vec4 a, Crust_Vec4 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4DivS(Crust_Vec4 a, f32 s)
+static CRUST_INLINE Crust_Vec4 crustVec4DivS(Crust_Vec4 a, f32 s)
 {
 	float s_inv = 1.0f / s;
 
@@ -913,7 +913,7 @@ CRUST_INLINE Crust_Vec4 crustVec4DivS(Crust_Vec4 a, f32 s)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4DivV(Crust_Vec4 a, Crust_Vec4 b)
+static CRUST_INLINE Crust_Vec4 crustVec4DivV(Crust_Vec4 a, Crust_Vec4 b)
 {
 	Crust_Vec4 result;
 	result.x = a.x / b.x;
@@ -924,7 +924,7 @@ CRUST_INLINE Crust_Vec4 crustVec4DivV(Crust_Vec4 a, Crust_Vec4 b)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4Lerp(Crust_Vec4 a, Crust_Vec4 b, f32 t)
+static CRUST_INLINE Crust_Vec4 crustVec4Lerp(Crust_Vec4 a, Crust_Vec4 b, f32 t)
 {
 	Crust_Vec4 result;
 	result.x = a.x + (b.x - a.x) * t;
@@ -935,7 +935,7 @@ CRUST_INLINE Crust_Vec4 crustVec4Lerp(Crust_Vec4 a, Crust_Vec4 b, f32 t)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec4 crustVec4Normalize(Crust_Vec4 v)
+static CRUST_INLINE Crust_Vec4 crustVec4Normalize(Crust_Vec4 v)
 {
 	f32 len_inv = crustRsqrtF32(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
 
@@ -948,17 +948,17 @@ CRUST_INLINE Crust_Vec4 crustVec4Normalize(Crust_Vec4 v)
 	return result;
 }
 
-CRUST_INLINE f32 crustVec4Dot(Crust_Vec4 a, Crust_Vec4 b)
+static CRUST_INLINE f32 crustVec4Dot(Crust_Vec4 a, Crust_Vec4 b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
-CRUST_INLINE f32 crustVec4Length(Crust_Vec4 v)
+static CRUST_INLINE f32 crustVec4Length(Crust_Vec4 v)
 {
 	return crustSqrtF32(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
 }
 
-CRUST_INLINE f32 crustVec4LengthSquared(Crust_Vec4 v)
+static CRUST_INLINE f32 crustVec4LengthSquared(Crust_Vec4 v)
 {
 	return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
 }
@@ -969,7 +969,7 @@ typedef struct Crust_Quat_t
 	f32 x, y, z, w;
 } Crust_Quat;
 
-CRUST_INLINE Crust_Quat crustQuatMad(Crust_Quat a, f32 s, Crust_Quat b)
+static CRUST_INLINE Crust_Quat crustQuatMad(Crust_Quat a, f32 s, Crust_Quat b)
 {
 	Crust_Quat result;
 	result.x = a.x * s + b.x;
@@ -980,7 +980,7 @@ CRUST_INLINE Crust_Quat crustQuatMad(Crust_Quat a, f32 s, Crust_Quat b)
 	return result;
 }
 
-CRUST_INLINE Crust_Quat crustQuatMul(Crust_Quat a, Crust_Quat b)
+static CRUST_INLINE Crust_Quat crustQuatMul(Crust_Quat a, Crust_Quat b)
 {
 	Crust_Quat result;
 
@@ -995,7 +995,7 @@ CRUST_INLINE Crust_Quat crustQuatMul(Crust_Quat a, Crust_Quat b)
 	return result;
 }
 
-CRUST_INLINE Crust_Quat crustQuatConjugate(Crust_Quat q)
+static CRUST_INLINE Crust_Quat crustQuatConjugate(Crust_Quat q)
 {
 	Crust_Quat result;
 	result.x = -q.x;
@@ -1006,12 +1006,12 @@ CRUST_INLINE Crust_Quat crustQuatConjugate(Crust_Quat q)
 	return result;
 }
 
-CRUST_INLINE f32 crustQuatDot(Crust_Quat a, Crust_Quat b)
+static CRUST_INLINE f32 crustQuatDot(Crust_Quat a, Crust_Quat b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
-CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
+static CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
 {
 	f32 len_inv = crustRsqrtF32(crustQuatDot(q, q));
 
@@ -1024,7 +1024,7 @@ CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
 	return result;
 }
 
-CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
+static CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
 {
 	Crust_Quat result;
 	result.x = a.x + (b.x - a.x) * t;
@@ -1035,7 +1035,7 @@ CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
 	return crustQuatNormalize(result);
 }
 
-CRUST_INLINE Crust_Quat crustQuatSlerp(Crust_Quat a, Crust_Quat b, f32 t)
+static CRUST_INLINE Crust_Quat crustQuatSlerp(Crust_Quat a, Crust_Quat b, f32 t)
 {
 	f32 cos_half_theta = crustQuatDot(a, b);
 
@@ -1054,7 +1054,7 @@ CRUST_INLINE Crust_Quat crustQuatSlerp(Crust_Quat a, Crust_Quat b, f32 t)
 	return result;
 }
 
-CRUST_INLINE Crust_Vec3 crustQuatRotate(Crust_Quat a, Crust_Vec3 v)
+static CRUST_INLINE Crust_Vec3 crustQuatRotate(Crust_Quat a, Crust_Vec3 v)
 {
 	Crust_Quat qv;
 	qv.x = v.x;
@@ -1081,7 +1081,7 @@ typedef struct Crust_Transform_t
 	Crust_Vec3 scale;
 } Crust_Transform;
 
-CRUST_INLINE Crust_Transform crustTransformInvert(Crust_Transform t)
+static CRUST_INLINE Crust_Transform crustTransformInvert(Crust_Transform t)
 {
 	Crust_Transform result;
 	result.scale.x = 1.0f / t.scale.x;
@@ -1093,7 +1093,7 @@ CRUST_INLINE Crust_Transform crustTransformInvert(Crust_Transform t)
 	return result;
 }
 
-CRUST_INLINE Crust_Transform crustTransformMul(Crust_Transform a, Crust_Transform b)
+static CRUST_INLINE Crust_Transform crustTransformMul(Crust_Transform a, Crust_Transform b)
 {
 	Crust_Transform result;
 	result.scale = crustVec3MulV(a.scale, b.scale);
@@ -1181,7 +1181,7 @@ CRUST_APIENTRY void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, 
 CRUST_APIENTRY void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment);
 CRUST_APIENTRY void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize size, usize alignment);
 
-CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
+static CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
 {
 	CRUST_ASSERT(a == 0 || b <= USIZE_MAX / a);
 	return a * b;
@@ -1221,7 +1221,7 @@ CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
 		crustAllocatorSizeMul(sizeof(T), (count)),                   \
 		CRUST_ALIGNOF(T))
 
-CRUST_APIENTRY Crust_Allocator crustSystemAllocatorInit();
+CRUST_APIENTRY Crust_Allocator crustSystemAllocatorInit(void);
 CRUST_APIENTRY Crust_Allocator crustArenaAllocatorInit(Crust_Arena *arena);
 
 //
@@ -1318,11 +1318,6 @@ typedef struct Crust_HeapNodePool_t
 
 CRUST_APIENTRY void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity);
 CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool);
-CRUST_APIENTRY u32 crustHeapNodePoolAcquire(Crust_HeapNodePool *pool);
-CRUST_APIENTRY void crustHeapNodePoolRelease(Crust_HeapNodePool *pool, u32 index);
-CRUST_APIENTRY void crustHeapNodePoolAddMask(Crust_HeapNodePool *pool, u32 index);
-CRUST_APIENTRY void crustHeapNodePoolRemoveMask(Crust_HeapNodePool *pool, u32 index);
-CRUST_APIENTRY u8 crustHeapNodePoolCheckMask(const Crust_HeapNodePool *pool, u32 index);
 
 //
 typedef struct Crust_HeapAllocation_t
