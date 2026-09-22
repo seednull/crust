@@ -1369,7 +1369,7 @@ CRUST_INLINE void crustStackPush(Crust_Stack *stack, const void *data, usize siz
 		return;
 
 	u8 *ptr = (u8 *)stack->memory + stack->head;
-	memcpy(ptr, data, size);
+	crustMemcpy(ptr, data, size);
 
 	stack->head += size;
 }
@@ -1384,7 +1384,7 @@ CRUST_INLINE void crustStackPeek(const Crust_Stack *stack, void *data, usize siz
 	usize offset = stack->head - size;
 
 	const u8 *ptr = (const u8 *)stack->memory + offset;
-	memcpy(data, ptr, size);
+	crustMemcpy(data, ptr, size);
 }
 
 CRUST_INLINE void crustStackPop(Crust_Stack *stack, void *data, usize size)
@@ -1397,7 +1397,7 @@ CRUST_INLINE void crustStackPop(Crust_Stack *stack, void *data, usize size)
 	stack->head -= size;
 
 	u8 *ptr = (u8 *)stack->memory + stack->head;
-	memcpy(data, ptr, size);
+	crustMemcpy(data, ptr, size);
 }
 
 //
