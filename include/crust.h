@@ -1455,7 +1455,7 @@ CRUST_INLINE void crustArenaReset(Crust_Arena *arena)
 //
 typedef void *(*PFN_crustAllocatorAlloc)(void *context, usize size, usize alignment);
 typedef void *(*PFN_crustAllocatorRealloc)(void *context, void *ptr, usize old_size, usize new_size, usize alignment);
-typedef void (*PFN_crustAllocatorFree)(void *allocator, void *ptr, usize size, usize alignment);
+typedef void (*PFN_crustAllocatorFree)(void *context, void *ptr, usize size, usize alignment);
 
 typedef struct Crust_AllocatorVtbl_t
 {
