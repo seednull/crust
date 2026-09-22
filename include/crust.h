@@ -26,14 +26,14 @@ extern "C" {
 	#define CRUST_INLINE		__forceinline
 	#define CRUST_RESTRICT		__restrict
 
-	#if defined(CRUST_STATIC_LIBRARY)
-		#define CRUST_APIENTRY extern
-	#else
-		#if defined (CRUST_SHARED_LIBRARY_IMPLEMENTATION)
+	#if defined(CRUST_SHARED_LIBRARY)
+		#if defined (CRUST_IMPLEMENTATION)
 			#define CRUST_APIENTRY extern __declspec(dllexport)
 		#else
 			#define CRUST_APIENTRY extern __declspec(dllimport)
 		#endif
+	#else
+		#define CRUST_APIENTRY extern
 	#endif
 
 	typedef signed char			i8;

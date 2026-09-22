@@ -11,10 +11,9 @@ set(TARGET crust)
 
 if (CRUST_BUILD_STATIC)
     set(CRUST_TARGET_TYPE STATIC)
-	set(CRUST_PLATFORM_DEFINES CRUST_STATIC_LIBRARY)
 else()
-    set(CRUST_TARGET_TYPE STATIC)
-    set(CRUST_PLATFORM_DEFINES CRUST_SHARED_LIBRARY_IMPLEMENTATION)
+    set(CRUST_TARGET_TYPE SHARED)
+    set(CRUST_PLATFORM_DEFINES CRUST_SHARED_LIBRARY)
 endif()
 
 # ==================================================================================================

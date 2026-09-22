@@ -1,7 +1,9 @@
-#include <crust.h>
-
 #include <malloc.h>
 #include <string.h>
+
+#define CRUST_IMPLEMENTATION
+#include <crust.h>
+#undef CRUST_IMPLEMENTATION
 
 //
 CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
