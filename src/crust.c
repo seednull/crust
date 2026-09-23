@@ -34,7 +34,7 @@
 #endif
 
 //
-CRUST_APIENTRY Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_RingBuffer crustRingBufferAttach(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -47,6 +47,16 @@ CRUST_APIENTRY Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity
 	result.write = 0;
 
 	return result;
+}
+
+CRUST_APIENTRY void crustRingBufferReset(Crust_RingBuffer *ring)
+{
+	CRUST_ASSERT(ring != CRUST_NULL);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+
+	ring->size = 0;
+	ring->read = 0;
+	ring->write = 0;
 }
 
 CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size)
@@ -111,7 +121,7 @@ CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *dat
 }
 
 //
-CRUST_APIENTRY Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -125,11 +135,28 @@ CRUST_APIENTRY Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity)
 		result.begin[i] = 0;
 		result.end[i] = 0;
 	}
+
 	result.staged = 0;
 	result.reader = 0;
 	result.writer = 0;
 
 	return result;
+}
+
+CRUST_APIENTRY void crustBipBufferReset(Crust_BipBuffer *bip)
+{
+	CRUST_ASSERT(bip != CRUST_NULL);
+	CRUST_ASSERT(bip->memory != CRUST_NULL);
+
+	for (u32 i = 0; i < 2; ++i)
+	{
+		bip->begin[i] = 0;
+		bip->end[i] = 0;
+	}
+
+	bip->staged = 0;
+	bip->reader = 0;
+	bip->writer = 0;
 }
 
 CRUST_APIENTRY void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize size)
@@ -242,7 +269,7 @@ CRUST_APIENTRY void crustBipBufferCommit(Crust_BipBuffer *bip, usize size)
 }
 
 //
-CRUST_APIENTRY Crust_Stack crustStackInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_Stack crustStackAttach(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -253,6 +280,14 @@ CRUST_APIENTRY Crust_Stack crustStackInit(void *memory, usize capacity)
 	result.head = 0;
 
 	return result;
+}
+
+CRUST_APIENTRY void crustStackReset(Crust_Stack *stack)
+{
+	CRUST_ASSERT(stack != CRUST_NULL);
+	CRUST_ASSERT(stack->memory != CRUST_NULL);
+
+	stack->head = 0;
 }
 
 CRUST_APIENTRY void crustStackPush(Crust_Stack *stack, const void *data, usize size)
@@ -298,7 +333,7 @@ CRUST_APIENTRY void crustStackPop(Crust_Stack *stack, void *data, usize size)
 }
 
 //
-CRUST_APIENTRY Crust_Arena crustArenaInit(void *memory, usize capacity)
+CRUST_APIENTRY Crust_Arena crustArenaAttach(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -309,6 +344,14 @@ CRUST_APIENTRY Crust_Arena crustArenaInit(void *memory, usize capacity)
 	result.size = 0;
 
 	return result;
+}
+
+CRUST_APIENTRY void crustArenaReset(Crust_Arena *arena)
+{
+	CRUST_ASSERT(arena != CRUST_NULL);
+	CRUST_ASSERT(arena->memory != CRUST_NULL);
+
+	arena->size = 0;
 }
 
 CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment)
@@ -332,14 +375,6 @@ CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize align
 
 	arena->size = offset + size;
 	return (void *)aligned;
-}
-
-CRUST_APIENTRY void crustArenaReset(Crust_Arena *arena)
-{
-	CRUST_ASSERT(arena != CRUST_NULL);
-	CRUST_ASSERT(arena->memory != CRUST_NULL);
-
-	arena->size = 0;
 }
 
 //

@@ -1105,7 +1105,8 @@ typedef struct Crust_RingBuffer_t
 	usize write;
 } Crust_RingBuffer;
 
-CRUST_APIENTRY Crust_RingBuffer crustRingBufferInit(void *memory, usize capacity);
+CRUST_APIENTRY Crust_RingBuffer crustRingBufferAttach(void *memory, usize capacity);
+CRUST_APIENTRY void crustRingBufferReset(Crust_RingBuffer *ring);
 CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size);
 CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size);
 
@@ -1121,7 +1122,8 @@ typedef struct Crust_BipBuffer_t
 	u16 writer;
 } Crust_BipBuffer;
 
-CRUST_APIENTRY Crust_BipBuffer crustBipBufferInit(void *memory, usize capacity);
+CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity);
+CRUST_APIENTRY void crustBipBufferReset(Crust_BipBuffer *bip);
 CRUST_APIENTRY void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize size);
 CRUST_APIENTRY void *crustBipBufferStage(Crust_BipBuffer *bip, usize size);
 CRUST_APIENTRY void crustBipBufferCommit(Crust_BipBuffer *bip, usize size);
@@ -1134,7 +1136,8 @@ typedef struct Crust_Stack_t
 	usize head;
 } Crust_Stack;
 
-CRUST_APIENTRY Crust_Stack crustStackInit(void *memory, usize capacity);
+CRUST_APIENTRY Crust_Stack crustStackAttach(void *memory, usize capacity);
+CRUST_APIENTRY void crustStackReset(Crust_Stack *stack);
 CRUST_APIENTRY void crustStackPush(Crust_Stack *stack, const void *data, usize size);
 CRUST_APIENTRY void crustStackPeek(const Crust_Stack *stack, void *data, usize size);
 CRUST_APIENTRY void crustStackPop(Crust_Stack *stack, void *data, usize size);
@@ -1147,9 +1150,9 @@ typedef struct Crust_Arena_t
 	usize size;
 } Crust_Arena;
 
-CRUST_APIENTRY Crust_Arena crustArenaInit(void *memory, usize capacity);
-CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment);
+CRUST_APIENTRY Crust_Arena crustArenaAttach(void *memory, usize capacity);
 CRUST_APIENTRY void crustArenaReset(Crust_Arena *arena);
+CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment);
 
 //
 typedef void *(*PFN_crustAllocatorAlloc)(void *context, usize size, usize alignment);
