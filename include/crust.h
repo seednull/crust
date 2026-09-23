@@ -515,29 +515,29 @@ static CRUST_INLINE f64 crustClampF64(f64 v, f64 v_min, f64 v_max)
 	return crustMaxF64(v_min, crustMinF64(v, v_max));
 }
 
-static CRUST_INLINE i8 crustAbsI8(i8 v)
+static CRUST_INLINE u8 crustAbsI8(i8 v)
 {
-	return (v < 0) ? -v : v;
+	return (v < 0) ? (u8)(-(i32)v) : (u8)v;
 }
 
-static CRUST_INLINE i16 crustAbsI16(i16 v)
+static CRUST_INLINE u16 crustAbsI16(i16 v)
 {
-	return (v < 0) ? -v : v;
+	return (v < 0) ? (u16)(-(i32)v) : (u16)v;
 }
 
-static CRUST_INLINE i32 crustAbsI32(i32 v)
+static CRUST_INLINE u32 crustAbsI32(i32 v)
 {
-	return (v < 0) ? -v : v;
+	return (v < 0) ? (u32)((u32)0 - (u32)v) : (u32)v;
 }
 
-static CRUST_INLINE i64 crustAbsI64(i64 v)
+static CRUST_INLINE u64 crustAbsI64(i64 v)
 {
-	return (v < 0) ? -v : v;
+	return (v < 0) ? (u64)((u64)0 - (u64)v) : (u64)v;
 }
 
-static CRUST_INLINE isize crustAbsISize(isize v)
+static CRUST_INLINE usize crustAbsISize(isize v)
 {
-	return (v < 0) ? -v : v;
+	return (v < 0) ? (usize)((usize)0 - (usize)v) : (usize)v;
 }
 
 //
