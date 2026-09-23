@@ -1142,16 +1142,18 @@ typedef struct Crust_BipBuffer_t
 	usize capacity;
 	usize begin[2];
 	usize end[2];
-	usize staged;
+	usize read_staged;
+	usize write_staged;
 	u16 reader;
 	u16 writer;
 } Crust_BipBuffer;
 
 CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity);
 CRUST_APIENTRY void crustBipBufferReset(Crust_BipBuffer *bip);
-CRUST_APIENTRY void crustBipBufferConsume(Crust_BipBuffer *bip, void *data, usize size);
-CRUST_APIENTRY void *crustBipBufferStage(Crust_BipBuffer *bip, usize size);
-CRUST_APIENTRY void crustBipBufferCommit(Crust_BipBuffer *bip, usize size);
+CRUST_APIENTRY const void *crustBipBufferStageRead(Crust_BipBuffer *bip, usize size);
+CRUST_APIENTRY void crustBipBufferCommitRead(Crust_BipBuffer *bip, usize size);
+CRUST_APIENTRY void *crustBipBufferStageWrite(Crust_BipBuffer *bip, usize size);
+CRUST_APIENTRY void crustBipBufferCommitWrite(Crust_BipBuffer *bip, usize size);
 
 //
 typedef struct Crust_Stack_t
