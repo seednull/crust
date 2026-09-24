@@ -1137,22 +1137,6 @@ CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usiz
 CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size);
 
 //
-typedef struct Crust_SpscRingBuffer_t
-{
-	void *memory;
-	usize capacity;
-	usize mask;
-
-	CRUST_ALIGNAS(128) volatile usize read;
-	CRUST_ALIGNAS(128) volatile usize write;
-} Crust_SpscRingBuffer;
-
-CRUST_APIENTRY Crust_SpscRingBuffer crustSpscRingBufferAttach(void *memory, usize capacity);
-CRUST_APIENTRY void crustSpscRingBufferReset(Crust_SpscRingBuffer *ring);
-CRUST_APIENTRY usize crustSpscRingBufferRead(Crust_SpscRingBuffer *ring, void *data, usize size);
-CRUST_APIENTRY usize crustSpscRingBufferWrite(Crust_SpscRingBuffer *ring, const void *data, usize size);
-
-//
 typedef struct Crust_BipBuffer_t
 {
 	void *memory;
@@ -1197,6 +1181,31 @@ typedef struct Crust_Arena_t
 CRUST_APIENTRY Crust_Arena crustArenaAttach(void *memory, usize capacity);
 CRUST_APIENTRY void crustArenaReset(Crust_Arena *arena);
 CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment);
+
+#if defined(_MSC_VER)
+	#pragma warning(push)
+	#pragma warning(disable: 4324)
+#endif
+
+//
+typedef struct Crust_SpscRingBuffer_t
+{
+	void *memory;
+	usize capacity;
+	usize mask;
+
+	CRUST_ALIGNAS(128) volatile usize read;
+	CRUST_ALIGNAS(128) volatile usize write;
+} Crust_SpscRingBuffer;
+
+CRUST_APIENTRY Crust_SpscRingBuffer crustSpscRingBufferAttach(void *memory, usize capacity);
+CRUST_APIENTRY void crustSpscRingBufferReset(Crust_SpscRingBuffer *ring);
+CRUST_APIENTRY usize crustSpscRingBufferRead(Crust_SpscRingBuffer *ring, void *data, usize size);
+CRUST_APIENTRY usize crustSpscRingBufferWrite(Crust_SpscRingBuffer *ring, const void *data, usize size);
+
+#if defined(_MSC_VER)
+	#pragma warning(pop)
+#endif
 
 //
 typedef void *(*PFN_crustAllocatorAlloc)(void *context, usize size, usize alignment);

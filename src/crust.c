@@ -441,114 +441,6 @@ CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *dat
 }
 
 //
-CRUST_APIENTRY Crust_SpscRingBuffer crustSpscRingBufferAttach(void *memory, usize capacity)
-{
-	CRUST_ASSERT(memory != CRUST_NULL);
-	CRUST_ASSERT(capacity > 0);
-	CRUST_ASSERT(crustIsPow2USize(capacity) != 0);
-
-	Crust_SpscRingBuffer result;
-	result.memory = memory;
-	result.capacity = capacity;
-	result.mask = capacity - 1;
-	result.read = 0;
-	result.write = 0;
-
-	return result;
-}
-
-CRUST_APIENTRY void crustSpscRingBufferReset(Crust_SpscRingBuffer *ring)
-{
-	CRUST_ASSERT(ring != CRUST_NULL);
-	CRUST_ASSERT(ring->memory != CRUST_NULL);
-
-	crustAtomicStoreUSize(&ring->read, 0, CRUST_MEMORY_ORDER_RELAXED);
-	crustAtomicStoreUSize(&ring->write, 0, CRUST_MEMORY_ORDER_RELAXED);
-}
-
-CRUST_APIENTRY usize crustSpscRingBufferRead(Crust_SpscRingBuffer *ring, void *data, usize size)
-{
-	CRUST_ASSERT(ring != CRUST_NULL);
-	CRUST_ASSERT(ring->memory != CRUST_NULL);
-	CRUST_ASSERT(data != CRUST_NULL);
-
-	if (size == 0)
-		return 0;
-
-	usize r = crustAtomicLoadUSize(&ring->read, CRUST_MEMORY_ORDER_RELAXED);
-	usize w = crustAtomicLoadUSize(&ring->write, CRUST_MEMORY_ORDER_ACQUIRE);
-
-	usize used = w - r;
-	CRUST_ASSERT(used <= ring->capacity);
-
-	if (used == 0)
-		return 0;
-
-	size = crustMinUSize(size, used);
-
-	usize begin = r & ring->mask;
-	usize end = (begin + size) & ring->mask;
-
-	const u8 *ptr = (const u8 *)ring->memory + begin;
-	if (begin < end)
-	{
-		crustMemcpy(data, ptr, size);
-	}
-	else
-	{
-		usize remainder = end;
-		usize base = size - remainder;
-		crustMemcpy(data, ptr, base);
-		crustMemcpy((u8 *)data + base, ring->memory, remainder);
-	}
-
-	crustAtomicStoreUSize(&ring->read, r + size, CRUST_MEMORY_ORDER_RELEASE);
-	return size;
-}
-
-CRUST_APIENTRY usize crustSpscRingBufferWrite(Crust_SpscRingBuffer *ring, const void *data, usize size)
-{
-	CRUST_ASSERT(ring != CRUST_NULL);
-	CRUST_ASSERT(ring->memory != CRUST_NULL);
-	CRUST_ASSERT(data != CRUST_NULL);
-
-	if (size == 0)
-		return 0;
-
-	usize r = crustAtomicLoadUSize(&ring->read, CRUST_MEMORY_ORDER_ACQUIRE);
-	usize w = crustAtomicLoadUSize(&ring->write, CRUST_MEMORY_ORDER_RELAXED);
-
-	usize used = w - r;
-	CRUST_ASSERT(used <= ring->capacity);
-
-	usize free = ring->capacity - used;
-
-	if (free == 0)
-		return 0;
-
-	size = crustMinUSize(size, free);
-
-	usize begin = w & ring->mask;
-	usize end = (begin + size) & ring->mask;
-
-	u8 *ptr = (u8 *)ring->memory + begin;
-	if (begin < end)
-	{
-		crustMemcpy(ptr, data, size);
-	}
-	else
-	{
-		usize remainder = end;
-		usize base = size - remainder;
-		crustMemcpy(ptr, data, base);
-		crustMemcpy(ring->memory, (const u8 *)data + base, remainder);
-	}
-
-	crustAtomicStoreUSize(&ring->write, w + size, CRUST_MEMORY_ORDER_RELEASE);
-	return size;
-}
-
-//
 CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity)
 {
 	CRUST_ASSERT(memory != CRUST_NULL);
@@ -558,7 +450,7 @@ CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity
 	result.memory = memory;
 	result.capacity = capacity;
 
-	for (u32 i = 0; i < 2; ++i)
+	for (usize i = 0; i < 2; ++i)
 	{
 		result.begin[i] = 0;
 		result.end[i] = 0;
@@ -577,7 +469,7 @@ CRUST_APIENTRY void crustBipBufferReset(Crust_BipBuffer *bip)
 	CRUST_ASSERT(bip != CRUST_NULL);
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 
-	for (u32 i = 0; i < 2; ++i)
+	for (usize i = 0; i < 2; ++i)
 	{
 		bip->begin[i] = 0;
 		bip->end[i] = 0;
@@ -813,6 +705,114 @@ CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize align
 
 	arena->size = offset + size;
 	return (void *)aligned;
+}
+
+//
+CRUST_APIENTRY Crust_SpscRingBuffer crustSpscRingBufferAttach(void *memory, usize capacity)
+{
+	CRUST_ASSERT(memory != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
+	CRUST_ASSERT(crustIsPow2USize(capacity) != 0);
+
+	Crust_SpscRingBuffer result;
+	result.memory = memory;
+	result.capacity = capacity;
+	result.mask = capacity - 1;
+	result.read = 0;
+	result.write = 0;
+
+	return result;
+}
+
+CRUST_APIENTRY void crustSpscRingBufferReset(Crust_SpscRingBuffer *ring)
+{
+	CRUST_ASSERT(ring != CRUST_NULL);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+
+	crustAtomicStoreUSize(&ring->read, 0, CRUST_MEMORY_ORDER_RELAXED);
+	crustAtomicStoreUSize(&ring->write, 0, CRUST_MEMORY_ORDER_RELAXED);
+}
+
+CRUST_APIENTRY usize crustSpscRingBufferRead(Crust_SpscRingBuffer *ring, void *data, usize size)
+{
+	CRUST_ASSERT(ring != CRUST_NULL);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	if (size == 0)
+		return 0;
+
+	usize r = crustAtomicLoadUSize(&ring->read, CRUST_MEMORY_ORDER_RELAXED);
+	usize w = crustAtomicLoadUSize(&ring->write, CRUST_MEMORY_ORDER_ACQUIRE);
+
+	usize used = w - r;
+	CRUST_ASSERT(used <= ring->capacity);
+
+	if (used == 0)
+		return 0;
+
+	size = crustMinUSize(size, used);
+
+	usize begin = r & ring->mask;
+	usize end = (begin + size) & ring->mask;
+
+	const u8 *ptr = (const u8 *)ring->memory + begin;
+	if (begin < end)
+	{
+		crustMemcpy(data, ptr, size);
+	}
+	else
+	{
+		usize remainder = end;
+		usize base = size - remainder;
+		crustMemcpy(data, ptr, base);
+		crustMemcpy((u8 *)data + base, ring->memory, remainder);
+	}
+
+	crustAtomicStoreUSize(&ring->read, r + size, CRUST_MEMORY_ORDER_RELEASE);
+	return size;
+}
+
+CRUST_APIENTRY usize crustSpscRingBufferWrite(Crust_SpscRingBuffer *ring, const void *data, usize size)
+{
+	CRUST_ASSERT(ring != CRUST_NULL);
+	CRUST_ASSERT(ring->memory != CRUST_NULL);
+	CRUST_ASSERT(data != CRUST_NULL);
+
+	if (size == 0)
+		return 0;
+
+	usize r = crustAtomicLoadUSize(&ring->read, CRUST_MEMORY_ORDER_ACQUIRE);
+	usize w = crustAtomicLoadUSize(&ring->write, CRUST_MEMORY_ORDER_RELAXED);
+
+	usize used = w - r;
+	CRUST_ASSERT(used <= ring->capacity);
+
+	usize free = ring->capacity - used;
+
+	if (free == 0)
+		return 0;
+
+	size = crustMinUSize(size, free);
+
+	usize begin = w & ring->mask;
+	usize end = (begin + size) & ring->mask;
+
+	u8 *ptr = (u8 *)ring->memory + begin;
+	if (begin < end)
+	{
+		crustMemcpy(ptr, data, size);
+	}
+	else
+	{
+		usize remainder = end;
+		usize base = size - remainder;
+		crustMemcpy(ptr, data, base);
+		crustMemcpy(ring->memory, (const u8 *)data + base, remainder);
+	}
+
+	crustAtomicStoreUSize(&ring->write, w + size, CRUST_MEMORY_ORDER_RELEASE);
+	return size;
 }
 
 //
