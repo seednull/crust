@@ -6,179 +6,215 @@
 #define CRUST_VERSION_PATCH 0
 #define CRUST_VERSION "1.0.0-dev"
 
-#if defined(_MSC_VER)
-	#include <intrin.h>
+// Compiler
+#define CRUST_COMPILER_MSVC  0
+#define CRUST_COMPILER_GCC   0
+#define CRUST_COMPILER_CLANG 0
 
-	#define CRUST_ASSERT(x)		do { (!!(x)) || (__debugbreak(), 0); } while(0)
-	#define CRUST_UNUSED(x)		do { (void)(x); } while(0)
-	#define CRUST_ALIGNOF(x)	__alignof(x)
-	#define CRUST_ALIGNAS(x)	__declspec(align(x))
-
-    #ifdef __cplusplus
-        #define CRUST_NULL 0
-    #else
-        #define CRUST_NULL ((void *)0)
-    #endif
-
-	#define CRUST_INLINE		__forceinline
-	#define CRUST_RESTRICT		__restrict
-
-	#if defined(CRUST_SHARED_LIBRARY)
-		#if defined (CRUST_IMPLEMENTATION)
-			#define CRUST_APIENTRY __declspec(dllexport)
-		#else
-			#define CRUST_APIENTRY __declspec(dllimport)
-		#endif
-	#else
-		#define CRUST_APIENTRY
-	#endif
-
-	typedef signed char			i8;
-	typedef signed short		i16;
-	typedef signed int			i32;
-	typedef signed long long	i64;
-
-	typedef unsigned char		u8;
-	typedef unsigned short		u16;
-	typedef unsigned int		u32;
-	typedef unsigned long long	u64;
-
-	#if defined(_WIN64)
-		typedef i64				isize;
-		typedef u64				usize;
-	#else
-		typedef i32				isize;
-		typedef u32				usize;
-	#endif
-
-	typedef float				f32;
-	typedef double				f64;
-
-	#define I8_MIN				-128i8
-	#define I16_MIN				-32768i16
-	#define I32_MIN				-2147483648i32
-	#define I64_MIN				-9223372036854775808i64
-	#define I8_MAX				127i8
-	#define I16_MAX				32767i16
-	#define I32_MAX				2147483647i32
-	#define I64_MAX				9223372036854775807i64
-	#define U8_MAX				255ui8
-	#define U16_MAX				65535ui16
-	#define U32_MAX				4294967295ui32
-	#define U64_MAX				18446744073709551615ui64
-
-	#if defined(_WIN64)
-		#define USIZE_MAX		U64_MAX
-		#define ISIZE_MAX		I64_MAX
-		#define ISIZE_MIN		I64_MIN
-	#else
-		#define USIZE_MAX		U32_MAX
-		#define ISIZE_MAX		I32_MAX
-		#define ISIZE_MIN		I32_MIN
-	#endif
-
-	#define F64_EPSILON			2.2204460492503131e-016
-	#define F64_MAX				1.7976931348623158e+308
-	#define F64_MIN				-1.7976931348623158e+308
-	#define F64_POSITIVE_MIN	2.2250738585072014e-308
-
-	#define F32_EPSILON			1.192092896e-07F
-	#define F32_MAX				3.402823466e+38F
-	#define F32_MIN				-3.402823466e+38F
-	#define F32_POSITIVE_MIN	1.175494351e-38F
+#if defined(__clang__)
+	#undef  CRUST_COMPILER_CLANG
+	#define CRUST_COMPILER_CLANG 1
+#elif defined(_MSC_VER)
+	#undef  CRUST_COMPILER_MSVC
+	#define CRUST_COMPILER_MSVC 1
+#elif defined(__GNUC__)
+	#undef  CRUST_COMPILER_GCC
+	#define CRUST_COMPILER_GCC 1
 #else
-	#error "Unsupported platform"
+	#error Unsupported compiler
 #endif
+
+// Toolchain
+#define CRUST_TOOLCHAIN_MSVC       0
+#define CRUST_TOOLCHAIN_MINGW      0
+#define CRUST_TOOLCHAIN_ANDROID    0
+#define CRUST_TOOLCHAIN_EMSCRIPTEN 0
+#define CRUST_TOOLCHAIN_WASI       0
+#define CRUST_TOOLCHAIN_APPLE      0
+
+#if defined(__EMSCRIPTEN__)
+	#undef  CRUST_TOOLCHAIN_EMSCRIPTEN
+	#define CRUST_TOOLCHAIN_EMSCRIPTEN 1
+#elif defined(__wasip1__) || defined(__wasip2__) || defined(__wasip3__) || defined(__wasi__)
+	#undef  CRUST_TOOLCHAIN_WASI
+	#define CRUST_TOOLCHAIN_WASI 1
+#elif defined(__ANDROID__)
+	#undef  CRUST_TOOLCHAIN_ANDROID
+	#define CRUST_TOOLCHAIN_ANDROID 1
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+	#undef  CRUST_TOOLCHAIN_MINGW
+	#define CRUST_TOOLCHAIN_MINGW 1
+#elif defined(_MSC_VER)
+	#undef  CRUST_TOOLCHAIN_MSVC
+	#define CRUST_TOOLCHAIN_MSVC 1
+#elif defined(__apple_build_version__)
+	#undef  CRUST_TOOLCHAIN_APPLE
+	#define CRUST_TOOLCHAIN_APPLE 1
+#endif
+
+// Architecture
+#define CRUST_ARCH_X86      0
+#define CRUST_ARCH_X64      0
+#define CRUST_ARCH_ARM      0
+#define CRUST_ARCH_ARM64    0
+#define CRUST_ARCH_WASM32   0
+#define CRUST_ARCH_WASM64   0
+
+#define CRUST_ARCH_32BIT 0
+#define CRUST_ARCH_64BIT 0
+
+#if defined(__wasm64__)
+	#undef  CRUST_ARCH_WASM64
+	#define CRUST_ARCH_WASM64 1
+	#undef  CRUST_ARCH_64BIT
+	#define CRUST_ARCH_64BIT 1
+#elif defined(__wasm32__) || (defined(__wasm__) && !defined(__wasm64__))
+	#undef  CRUST_ARCH_WASM32
+	#define CRUST_ARCH_WASM32 1
+	#undef  CRUST_ARCH_32BIT
+	#define CRUST_ARCH_32BIT 1
+#elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(__aarch64__)
+	#undef  CRUST_ARCH_ARM64
+	#define CRUST_ARCH_ARM64 1
+	#undef  CRUST_ARCH_64BIT
+	#define CRUST_ARCH_64BIT 1
+#elif defined(_M_ARM) || defined(__arm__)
+	#undef  CRUST_ARCH_ARM
+	#define CRUST_ARCH_ARM 1
+	#undef  CRUST_ARCH_32BIT
+	#define CRUST_ARCH_32BIT 1
+#elif defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__)
+	#undef  CRUST_ARCH_X64
+	#define CRUST_ARCH_X64 1
+	#undef  CRUST_ARCH_64BIT
+	#define CRUST_ARCH_64BIT 1
+#elif defined(_M_IX86) || defined(__i386__)
+	#undef  CRUST_ARCH_X86
+	#define CRUST_ARCH_X86 1
+	#undef  CRUST_ARCH_32BIT
+	#define CRUST_ARCH_32BIT 1
+#else
+	#error "Unsupported architecture"
+#endif
+
+// Defines
+#if CRUST_COMPILER_MSVC
+    #define CRUST_ALIGNOF(x) __alignof(x)
+    #define CRUST_ALIGNAS(n) __declspec(align(n))
+    #define CRUST_DEBUG_BREAK() __debugbreak()
+    #define CRUST_INLINE __forceinline
+    #define CRUST_RESTRICT __restrict
+#else
+    #define CRUST_ALIGNOF(x) __alignof__(x)
+    #define CRUST_ALIGNAS(n) __attribute__((aligned(n)))
+    #define CRUST_DEBUG_BREAK() __builtin_trap()
+    #define CRUST_INLINE inline __attribute__((always_inline))
+    #define CRUST_RESTRICT __restrict__
+#endif
+
+#if defined(NDEBUG)
+    #define CRUST_ASSERT(x) ((void)0)
+#else
+    #define CRUST_ASSERT(x) do { (void)(!!(x) || (crustAssertFailure(#x, __FILE__, (u32)__LINE__), 0)); } while (0)
+#endif
+
+#define CRUST_UNUSED(x) do { (void)(x); } while (0)
+
+#ifdef __cplusplus
+	#define CRUST_NULL 0
+#else
+	#define CRUST_NULL ((void *)0)
+#endif
+
+#if defined(CRUST_SHARED_LIBRARY)
+    #if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
+        #if defined(CRUST_IMPLEMENTATION)
+            #define CRUST_APIENTRY __declspec(dllexport)
+        #else
+            #define CRUST_APIENTRY __declspec(dllimport)
+        #endif
+    #else
+        #define CRUST_APIENTRY __attribute__((visibility("default")))
+    #endif
+#else
+    #define CRUST_APIENTRY
+#endif
+
+// Types
+typedef signed char					i8;
+typedef signed short				i16;
+typedef signed int					i32;
+typedef signed long long			i64;
+
+typedef unsigned char				u8;
+typedef unsigned short				u16;
+typedef unsigned int				u32;
+typedef unsigned long long			u64;
+
+#if CRUST_ARCH_64BIT
+	typedef i64						isize;
+	typedef u64						usize;
+#else
+	typedef i32						isize;
+	typedef u32						usize;
+#endif
+
+typedef float						f32;
+typedef double						f64;
+
+#define CRUST_I8_MIN				(-128)
+#define CRUST_I16_MIN				(-32768)
+#define CRUST_I32_MIN				(-2147483647 - 1)
+#define CRUST_I64_MIN				(-9223372036854775807LL - 1)
+#define CRUST_I8_MAX				127
+#define CRUST_I16_MAX				32767
+#define CRUST_I32_MAX				2147483647
+#define CRUST_I64_MAX				9223372036854775807LL
+#define CRUST_U8_MAX				255
+#define CRUST_U16_MAX				65535
+#define CRUST_U32_MAX				4294967295U
+#define CRUST_U64_MAX				18446744073709551615ULL
+
+#if CRUST_ARCH_64BIT
+	#define CRUST_USIZE_MAX			CRUST_U64_MAX
+	#define CRUST_ISIZE_MAX			CRUST_I64_MAX
+	#define CRUST_ISIZE_MIN			CRUST_I64_MIN
+#else
+	#define CRUST_USIZE_MAX			CRUST_U32_MAX
+	#define CRUST_ISIZE_MAX			CRUST_I32_MAX
+	#define CRUST_ISIZE_MIN			CRUST_I32_MIN
+#endif
+
+#define CRUST_F64_EPSILON			2.2204460492503131e-016
+#define CRUST_F64_MAX				1.7976931348623158e+308
+#define CRUST_F64_MIN				(-CRUST_F64_MAX)
+#define CRUST_F64_POSITIVE_MIN		2.2250738585072014e-308
+
+#define CRUST_F32_EPSILON			1.192092896e-07F
+#define CRUST_F32_MAX				3.402823466e+38F
+#define CRUST_F32_MIN				(-CRUST_F32_MAX)
+#define CRUST_F32_POSITIVE_MIN		1.175494351e-38F
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined(_MSC_VER)
-	static CRUST_INLINE f32 crustAbsF32(f32 v)
-	{
-		__m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));
-		return _mm_cvtss_f32(_mm_and_ps(_mm_set_ss(v), mask));
-	}
+CRUST_APIENTRY void crustAssertFailure(const char *expression, const char *file, u32 line);
 
-	static CRUST_INLINE f64 crustAbsF64(f64 v)
-	{
-		__m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7FFFFFFFFFFFFFFFi64));
-		return _mm_cvtsd_f64(_mm_and_pd(_mm_set_sd(v), mask));
-	}
-
-	static CRUST_INLINE f32 crustRsqrtF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustSqrtF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustCosF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_cos_ps(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustAcosF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_acos_ps(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustSinF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_sin_ps(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustAsinF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_asin_ps(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustTanF32(f32 v)
-	{
-		return _mm_cvtss_f32(_mm_tan_ps(_mm_set_ss(v)));
-	}
-
-	static CRUST_INLINE f32 crustAtan2F32(f32 y, f32 x)
-	{
-		return _mm_cvtss_f32(_mm_atan2_ps(_mm_set_ss(y), _mm_set_ss(x)));
-	}
-
-	static CRUST_INLINE u32 crustLzcntU32(u32 value)
-	{
-		CRUST_ASSERT(value != 0);
-
-		unsigned long result = 0;
-		_BitScanReverse(&result, value);
-		return 31 - result;
-	}
-
-	static CRUST_INLINE u32 crustTzcntU32(u32 value)
-	{
-		CRUST_ASSERT(value != 0);
-
-		unsigned long result = 0;
-		_BitScanForward(&result, value);
-		return result;
-	}
-
-	static CRUST_INLINE u32 crustPopcntU32(u32 value)
-	{
-		return __popcnt(value);
-	}
-#else
-	#error "Unsupported platform"
-#endif
+CRUST_APIENTRY f32 crustAbsF32(f32 v);
+CRUST_APIENTRY f64 crustAbsF64(f64 v);
+CRUST_APIENTRY f32 crustSqrtF32(f32 v);
+CRUST_APIENTRY f32 crustRsqrtF32(f32 v);
+CRUST_APIENTRY f32 crustCosF32(f32 v);
+CRUST_APIENTRY f32 crustAcosF32(f32 v);
+CRUST_APIENTRY f32 crustSinF32(f32 v);
+CRUST_APIENTRY f32 crustAsinF32(f32 v);
+CRUST_APIENTRY f32 crustTanF32(f32 v);
+CRUST_APIENTRY f32 crustAtan2F32(f32 y, f32 x);
 
 //
 CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size);
 CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
-CRUST_APIENTRY void *crustAlignedMalloc(usize size, usize alignment);
-CRUST_APIENTRY void *crustAlignedRealloc(void *ptr, usize size, usize alignment);
-CRUST_APIENTRY void crustAlignedFree(void *ptr);
 
 //
 static CRUST_INLINE u8 crustIsPow2U8(u8 v)
@@ -1182,7 +1218,7 @@ CRUST_APIENTRY Crust_Arena crustArenaAttach(void *memory, usize capacity);
 CRUST_APIENTRY void crustArenaReset(Crust_Arena *arena);
 CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize alignment);
 
-#if defined(_MSC_VER)
+#if CRUST_COMPILER_MSVC
 	#pragma warning(push)
 	#pragma warning(disable: 4324)
 #endif
@@ -1225,7 +1261,7 @@ CRUST_APIENTRY void crustSpscBipBufferCommitRead(Crust_SpscBipBuffer *bip, usize
 CRUST_APIENTRY void *crustSpscBipBufferStageWrite(Crust_SpscBipBuffer *bip, usize size);
 CRUST_APIENTRY void crustSpscBipBufferCommitWrite(Crust_SpscBipBuffer *bip, usize size);
 
-#if defined(_MSC_VER)
+#if CRUST_COMPILER_MSVC
 	#pragma warning(pop)
 #endif
 
@@ -1253,7 +1289,7 @@ CRUST_APIENTRY void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usi
 
 static CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
 {
-	CRUST_ASSERT(a == 0 || b <= USIZE_MAX / a);
+	CRUST_ASSERT(a == 0 || b <= CRUST_USIZE_MAX / a);
 	return a * b;
 }
 

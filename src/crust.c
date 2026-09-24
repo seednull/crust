@@ -1,10 +1,111 @@
-#include <malloc.h>
+#include <math.h>
+#include <stdlib.h>
 #include <string.h>
+
+#if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
+	#include <intrin.h>
+#endif
 
 #define CRUST_IMPLEMENTATION
 #include <crust.h>
 #undef CRUST_IMPLEMENTATION
 
+//
+CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
+{
+	memcpy(dst, src, size);
+}
+
+CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
+{
+	memset(dst, value, size);
+}
+
+#if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
+	static CRUST_INLINE void *crustAlignedMalloc(usize size, usize alignment)
+	{
+		CRUST_ASSERT(alignment > 0);
+		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
+
+		if (size == 0)
+			return CRUST_NULL;
+
+		return _aligned_malloc(size, alignment);
+	}
+
+	static CRUST_INLINE void *crustAlignedRealloc(void *ptr, usize old_size, usize size, usize alignment)
+	{
+		CRUST_ASSERT(alignment > 0);
+		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
+		CRUST_ASSERT(ptr == CRUST_NULL || old_size > 0);
+
+		CRUST_UNUSED(old_size);
+
+		if (size == 0)
+		{
+			_aligned_free(ptr);
+			return CRUST_NULL;
+		}
+
+		return _aligned_realloc(ptr, size, alignment);
+	}
+
+	static CRUST_INLINE void crustAlignedFree(void *ptr)
+	{
+		_aligned_free(ptr);
+	}
+#else
+	static CRUST_INLINE void *crustAlignedMalloc(usize size, usize alignment)
+	{
+		CRUST_ASSERT(alignment > 0);
+		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
+
+		if (size == 0)
+			return CRUST_NULL;
+
+		alignment = crustMaxUSize(alignment, sizeof(void *));
+
+		void *ptr = CRUST_NULL;
+		if (posix_memalign(&ptr, alignment, size) != 0)
+			return CRUST_NULL;
+
+		return ptr;
+	}
+
+	static CRUST_INLINE void *crustAlignedRealloc(void *ptr, usize old_size, usize size, usize alignment)
+	{
+		CRUST_ASSERT(alignment > 0);
+		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
+		CRUST_ASSERT(ptr == CRUST_NULL || old_size > 0);
+
+		if (size == 0)
+		{
+			free(ptr);
+			return CRUST_NULL;
+		}
+
+		void *new_ptr = crustAlignedMalloc(size, alignment);
+		if (new_ptr == CRUST_NULL)
+			return CRUST_NULL;
+
+		if (ptr != CRUST_NULL)
+		{
+			usize copy_size = crustMinUSize(old_size, size);
+			memcpy(new_ptr, ptr, copy_size);
+
+			free(ptr);
+		}
+
+		return new_ptr;
+	}
+
+	static CRUST_INLINE void crustAlignedFree(void *ptr)
+	{
+		free(ptr);
+	}
+#endif
+
+//
 typedef enum Crust_MemoryOrder_t
 {
 	CRUST_MEMORY_ORDER_RELAXED = 0,
@@ -15,33 +116,8 @@ typedef enum Crust_MemoryOrder_t
 	CRUST_MEMORY_ORDER_SEQ_CST = 5,
 } Crust_MemoryOrder;
 
-//
+
 #if defined(_MSC_VER)
-	CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
-	{
-		memcpy(dst, src, size);
-	}
-
-	CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
-	{
-		memset(dst, value, size);
-	}
-
-	CRUST_APIENTRY void *crustAlignedMalloc(usize size, usize alignment)
-	{
-		return _aligned_malloc(size, alignment);
-	}
-
-	CRUST_APIENTRY void *crustAlignedRealloc(void *ptr, usize size, usize alignment)
-	{
-		return _aligned_realloc(ptr, size, alignment);
-	}
-
-	CRUST_APIENTRY void crustAlignedFree(void *ptr)
-	{
-		_aligned_free(ptr);
-	}
-
 	static CRUST_INLINE u32 crustAtomicSwapU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
 	{
 		CRUST_UNUSED(order);
@@ -96,7 +172,7 @@ typedef enum Crust_MemoryOrder_t
 		return (u32)_InterlockedDecrement((volatile long *)p);
 	}
 
-	#if defined(_WIN64)
+	#if defined(CRUST_ARCH_64BIT)
 		static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
 		{
 			CRUST_UNUSED(order);
@@ -150,21 +226,6 @@ typedef enum Crust_MemoryOrder_t
 			CRUST_UNUSED(order);
 			return (u64)_InterlockedDecrement64((volatile long long *)p);
 		}
-
-
-		#define crustAtomicSwapUSize crustAtomicSwapU64
-		#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU64
-		#define crustAtomicLoadUSize crustAtomicLoadU64
-		#define crustAtomicStoreUSize crustAtomicStoreU64
-		#define crustAtomicIncrementUSize crustAtomicIncrementU64
-		#define crustAtomicDecrementUSize crustAtomicDecrementU64
-	#else
-		#define crustAtomicSwapUSize crustAtomicSwapU32
-		#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU32
-		#define crustAtomicLoadUSize crustAtomicLoadU32
-		#define crustAtomicStoreUSize crustAtomicStoreU32
-		#define crustAtomicIncrementUSize crustAtomicIncrementU32
-		#define crustAtomicDecrementUSize crustAtomicDecrementU32
 	#endif
 
 	static CRUST_INLINE void crustCpuRelax(void)
@@ -172,6 +233,137 @@ typedef enum Crust_MemoryOrder_t
 		_mm_pause();
 	}
 #endif
+
+#if CRUST_ARCH_64BIT
+	#define crustAtomicSwapUSize crustAtomicSwapU64
+	#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU64
+	#define crustAtomicLoadUSize crustAtomicLoadU64
+	#define crustAtomicStoreUSize crustAtomicStoreU64
+	#define crustAtomicIncrementUSize crustAtomicIncrementU64
+	#define crustAtomicDecrementUSize crustAtomicDecrementU64
+#else
+	#define crustAtomicSwapUSize crustAtomicSwapU32
+	#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU32
+	#define crustAtomicLoadUSize crustAtomicLoadU32
+	#define crustAtomicStoreUSize crustAtomicStoreU32
+	#define crustAtomicIncrementUSize crustAtomicIncrementU32
+	#define crustAtomicDecrementUSize crustAtomicDecrementU32
+#endif
+
+//
+static CRUST_INLINE u32 crustLzcntU32(u32 value)
+{
+	CRUST_ASSERT(value != 0);
+
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM || CRUST_ARCH_ARM64
+		return (u32)_CountLeadingZeros(value);
+	#else
+		unsigned long result;
+		_BitScanReverse(&result, value);
+		return 31u - (u32)result;
+	#endif
+#else
+	return (u32)__builtin_clz(value);
+#endif
+}
+
+static CRUST_INLINE u32 crustTzcntU32(u32 value)
+{
+	CRUST_ASSERT(value != 0);
+
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM || CRUST_ARCH_ARM64
+		return (u32)_CountTrailingZeros(value);
+	#else
+		unsigned long result;
+		_BitScanForward(&result, value);
+		return (u32)result;
+	#endif
+#else
+	return (u32)__builtin_ctz(value);
+#endif
+}
+
+static CRUST_INLINE u32 crustPopcntU32(u32 value)
+{
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM || CRUST_ARCH_ARM64
+		return (u32)_CountOneBits(value);
+	#elif CRUST_ARCH_X86 || CRUST_ARCH_X64
+		return (u32)__popcnt(value);
+	#endif
+#else
+	return (u32)__builtin_popcount(value);
+#endif
+}
+
+//
+CRUST_APIENTRY void crustAssertFailure(const char *expression, const char *file, u32 line)
+{
+	CRUST_UNUSED(expression);
+	CRUST_UNUSED(file);
+	CRUST_UNUSED(line);
+
+#if CRUST_COMPILER_MSVC
+	__debugbreak();
+#elif CRUST_COMPILER_CLANG
+	__builtin_debugtrap();
+#else
+	__builtin_trap();
+#endif
+}
+
+//
+CRUST_APIENTRY f32 crustAbsF32(f32 v)
+{
+	return fabsf(v);
+}
+
+CRUST_APIENTRY f64 crustAbsF64(f64 v)
+{
+	return fabs(v);
+}
+
+CRUST_APIENTRY f32 crustSqrtF32(f32 v)
+{
+	return sqrtf(v);
+}
+
+CRUST_APIENTRY f32 crustRsqrtF32(f32 v)
+{
+	return 1.0f / sqrtf(v);
+}
+
+CRUST_APIENTRY f32 crustCosF32(f32 v)
+{
+	return cosf(v);
+}
+
+CRUST_APIENTRY f32 crustAcosF32(f32 v)
+{
+	return acosf(v);
+}
+
+CRUST_APIENTRY f32 crustSinF32(f32 v)
+{
+	return sinf(v);
+}
+
+CRUST_APIENTRY f32 crustAsinF32(f32 v)
+{
+	return asinf(v);
+}
+
+CRUST_APIENTRY f32 crustTanF32(f32 v)
+{
+	return tanf(v);
+}
+
+CRUST_APIENTRY f32 crustAtan2F32(f32 y, f32 x)
+{
+	return atan2f(y, x);
+}
 
 //
 CRUST_APIENTRY Crust_SpinLock crustSpinLockInit(void)
@@ -1065,7 +1257,7 @@ static void *crustSystemAllocatorRealloc(void *context, void *ptr, usize old_siz
 	CRUST_UNUSED(context);
 	CRUST_UNUSED(old_size);
 
-	return crustAlignedRealloc(ptr, new_size, alignment);
+	return crustAlignedRealloc(ptr, old_size, new_size, alignment);
 }
 
 static void crustSystemAllocatorFree(void *context, void *ptr, usize size, usize alignment)
@@ -1266,7 +1458,7 @@ static Crust_HashIndexMapProbe crustHashIndexMapProbeKey(const Crust_HashIndexMa
 		bucket = (bucket + 1) % hash_map->capacity;
 	}
 
-	Crust_HashIndexMapProbe result = { USIZE_MAX, 0 };
+	Crust_HashIndexMapProbe result = { CRUST_USIZE_MAX, 0 };
 	return result;
 }
 
@@ -1287,7 +1479,7 @@ static usize crustHashIndexMapFindFreeBucket(const Crust_HashIndexMap *hash_map,
 	}
 
 	CRUST_ASSERT(0);
-	return USIZE_MAX;
+	return CRUST_USIZE_MAX;
 }
 
 CRUST_APIENTRY Crust_HashIndexMap crustHashIndexMapInit(void *context, const Crust_HashIndexMapVtbl *vtbl, usize key_size, usize key_alignment)
@@ -1400,13 +1592,13 @@ CRUST_APIENTRY usize crustHashIndexMapFind(const Crust_HashIndexMap *hash_map, c
 	CRUST_ASSERT(key_size == hash_map->key_size);
 
 	if (hash_map->count == 0)
-		return USIZE_MAX;
+		return CRUST_USIZE_MAX;
 
 	usize hash = hash_map->vtbl->hash(hash_map->context, key, key_size);
 	Crust_HashIndexMapProbe probe = crustHashIndexMapProbeKey(hash_map, key, key_size, hash);
 
 	if (probe.found == 0)
-		return USIZE_MAX;
+		return CRUST_USIZE_MAX;
 
 	return hash_map->indices[probe.bucket];
 }
@@ -1419,7 +1611,7 @@ CRUST_APIENTRY usize crustHashIndexMapAdd(Crust_HashIndexMap *hash_map, const vo
 	CRUST_ASSERT(key != CRUST_NULL);
 	CRUST_ASSERT(key_size == hash_map->key_size);
 
-	CRUST_ASSERT(index != USIZE_MAX);
+	CRUST_ASSERT(index != CRUST_USIZE_MAX);
 
 	usize hash = hash_map->vtbl->hash(hash_map->context, key, key_size);
 
@@ -1433,8 +1625,8 @@ CRUST_APIENTRY usize crustHashIndexMapAdd(Crust_HashIndexMap *hash_map, const vo
 		return stored_index;
 	}
 
-	if (probe.bucket == USIZE_MAX)
-		return USIZE_MAX;
+	if (probe.bucket == CRUST_USIZE_MAX)
+		return CRUST_USIZE_MAX;
 
 	u8 *stored_key = crustHashIndexMapKey(hash_map, probe.bucket);
 
@@ -1457,13 +1649,13 @@ CRUST_APIENTRY usize crustHashIndexMapRemove(Crust_HashIndexMap *hash_map, const
 	CRUST_ASSERT(key_size == hash_map->key_size);
 
 	if (hash_map->count == 0)
-		return USIZE_MAX;
+		return CRUST_USIZE_MAX;
 
 	usize hash = hash_map->vtbl->hash(hash_map->context, key, key_size);
 	Crust_HashIndexMapProbe probe = crustHashIndexMapProbeKey(hash_map, key, key_size, hash);
 
 	if (probe.found == 0)
-		return USIZE_MAX;
+		return CRUST_USIZE_MAX;
 
 	usize removed_index = hash_map->indices[probe.bucket];
 	u8 *stored_key = crustHashIndexMapKey(hash_map, probe.bucket);
@@ -1558,8 +1750,8 @@ CRUST_APIENTRY void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, 
 
 	for (usize i = 0; i < capacity; ++i)
 	{
-		usize next = (i + 1 < capacity) ? i + 1 : USIZE_MAX;
-		usize prev = (i > 0) ? i - 1 : USIZE_MAX;
+		usize next = (i + 1 < capacity) ? i + 1 : CRUST_USIZE_MAX;
+		usize prev = (i > 0) ? i - 1 : CRUST_USIZE_MAX;
 
 		pool->nexts[i] = next;
 		pool->prevs[i] = prev;
@@ -1572,8 +1764,8 @@ CRUST_APIENTRY void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, 
 	pool->free_head = 0;
 	pool->free_tail = capacity - 1;
 
-	pool->used_head = USIZE_MAX;
-	pool->used_tail = USIZE_MAX;
+	pool->used_head = CRUST_USIZE_MAX;
+	pool->used_tail = CRUST_USIZE_MAX;
 }
 
 CRUST_APIENTRY void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool)
@@ -1594,11 +1786,11 @@ CRUST_APIENTRY void crustGenerationalHandlePoolFree(Crust_Allocator allocator, C
 
 	pool->capacity = 0;
 
-	pool->free_head = USIZE_MAX;
-	pool->free_tail = USIZE_MAX;
+	pool->free_head = CRUST_USIZE_MAX;
+	pool->free_tail = CRUST_USIZE_MAX;
 
-	pool->used_head = USIZE_MAX;
-	pool->used_tail = USIZE_MAX;
+	pool->used_head = CRUST_USIZE_MAX;
+	pool->used_tail = CRUST_USIZE_MAX;
 }
 
 CRUST_APIENTRY void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize new_capacity)
@@ -1621,7 +1813,7 @@ CRUST_APIENTRY void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, C
 
 	for (usize i = pool->capacity; i < new_capacity; ++i)
 	{
-		usize next = (i + 1 < new_capacity) ? i + 1 : USIZE_MAX;
+		usize next = (i + 1 < new_capacity) ? i + 1 : CRUST_USIZE_MAX;
 		usize prev = (i > pool->capacity) ? i - 1 : pool->free_tail;
 
 		pool->nexts[i] = next;
@@ -1629,10 +1821,10 @@ CRUST_APIENTRY void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, C
 		pool->generations[i] = 0;
 	}
 
-	if (pool->free_tail != USIZE_MAX)
+	if (pool->free_tail != CRUST_USIZE_MAX)
 		pool->nexts[pool->free_tail] = pool->capacity;
 
-	if (pool->free_head == USIZE_MAX)
+	if (pool->free_head == CRUST_USIZE_MAX)
 		pool->free_head = pool->capacity;
 
 	pool->free_tail = new_capacity - 1;
@@ -1661,19 +1853,19 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_Gen
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
-	CRUST_ASSERT(pool->free_head != USIZE_MAX);
+	CRUST_ASSERT(pool->free_head != CRUST_USIZE_MAX);
 
 	usize index = pool->free_head;
 	usize next = pool->nexts[index];
 	usize prev = pool->prevs[index];
 
-	pool->prevs[index] = USIZE_MAX;
-	pool->nexts[index] = USIZE_MAX;
+	pool->prevs[index] = CRUST_USIZE_MAX;
+	pool->nexts[index] = CRUST_USIZE_MAX;
 
-	if (prev != USIZE_MAX)
+	if (prev != CRUST_USIZE_MAX)
 		pool->nexts[prev] = next;
 
-	if (next != USIZE_MAX)
+	if (next != CRUST_USIZE_MAX)
 		pool->prevs[next] = prev;
 
 	if (pool->free_head == index)
@@ -1689,9 +1881,9 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_Gen
 
 	pool->generations[index] = generation;
 
-	if (pool->used_tail == USIZE_MAX)
+	if (pool->used_tail == CRUST_USIZE_MAX)
 	{
-		CRUST_ASSERT(pool->used_head == USIZE_MAX);
+		CRUST_ASSERT(pool->used_head == CRUST_USIZE_MAX);
 
 		pool->used_head = index;
 		pool->used_tail = index;
@@ -1719,20 +1911,20 @@ CRUST_APIENTRY void crustGenerationalHandlePoolRemove(Crust_GenerationalHandlePo
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
-	CRUST_ASSERT(pool->used_tail != USIZE_MAX);
+	CRUST_ASSERT(pool->used_tail != CRUST_USIZE_MAX);
 	CRUST_ASSERT(crustGenerationalHandlePoolCheck(pool, handle) != 0);
 
 	usize index = handle.index;
 	usize next = pool->nexts[index];
 	usize prev = pool->prevs[index];
 
-	pool->nexts[index] = USIZE_MAX;
-	pool->prevs[index] = USIZE_MAX;
+	pool->nexts[index] = CRUST_USIZE_MAX;
+	pool->prevs[index] = CRUST_USIZE_MAX;
 
-	if (prev != USIZE_MAX)
+	if (prev != CRUST_USIZE_MAX)
 		pool->nexts[prev] = next;
 
-	if (next != USIZE_MAX)
+	if (next != CRUST_USIZE_MAX)
 		pool->prevs[next] = prev;
 
 	if (pool->used_head == index)
@@ -1741,9 +1933,9 @@ CRUST_APIENTRY void crustGenerationalHandlePoolRemove(Crust_GenerationalHandlePo
 	if (pool->used_tail == index)
 		pool->used_tail = prev;
 
-	if (pool->free_head == USIZE_MAX)
+	if (pool->free_head == CRUST_USIZE_MAX)
 	{
-		CRUST_ASSERT(pool->free_tail == USIZE_MAX);
+		CRUST_ASSERT(pool->free_tail == CRUST_USIZE_MAX);
 
 		pool->free_head = index;
 		pool->free_tail = index;
@@ -1770,7 +1962,7 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolHead(const Cr
 	result.index = pool->used_head;
 	result.generation = 0;
 
-	if (result.index != USIZE_MAX)
+	if (result.index != CRUST_USIZE_MAX)
 		result.generation = pool->generations[result.index];
 
 	return result;
@@ -1785,7 +1977,7 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolTail(const Cr
 	result.index = pool->used_tail;
 	result.generation = 0;
 
-	if (result.index != USIZE_MAX)
+	if (result.index != CRUST_USIZE_MAX)
 		result.generation = pool->generations[result.index];
 
 	return result;
@@ -1802,7 +1994,7 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolNext(const Cr
 	result.index = pool->nexts[handle.index];
 	result.generation = 0;
 
-	if (result.index != USIZE_MAX)
+	if (result.index != CRUST_USIZE_MAX)
 		result.generation = pool->generations[result.index];
 
 	return result;
@@ -1819,7 +2011,7 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolPrev(const Cr
 	result.index = pool->prevs[handle.index];
 	result.generation = 0;
 
-	if (result.index != USIZE_MAX)
+	if (result.index != CRUST_USIZE_MAX)
 		result.generation = pool->generations[result.index];
 
 	return result;
@@ -1974,7 +2166,7 @@ static u8 crustHeapFindBin(u32 bin_mask, u8 index)
 
 	u32 masked_bins = bin_mask & ~mask;
 	if (masked_bins == 0)
-		return U8_MAX;
+		return CRUST_U8_MAX;
 
 	return (u8)crustTzcntU32(masked_bins);
 }
@@ -1992,7 +2184,7 @@ static u8 crustHeapFindBinForSize(const Crust_Heap *heap, u32 size)
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) >= size);
 
 	u8 sparse_bin_index = bin_index >> CRUST_HEAP_PARAMETERS_MANTISSA_BITS;
-	u8 linear_bin_index = U8_MAX;
+	u8 linear_bin_index = CRUST_U8_MAX;
 
 	u8 used_linear_bins = heap->used_linear_bins[sparse_bin_index];
 
@@ -2002,11 +2194,11 @@ static u8 crustHeapFindBinForSize(const Crust_Heap *heap, u32 size)
 		linear_bin_index = crustHeapFindBin(used_linear_bins, min_linear_bin);
 	}
 
-	if (linear_bin_index == U8_MAX)
+	if (linear_bin_index == CRUST_U8_MAX)
 	{
 		sparse_bin_index = crustHeapFindBin(heap->used_sparse_bins, sparse_bin_index + 1);
-		if (sparse_bin_index == U8_MAX)
-			return U8_MAX;
+		if (sparse_bin_index == CRUST_U8_MAX)
+			return CRUST_U8_MAX;
 
 		CRUST_ASSERT(sparse_bin_index != 0);
 
@@ -2016,7 +2208,7 @@ static u8 crustHeapFindBinForSize(const Crust_Heap *heap, u32 size)
 		linear_bin_index = (u8)crustTzcntU32(used_linear_bins);
 	}
 
-	CRUST_ASSERT(linear_bin_index != U8_MAX);
+	CRUST_ASSERT(linear_bin_index != CRUST_U8_MAX);
 	return (sparse_bin_index << CRUST_HEAP_PARAMETERS_MANTISSA_BITS) | (linear_bin_index & CRUST_HEAP_PARAMETERS_MANTISSA_MASK);
 }
 
@@ -2024,7 +2216,7 @@ static void crustHeapAddNodeToBin(Crust_Heap *heap, u32 index, u32 size, u32 off
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 	CRUST_ASSERT(heap->size >= size + offset);
-	CRUST_ASSERT(index != U32_MAX);
+	CRUST_ASSERT(index != CRUST_U32_MAX);
 
 	Crust_HeapNodePool *pool = heap->pool;
 	CRUST_ASSERT(pool != CRUST_NULL);
@@ -2044,15 +2236,15 @@ static void crustHeapAddNodeToBin(Crust_Heap *heap, u32 index, u32 size, u32 off
 
 	node->offset = offset;
 	node->size = size;
-	node->prev_bin = U32_MAX;
-	node->next_bin = U32_MAX;
-	node->prev_neighbour = U32_MAX;
-	node->next_neighbour = U32_MAX;
+	node->prev_bin = CRUST_U32_MAX;
+	node->next_bin = CRUST_U32_MAX;
+	node->prev_neighbour = CRUST_U32_MAX;
+	node->next_neighbour = CRUST_U32_MAX;
 	crustHeapNodePoolRemoveMask(pool, index);
 
 	u32 bin_head_index = heap->heads[bin_index];
 
-	if (bin_head_index != U32_MAX)
+	if (bin_head_index != CRUST_U32_MAX)
 	{
 		Crust_HeapNode *bin_head_node = &pool->nodes[bin_head_index];
 		CRUST_ASSERT(crustHeapNodePoolCheckMask(pool, bin_head_index) == 0);
@@ -2067,7 +2259,7 @@ static void crustHeapAddNodeToBin(Crust_Heap *heap, u32 index, u32 size, u32 off
 static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
-	CRUST_ASSERT(index != U32_MAX);
+	CRUST_ASSERT(index != CRUST_U32_MAX);
 
 	Crust_HeapNodePool *pool = heap->pool;
 	CRUST_ASSERT(pool != CRUST_NULL);
@@ -2081,7 +2273,7 @@ static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 	u8 bin_index = crustHeapToBinIndex(node->size);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) <= node->size);
 
-	if (node->prev_bin != U32_MAX)
+	if (node->prev_bin != CRUST_U32_MAX)
 	{
 		Crust_HeapNode *prev_node = &pool->nodes[node->prev_bin];
 		CRUST_ASSERT(prev_node != CRUST_NULL);
@@ -2089,7 +2281,7 @@ static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 		prev_node->next_bin = node->next_bin;
 	}
 
-	if (node->next_bin != U32_MAX)
+	if (node->next_bin != CRUST_U32_MAX)
 	{
 		Crust_HeapNode *next_node = &pool->nodes[node->next_bin];
 		CRUST_ASSERT(next_node != CRUST_NULL);
@@ -2101,12 +2293,12 @@ static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 	u8 linear_bin_index = bin_index & CRUST_HEAP_PARAMETERS_MANTISSA_MASK;
 
 	u32 bin_head_index = heap->heads[bin_index];
-	CRUST_ASSERT(bin_head_index != U32_MAX);
+	CRUST_ASSERT(bin_head_index != CRUST_U32_MAX);
 
 	if (bin_head_index == index)
 		bin_head_index = node->next_bin;
 
-	if (bin_head_index == U32_MAX)
+	if (bin_head_index == CRUST_U32_MAX)
 	{
 		u8 linear_bin_mask = heap->used_linear_bins[sparse_bin_index];
 		u32 sparse_bin_mask = heap->used_sparse_bins;
@@ -2132,7 +2324,7 @@ CRUST_APIENTRY Crust_Heap crustHeapInit(Crust_HeapNodePool *pool, u32 size)
 	result.size = size;
 
 	for (u32 i = 0; i < CRUST_HEAP_PARAMETERS_NUM_BINS; ++i)
-		result.heads[i] = U32_MAX;
+		result.heads[i] = CRUST_U32_MAX;
 
 	result.used_sparse_bins = 0;
 	for (u32 i = 0; i < CRUST_HEAP_PARAMETERS_NUM_SPARSE_BINS; ++i)
@@ -2155,18 +2347,18 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAlloc(const Crust_Heap *heap, 
 	CRUST_ASSERT(pool->nodes != CRUST_NULL);
 
 	Crust_HeapAllocation result;
-	result.offset = U32_MAX;
-	result.index = U32_MAX;
+	result.offset = CRUST_U32_MAX;
+	result.index = CRUST_U32_MAX;
 
 	u8 bin_index = crustHeapFindBinForSize(heap, size);
-	if (bin_index == U8_MAX)
+	if (bin_index == CRUST_U8_MAX)
 		return result;
 
 	CRUST_ASSERT(bin_index != 0);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) >= size);
 
 	result.index = heap->heads[bin_index];
-	CRUST_ASSERT(result.index != U32_MAX);
+	CRUST_ASSERT(result.index != CRUST_U32_MAX);
 
 	const Crust_HeapNode *node = &pool->nodes[result.index];
 	CRUST_ASSERT(node != CRUST_NULL);
@@ -2189,18 +2381,18 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap 
 	CRUST_ASSERT(pool->nodes != CRUST_NULL);
 
 	Crust_HeapAllocation result;
-	result.offset = U32_MAX;
-	result.index = U32_MAX;
+	result.offset = CRUST_U32_MAX;
+	result.index = CRUST_U32_MAX;
 
 	u8 bin_index = crustHeapFindBinForSize(heap, size);
-	if (bin_index == U8_MAX)
+	if (bin_index == CRUST_U8_MAX)
 		return result;
 
 	CRUST_ASSERT(bin_index != 0);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) >= size);
 
 	result.index = heap->heads[bin_index];
-	CRUST_ASSERT(result.index != U32_MAX);
+	CRUST_ASSERT(result.index != CRUST_U32_MAX);
 
 	const Crust_HeapNode *node = &pool->nodes[result.index];
 	CRUST_ASSERT(node != CRUST_NULL);
@@ -2213,10 +2405,10 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap 
 	{
 		u32 max_size = size + alignment - 1;
 		bin_index = crustHeapFindBinForSize(heap, max_size);
-		if (bin_index == U8_MAX)
+		if (bin_index == CRUST_U8_MAX)
 		{
-			result.offset = U32_MAX;
-			result.index = U32_MAX;
+			result.offset = CRUST_U32_MAX;
+			result.index = CRUST_U32_MAX;
 
 			return result;
 		}
@@ -2224,7 +2416,7 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap 
 		CRUST_ASSERT(bin_index != 0);
 		result.index = heap->heads[bin_index];
 
-		CRUST_ASSERT(result.index != U32_MAX);
+		CRUST_ASSERT(result.index != CRUST_U32_MAX);
 
 		node = &pool->nodes[result.index];
 		CRUST_ASSERT(node != CRUST_NULL);
@@ -2241,8 +2433,8 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 	CRUST_ASSERT(heap->size >= size);
 	CRUST_ASSERT(size > 0);
 
-	CRUST_ASSERT(allocation.index != U32_MAX);
-	CRUST_ASSERT(allocation.offset != U32_MAX);
+	CRUST_ASSERT(allocation.index != CRUST_U32_MAX);
+	CRUST_ASSERT(allocation.offset != CRUST_U32_MAX);
 
 	Crust_HeapNodePool *pool = heap->pool;
 	CRUST_ASSERT(pool != CRUST_NULL);
@@ -2273,7 +2465,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 
 	if (remainder_begin_size > 0)
 	{
-		Crust_HeapNode *prev_node = (prev_index != U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
+		Crust_HeapNode *prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
 
 		// try merge with previous free node
 		if (prev_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, prev_index) == 0)
@@ -2289,7 +2481,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 			crustHeapNodePoolRelease(pool, prev_index);
 
 			prev_index = prev_prev_index;
-			prev_node = (prev_index != U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
+			prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
 		}
 
 		u32 new_index = crustHeapNodePoolAcquire(pool);
@@ -2308,7 +2500,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 
 	if (remainder_end_size > 0)
 	{
-		Crust_HeapNode *next_node = (next_index != U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
+		Crust_HeapNode *next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
 
 		// try merge with next free node
 		if (next_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, next_index) == 0)
@@ -2323,7 +2515,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 			crustHeapNodePoolRelease(pool, next_index);
 
 			next_index = next_next_index;
-			next_node = (next_index != U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
+			next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
 		}
 
 		u32 new_index = crustHeapNodePoolAcquire(pool);
@@ -2348,7 +2540,7 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapAlloc(Crust_Heap *heap, u32 size)
 	CRUST_ASSERT(size > 0);
 
 	Crust_HeapAllocation result = crustHeapStageAlloc(heap, size);
-	if (result.index == U32_MAX && result.offset == U32_MAX)
+	if (result.index == CRUST_U32_MAX && result.offset == CRUST_U32_MAX)
 		return result;
 
 	crustHeapCommitAlloc(heap, result, size);
@@ -2363,7 +2555,7 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapAllocAligned(Crust_Heap *heap, u32 
 	CRUST_ASSERT(crustIsPow2U32(alignment) != 0);
 
 	Crust_HeapAllocation result = crustHeapStageAllocAligned(heap, size, alignment);
-	if (result.index == U32_MAX && result.offset == U32_MAX)
+	if (result.index == CRUST_U32_MAX && result.offset == CRUST_U32_MAX)
 		return result;
 
 	crustHeapCommitAlloc(heap, result, size);
@@ -2374,8 +2566,8 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 {
 	CRUST_ASSERT(heap != CRUST_NULL);
 
-	CRUST_ASSERT(allocation.index != U32_MAX);
-	CRUST_ASSERT(allocation.offset != U32_MAX);
+	CRUST_ASSERT(allocation.index != CRUST_U32_MAX);
+	CRUST_ASSERT(allocation.offset != CRUST_U32_MAX);
 
 	Crust_HeapNodePool *pool = heap->pool;
 	CRUST_ASSERT(pool != CRUST_NULL);
@@ -2393,7 +2585,7 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 	u32 size = node->size;
 	u32 offset = node->offset;
 
-	Crust_HeapNode *prev_node = (prev_index != U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
+	Crust_HeapNode *prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
 
 	// try merge with previous free node
 	if (prev_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, prev_index) == 0)
@@ -2407,7 +2599,7 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 		prev_index = prev_node->prev_neighbour;
 	}
 
-	Crust_HeapNode *next_node = (next_index != U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
+	Crust_HeapNode *next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
 
 	// try merge with next free node
 	if (next_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, next_index) == 0)
@@ -2425,13 +2617,13 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 	node->prev_neighbour = prev_index;
 	node->next_neighbour = next_index;
 
-	if (prev_index != U32_MAX)
+	if (prev_index != CRUST_U32_MAX)
 	{
 		Crust_HeapNode *prev_prev_node = &pool->nodes[prev_index];
 		prev_prev_node->next_neighbour = allocation.index;
 	}
 
-	if (next_index != U32_MAX)
+	if (next_index != CRUST_U32_MAX)
 	{
 		Crust_HeapNode *next_next_node = &pool->nodes[next_index];
 		next_next_node->prev_neighbour = allocation.index;
