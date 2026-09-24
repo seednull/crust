@@ -1161,8 +1161,8 @@ typedef struct Crust_BipBuffer_t
 	usize end[2];
 	usize read_staged;
 	usize write_staged;
-	u16 reader;
-	u16 writer;
+	usize reader;
+	usize writer;
 } Crust_BipBuffer;
 
 CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity);

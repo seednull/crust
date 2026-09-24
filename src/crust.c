@@ -596,8 +596,8 @@ CRUST_APIENTRY const void *crustBipBufferStageRead(Crust_BipBuffer *bip, usize s
 	CRUST_ASSERT(bip->read_staged == 0);
 	CRUST_ASSERT(size > 0);
 
-	u16 r = bip->reader;
-	u16 w = bip->writer;
+	usize r = bip->reader;
+	usize w = bip->writer;
 
 	usize begin = bip->begin[r];
 	usize end = bip->end[r];
@@ -614,7 +614,7 @@ CRUST_APIENTRY const void *crustBipBufferStageRead(Crust_BipBuffer *bip, usize s
 	if (r == w)
 		return CRUST_NULL;
 
-	u16 next = (r + 1) % 2;
+	usize next = (r + 1) % 2;
 
 	end = bip->end[next];
 
@@ -636,7 +636,7 @@ CRUST_APIENTRY void crustBipBufferCommitRead(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip->read_staged >= size);
 	CRUST_ASSERT(size > 0);
 
-	u16 r = bip->reader;
+	usize r = bip->reader;
 
 	bip->begin[r] += size;
 	bip->read_staged = 0;
@@ -649,8 +649,8 @@ CRUST_APIENTRY void *crustBipBufferStageWrite(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip->write_staged == 0);
 	CRUST_ASSERT(size > 0);
 
-	u16 r = bip->reader;
-	u16 w = bip->writer;
+	usize r = bip->reader;
+	usize w = bip->writer;
 
 	usize read_begin = bip->begin[r];
 	usize read_end = bip->end[r];
@@ -669,7 +669,7 @@ CRUST_APIENTRY void *crustBipBufferStageWrite(Crust_BipBuffer *bip, usize size)
 		if (available < size)
 			return CRUST_NULL;
 
-		u16 next = (w + 1) % 2;
+		usize next = (w + 1) % 2;
 
 		CRUST_ASSERT(bip->begin[next] == bip->end[next]);
 
@@ -700,7 +700,7 @@ CRUST_APIENTRY void crustBipBufferCommitWrite(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip->write_staged >= size);
 	CRUST_ASSERT(size > 0);
 
-	u16 w = bip->writer;
+	usize w = bip->writer;
 
 	bip->end[w] += size;
 	bip->write_staged = 0;
