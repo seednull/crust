@@ -1203,6 +1203,28 @@ CRUST_APIENTRY void crustSpscRingBufferReset(Crust_SpscRingBuffer *ring);
 CRUST_APIENTRY usize crustSpscRingBufferRead(Crust_SpscRingBuffer *ring, void *data, usize size);
 CRUST_APIENTRY usize crustSpscRingBufferWrite(Crust_SpscRingBuffer *ring, const void *data, usize size);
 
+//
+typedef struct Crust_SpscBipBuffer_t
+{
+	void *memory;
+	usize capacity;
+
+	CRUST_ALIGNAS(128) volatile usize begin[2];
+	volatile usize reader;
+	usize read_staged;
+
+	CRUST_ALIGNAS(128) volatile usize end[2];
+	volatile usize writer;
+	usize write_staged;
+} Crust_SpscBipBuffer;
+
+CRUST_APIENTRY Crust_SpscBipBuffer crustSpscBipBufferAttach(void *memory, usize capacity);
+CRUST_APIENTRY void crustSpscBipBufferReset(Crust_SpscBipBuffer *bip);
+CRUST_APIENTRY const void *crustSpscBipBufferStageRead(Crust_SpscBipBuffer *bip, usize size);
+CRUST_APIENTRY void crustSpscBipBufferCommitRead(Crust_SpscBipBuffer *bip, usize size);
+CRUST_APIENTRY void *crustSpscBipBufferStageWrite(Crust_SpscBipBuffer *bip, usize size);
+CRUST_APIENTRY void crustSpscBipBufferCommitWrite(Crust_SpscBipBuffer *bip, usize size);
+
 #if defined(_MSC_VER)
 	#pragma warning(pop)
 #endif
