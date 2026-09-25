@@ -1,6 +1,3 @@
-#include <intrin.h>
-#include <arm64_neon.h>
-
 //
 static CRUST_INLINE f32 crustAbsF32(f32 v)
 {

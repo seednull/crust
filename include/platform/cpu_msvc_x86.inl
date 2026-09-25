@@ -1,5 +1,3 @@
-#include <intrin.h>
-
 //
 static CRUST_INLINE f32 crustAbsF32(f32 v)
 {

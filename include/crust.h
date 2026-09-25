@@ -97,6 +97,14 @@
 	#error "Unsupported architecture"
 #endif
 
+// Includes
+#if CRUST_COMPILER_MSVC
+	#include <intrin.h>
+	#if CRUST_ARCH_ARM64
+		#include <arm64_neon.h>
+	#endif
+#endif
+
 // Defines
 #if CRUST_COMPILER_MSVC
 	#define CRUST_ALIGNOF(x) __alignof(x)
