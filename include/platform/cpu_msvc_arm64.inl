@@ -14,32 +14,36 @@ static CRUST_INLINE void crustAssertFailure(const char *expression, const char *
 //
 static CRUST_INLINE f32 crustAbsF32(f32 v)
 {
-	return vabs_f32(v);
+	float32x2_t x = vdup_n_f32(v);
+	return vget_lane_f32(vabs_f32(x), 0);
 }
 
 static CRUST_INLINE f32 crustSqrtF32(f32 v)
 {
-	return vsqrts_f32(v);
+	float32x2_t x = vdup_n_f32(v);
+	return vget_lane_f32(vsqrt_f32(x), 0);
 }
 
 static CRUST_INLINE f32 crustRsqrtF32(f32 v)
 {
-	return 1.0f / vsqrts_f32(v);
+	return 1.0f / crustSqrtF32(v);
 }
 
 static CRUST_INLINE f64 crustAbsF64(f64 v)
 {
-	return vabs_f64(v);
+	float64x1_t x = vdup_n_f64(v);
+	return vget_lane_f64(vabs_f64(x), 0);
 }
 
 static CRUST_INLINE f64 crustSqrtF64(f64 v)
 {
-	return vsqrts_f64(v);
+	float64x1_t x = vdup_n_f64(v);
+	return vget_lane_f64(vsqrt_f64(x), 0);
 }
 
 static CRUST_INLINE f64 crustRsqrtF64(f64 v)
 {
-	return 1.0 / vsqrts_f64(v);
+	return 1.0 / crustSqrt(v);
 }
 
 //
