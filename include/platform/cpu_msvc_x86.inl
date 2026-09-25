@@ -13,11 +13,6 @@ static CRUST_INLINE f32 crustSqrtF32(f32 v)
 	return _mm_cvtss_f32(_mm_sqrt_ss(x));
 }
 
-static CRUST_INLINE f32 crustRsqrtF32(f32 v)
-{
-	return 1.0f / crustSqrtF32(v);
-}
-
 static CRUST_INLINE f64 crustAbsF64(f64 v)
 {
 	__m128d x = _mm_set_sd(v);
@@ -30,11 +25,6 @@ static CRUST_INLINE f64 crustSqrtF64(f64 v)
 {
 	__m128d x = _mm_set_sd(v);
 	return _mm_cvtsd_f64(_mm_sqrt_sd(x, x));
-}
-
-static CRUST_INLINE f64 crustRsqrtF64(f64 v)
-{
-	return 1.0 / crustSqrtF64(v);
 }
 
 //

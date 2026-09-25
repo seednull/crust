@@ -309,6 +309,16 @@ CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size);
 CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
 
 //
+static CRUST_INLINE f32 crustRsqrtF32(f32 v)
+{
+	return 1.0f / crustSqrtF32(v);
+}
+
+static CRUST_INLINE f64 crustRsqrtF64(f64 v)
+{
+	return 1.0 / crustSqrtF64(v);
+}
+
 CRUST_APIENTRY f32 crustCosF32(f32 v);
 CRUST_APIENTRY f32 crustAcosF32(f32 v);
 CRUST_APIENTRY f32 crustSinF32(f32 v);
