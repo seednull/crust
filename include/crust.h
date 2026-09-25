@@ -7,8 +7,8 @@
 #define CRUST_VERSION "1.0.0-dev"
 
 // Compiler
-#define CRUST_COMPILER_MSVC  0
-#define CRUST_COMPILER_GCC   0
+#define CRUST_COMPILER_MSVC 0
+#define CRUST_COMPILER_GCC 0
 #define CRUST_COMPILER_CLANG 0
 
 #if defined(__clang__)
@@ -25,12 +25,12 @@
 #endif
 
 // Toolchain
-#define CRUST_TOOLCHAIN_MSVC       0
-#define CRUST_TOOLCHAIN_MINGW      0
-#define CRUST_TOOLCHAIN_ANDROID    0
+#define CRUST_TOOLCHAIN_MSVC 0
+#define CRUST_TOOLCHAIN_MINGW 0
+#define CRUST_TOOLCHAIN_ANDROID 0
 #define CRUST_TOOLCHAIN_EMSCRIPTEN 0
-#define CRUST_TOOLCHAIN_WASI       0
-#define CRUST_TOOLCHAIN_APPLE      0
+#define CRUST_TOOLCHAIN_WASI 0
+#define CRUST_TOOLCHAIN_APPLE 0
 
 #if defined(__EMSCRIPTEN__)
 	#undef  CRUST_TOOLCHAIN_EMSCRIPTEN
@@ -53,12 +53,12 @@
 #endif
 
 // Architecture
-#define CRUST_ARCH_X86      0
-#define CRUST_ARCH_X64      0
-#define CRUST_ARCH_ARM      0
-#define CRUST_ARCH_ARM64    0
-#define CRUST_ARCH_WASM32   0
-#define CRUST_ARCH_WASM64   0
+#define CRUST_ARCH_X86 0
+#define CRUST_ARCH_X64 0
+#define CRUST_ARCH_ARM 0
+#define CRUST_ARCH_ARM64 0
+#define CRUST_ARCH_WASM32 0
+#define CRUST_ARCH_WASM64 0
 
 #define CRUST_ARCH_32BIT 0
 #define CRUST_ARCH_64BIT 0
@@ -99,23 +99,23 @@
 
 // Defines
 #if CRUST_COMPILER_MSVC
-    #define CRUST_ALIGNOF(x) __alignof(x)
-    #define CRUST_ALIGNAS(n) __declspec(align(n))
-    #define CRUST_DEBUG_BREAK() __debugbreak()
-    #define CRUST_INLINE __forceinline
-    #define CRUST_RESTRICT __restrict
+	#define CRUST_ALIGNOF(x) __alignof(x)
+	#define CRUST_ALIGNAS(n) __declspec(align(n))
+	#define CRUST_DEBUG_BREAK() __debugbreak()
+	#define CRUST_INLINE __forceinline
+	#define CRUST_RESTRICT __restrict
 #else
-    #define CRUST_ALIGNOF(x) __alignof__(x)
-    #define CRUST_ALIGNAS(n) __attribute__((aligned(n)))
-    #define CRUST_DEBUG_BREAK() __builtin_trap()
-    #define CRUST_INLINE inline __attribute__((always_inline))
-    #define CRUST_RESTRICT __restrict__
+	#define CRUST_ALIGNOF(x) __alignof__(x)
+	#define CRUST_ALIGNAS(n) __attribute__((aligned(n)))
+	#define CRUST_DEBUG_BREAK() __builtin_trap()
+	#define CRUST_INLINE inline __attribute__((always_inline))
+	#define CRUST_RESTRICT __restrict__
 #endif
 
 #if defined(NDEBUG)
-    #define CRUST_ASSERT(x) ((void)0)
+	#define CRUST_ASSERT(x) ((void)0)
 #else
-    #define CRUST_ASSERT(x) do { (void)(!!(x) || (crustAssertFailure(#x, __FILE__, (u32)__LINE__), 0)); } while (0)
+	#define CRUST_ASSERT(x) do { (void)(!!(x) || (crustAssertFailure(#x, __FILE__, (u32)__LINE__), 0)); } while (0)
 #endif
 
 #define CRUST_UNUSED(x) do { (void)(x); } while (0)
@@ -127,17 +127,17 @@
 #endif
 
 #if defined(CRUST_SHARED_LIBRARY)
-    #if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
-        #if defined(CRUST_IMPLEMENTATION)
-            #define CRUST_APIENTRY __declspec(dllexport)
-        #else
-            #define CRUST_APIENTRY __declspec(dllimport)
-        #endif
-    #else
-        #define CRUST_APIENTRY __attribute__((visibility("default")))
-    #endif
+	#if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
+		#if defined(CRUST_IMPLEMENTATION)
+			#define CRUST_APIENTRY __declspec(dllexport)
+		#else
+			#define CRUST_APIENTRY __declspec(dllimport)
+		#endif
+	#else
+		#define CRUST_APIENTRY __attribute__((visibility("default")))
+	#endif
 #else
-    #define CRUST_APIENTRY
+	#define CRUST_APIENTRY
 #endif
 
 // Types
@@ -199,8 +199,14 @@ typedef double						f64;
 extern "C" {
 #endif
 
+//
 CRUST_APIENTRY void crustAssertFailure(const char *expression, const char *file, u32 line);
 
+//
+CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size);
+CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
+
+//
 CRUST_APIENTRY f32 crustAbsF32(f32 v);
 CRUST_APIENTRY f64 crustAbsF64(f64 v);
 CRUST_APIENTRY f32 crustSqrtF32(f32 v);
@@ -211,10 +217,6 @@ CRUST_APIENTRY f32 crustSinF32(f32 v);
 CRUST_APIENTRY f32 crustAsinF32(f32 v);
 CRUST_APIENTRY f32 crustTanF32(f32 v);
 CRUST_APIENTRY f32 crustAtan2F32(f32 y, f32 x);
-
-//
-CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size);
-CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
 
 //
 static CRUST_INLINE u8 crustIsPow2U8(u8 v)
