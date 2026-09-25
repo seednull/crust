@@ -6,22 +6,7 @@ static CRUST_INLINE f32 crustAbsF32(f32 v)
 
 static CRUST_INLINE f32 crustSqrtF32(f32 v)
 {
-#if CRUST_ARCH_X86 || CRUST_ARCH_X64
-	__asm__("sqrtss %0, %0" : "+x"(v));
-	return v;
-#elif CRUST_ARCH_ARM64
-	f32 result;
-	__asm__("fsqrt %s0, %s1" : "=w"(result) : "w"(v));
-	return result;
-#elif CRUST_ARCH_ARM
-	f32 result;
-	__asm__("vsqrt.f32 %0, %1" : "=t"(result) : "t"(v));
-	return result;
-#elif CRUST_ARCH_WASM32 || CRUST_ARCH_WASM64
-	return __builtin_sqrtf(v);
-#else
-	#error "Unsupported architecture"
-#endif
+    return __builtin_sqrtf(v);
 }
 
 static CRUST_INLINE f64 crustAbsF64(f64 v)
@@ -31,22 +16,7 @@ static CRUST_INLINE f64 crustAbsF64(f64 v)
 
 static CRUST_INLINE f64 crustSqrtF64(f64 v)
 {
-#if CRUST_ARCH_X86 || CRUST_ARCH_X64
-	__asm__("sqrtsd %0, %0" : "+x"(v));
-	return v;
-#elif CRUST_ARCH_ARM64
-	f64 result;
-	__asm__("fsqrt %d0, %d1" : "=w"(result) : "w"(v));
-	return result;
-#elif CRUST_ARCH_ARM
-	f64 result;
-	__asm__("vsqrt.f64 %P0, %P1" : "=w"(result) : "w"(v));
-	return result;
-#elif CRUST_ARCH_WASM32 || CRUST_ARCH_WASM64
-	return __builtin_sqrt(v);
-#else
-	#error "Unsupported architecture"
-#endif
+    return __builtin_sqrt(v);
 }
 
 //
