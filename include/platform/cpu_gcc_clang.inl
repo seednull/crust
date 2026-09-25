@@ -1,3 +1,49 @@
+//
+static CRUST_INLINE void crustAssertFailure(const char *expression, const char *file, u32 line)
+{
+	CRUST_UNUSED(expression);
+	CRUST_UNUSED(file);
+	CRUST_UNUSED(line);
+
+#if CRUST_COMPILER_CLANG
+	__builtin_debugtrap();
+#else
+	__builtin_trap();
+#endif
+}
+
+//
+static CRUST_INLINE f32 crustAbsF32(f32 v)
+{
+	return __builtin_fabsf(v);
+}
+
+static CRUST_INLINE f32 crustSqrtF32(f32 v)
+{
+	return __builtin_sqrtf(v);
+}
+
+static CRUST_INLINE f32 crustRsqrtF32(f32 v)
+{
+	return 1.0f / __builtin_sqrtf(v);
+}
+
+static CRUST_INLINE f64 crustAbsF64(f64 v)
+{
+	return __builtin_fabs(v);
+}
+
+static CRUST_INLINE f64 crustSqrtF64(f64 v)
+{
+	return __builtin_sqrt(v);
+}
+
+static CRUST_INLINE f64 crustRsqrtF64(f64 v)
+{
+	return 1.0 / __builtin_sqrt(v);
+}
+
+//
 static CRUST_INLINE u32 crustAtomicSwapU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
 {
 	return __atomic_exchange_n((u32 *)p, v, (int)order);
@@ -82,6 +128,7 @@ static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrd
 	return __atomic_sub_fetch((u64 *)p, 1, (int)order);
 }
 
+//
 static CRUST_INLINE void crustCpuRelax(void)
 {
 #if CRUST_ARCH_X86 || CRUST_ARCH_X64
@@ -95,6 +142,7 @@ static CRUST_INLINE void crustCpuRelax(void)
 #endif
 }
 
+//
 static CRUST_INLINE u32 crustLzcntU32(u32 value)
 {
 	CRUST_ASSERT(value != 0);

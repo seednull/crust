@@ -203,16 +203,88 @@ extern "C" {
 #endif
 
 //
-CRUST_APIENTRY void crustAssertFailure(const char *expression, const char *file, u32 line);
+typedef enum Crust_MemoryOrder_t
+{
+	CRUST_MEMORY_ORDER_RELAXED = 0,
+	CRUST_MEMORY_ORDER_CONSUME = 1,
+	CRUST_MEMORY_ORDER_ACQUIRE = 2,
+	CRUST_MEMORY_ORDER_RELEASE = 3,
+	CRUST_MEMORY_ORDER_ACQ_REL = 4,
+	CRUST_MEMORY_ORDER_SEQ_CST = 5,
+} Crust_MemoryOrder;
+
+static CRUST_INLINE int crustIsValidFailureOrder(Crust_MemoryOrder success, Crust_MemoryOrder failure)
+{
+	if (failure == CRUST_MEMORY_ORDER_RELEASE || failure == CRUST_MEMORY_ORDER_ACQ_REL)
+		return 0;
+
+	switch (success)
+	{
+		case CRUST_MEMORY_ORDER_RELAXED:
+			return failure == CRUST_MEMORY_ORDER_RELAXED;
+
+		case CRUST_MEMORY_ORDER_CONSUME:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME;
+
+		case CRUST_MEMORY_ORDER_ACQUIRE:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME ||
+				   failure == CRUST_MEMORY_ORDER_ACQUIRE;
+
+		case CRUST_MEMORY_ORDER_RELEASE:
+			return failure == CRUST_MEMORY_ORDER_RELAXED;
+
+		case CRUST_MEMORY_ORDER_ACQ_REL:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME ||
+				   failure == CRUST_MEMORY_ORDER_ACQUIRE;
+
+		case CRUST_MEMORY_ORDER_SEQ_CST:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME ||
+				   failure == CRUST_MEMORY_ORDER_ACQUIRE ||
+				   failure == CRUST_MEMORY_ORDER_SEQ_CST;
+	}
+
+	return 0;
+}
+
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_X86 || CRUST_ARCH_X64
+		#include "platform/cpu_msvc_x86.inl"
+	#elif CRUST_ARCH_ARM64
+		#include "platform/cpu_msvc_arm64.inl"
+	#else
+		#error "Unsupported MSVC architecture"
+	#endif
+#elif CRUST_COMPILER_GCC || CRUST_COMPILER_CLANG
+	#include "platform/cpu_gcc_clang.inl"
+#else
+	#error "Unsupported compiler"
+#endif
+
+#if CRUST_ARCH_64BIT
+	#define crustAtomicSwapUSize crustAtomicSwapU64
+	#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU64
+	#define crustAtomicLoadUSize crustAtomicLoadU64
+	#define crustAtomicStoreUSize crustAtomicStoreU64
+	#define crustAtomicIncrementUSize crustAtomicIncrementU64
+	#define crustAtomicDecrementUSize crustAtomicDecrementU64
+#else
+	#define crustAtomicSwapUSize crustAtomicSwapU32
+	#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU32
+	#define crustAtomicLoadUSize crustAtomicLoadU32
+	#define crustAtomicStoreUSize crustAtomicStoreU32
+	#define crustAtomicIncrementUSize crustAtomicIncrementU32
+	#define crustAtomicDecrementUSize crustAtomicDecrementU32
+#endif
 
 //
 CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size);
 CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
 
 //
-CRUST_APIENTRY f32 crustAbsF32(f32 v);
-CRUST_APIENTRY f32 crustSqrtF32(f32 v);
-CRUST_APIENTRY f32 crustRsqrtF32(f32 v);
 CRUST_APIENTRY f32 crustCosF32(f32 v);
 CRUST_APIENTRY f32 crustAcosF32(f32 v);
 CRUST_APIENTRY f32 crustSinF32(f32 v);
@@ -220,9 +292,6 @@ CRUST_APIENTRY f32 crustAsinF32(f32 v);
 CRUST_APIENTRY f32 crustTanF32(f32 v);
 CRUST_APIENTRY f32 crustAtan2F32(f32 y, f32 x);
 
-CRUST_APIENTRY f64 crustAbsF64(f64 v);
-CRUST_APIENTRY f64 crustSqrtF64(f64 v);
-CRUST_APIENTRY f64 crustRsqrtF64(f64 v);
 CRUST_APIENTRY f64 crustCosF64(f64 v);
 CRUST_APIENTRY f64 crustAcosF64(f64 v);
 CRUST_APIENTRY f64 crustSinF64(f64 v);
@@ -1297,9 +1366,63 @@ typedef struct Crust_Allocator_t
 	const Crust_AllocatorVtbl *vtbl;
 } Crust_Allocator;
 
-CRUST_APIENTRY void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, usize alignment);
-CRUST_APIENTRY void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment);
-CRUST_APIENTRY void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize size, usize alignment);
+static CRUST_INLINE void *crustAllocatorAlloc(Crust_Allocator allocator, usize size, usize alignment)
+{
+	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->alloc != CRUST_NULL);
+
+	CRUST_ASSERT(size > 0);
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2USize(alignment));
+
+	return allocator.vtbl->alloc(allocator.context, size, alignment);
+}
+
+static CRUST_INLINE void *crustAllocatorRealloc(Crust_Allocator allocator, void *ptr, usize old_size, usize new_size, usize alignment)
+{
+	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->alloc != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->realloc != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->free != CRUST_NULL);
+
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2USize(alignment));
+	
+	if (ptr == CRUST_NULL)
+	{
+		CRUST_ASSERT(old_size == 0);
+
+		if (new_size == 0)
+			return CRUST_NULL;
+
+		return allocator.vtbl->alloc(allocator.context, new_size, alignment);
+	}
+
+	CRUST_ASSERT(old_size > 0);
+
+	if (new_size == 0)
+	{
+		allocator.vtbl->free(allocator.context, ptr, old_size, alignment);
+		return CRUST_NULL;
+	}
+
+	return allocator.vtbl->realloc(allocator.context, ptr, old_size, new_size, alignment);
+}
+
+static CRUST_INLINE void crustAllocatorFree(Crust_Allocator allocator, void *ptr, usize size, usize alignment)
+{
+	CRUST_ASSERT(allocator.vtbl != CRUST_NULL);
+	CRUST_ASSERT(allocator.vtbl->free != CRUST_NULL);
+
+	if (ptr == CRUST_NULL)
+		return;
+
+	CRUST_ASSERT(size > 0);
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2USize(alignment));
+
+	allocator.vtbl->free(allocator.context, ptr, size, alignment);
+}
 
 static CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
 {

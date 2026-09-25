@@ -1,5 +1,51 @@
 #include <intrin.h>
 
+//
+static CRUST_INLINE void crustAssertFailure(const char *expression, const char *file, u32 line)
+{
+	CRUST_UNUSED(expression);
+	CRUST_UNUSED(file);
+	CRUST_UNUSED(line);
+
+	__debugbreak();
+}
+
+//
+static CRUST_INLINE f32 crustAbsF32(f32 v)
+{
+	__m128 m = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));
+	return _mm_cvtss_f32(_mm_and_ps(_mm_set_ss(v), m));
+}
+
+static CRUST_INLINE f32 crustSqrtF32(f32 v)
+{
+	__m128 x = _mm_set_ss(v);
+	return _mm_cvtss_f32(_mm_sqrt_ss(x));
+}
+
+static CRUST_INLINE f32 crustRsqrtF32(f32 v)
+{
+	return 1.0f / crustSqrtF32(v);
+}
+
+static CRUST_INLINE f64 crustAbsF64(f64 v)
+{
+	__m128d m = _mm_castsi128_pd(_mm_set1_epi64x(0x7FFFFFFFFFFFFFFFLL));
+	return _mm_cvtsd_f64(_mm_and_pd(_mm_set_sd(v), m));
+}
+
+static CRUST_INLINE f64 crustSqrtF64(f64 v)
+{
+	__m128d x = _mm_set_sd(v);
+	return _mm_cvtsd_f64(_mm_sqrt_sd(x, x));
+}
+
+static CRUST_INLINE f64 crustRsqrtF64(f64 v)
+{
+	return 1.0 / crustSqrtF64(v);
+}
+
+//
 static CRUST_INLINE u32 crustAtomicSwapU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
 {
 	CRUST_UNUSED(order);
@@ -132,11 +178,13 @@ static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrd
 	return (u64)_InterlockedDecrement64((volatile long long *)p);
 }
 
+//
 static CRUST_INLINE void crustCpuRelax(void)
 {
 	_mm_pause();
 }
 
+//
 static CRUST_INLINE u32 crustLzcntU32(u32 value)
 {
 	CRUST_ASSERT(value != 0);
