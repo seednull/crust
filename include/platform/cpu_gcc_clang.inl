@@ -1,18 +1,4 @@
 //
-static CRUST_INLINE void crustAssertFailure(const char *expression, const char *file, u32 line)
-{
-	CRUST_UNUSED(expression);
-	CRUST_UNUSED(file);
-	CRUST_UNUSED(line);
-
-#if CRUST_COMPILER_CLANG
-	__builtin_debugtrap();
-#else
-	__builtin_trap();
-#endif
-}
-
-//
 static CRUST_INLINE f32 crustAbsF32(f32 v)
 {
 	return __builtin_fabsf(v);

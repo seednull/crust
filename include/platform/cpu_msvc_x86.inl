@@ -1,16 +1,6 @@
 #include <intrin.h>
 
 //
-static CRUST_INLINE void crustAssertFailure(const char *expression, const char *file, u32 line)
-{
-	CRUST_UNUSED(expression);
-	CRUST_UNUSED(file);
-	CRUST_UNUSED(line);
-
-	__debugbreak();
-}
-
-//
 static CRUST_INLINE f32 crustAbsF32(f32 v)
 {
 	__m128 m = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));

@@ -2,16 +2,6 @@
 #include <arm64_neon.h>
 
 //
-static CRUST_INLINE void crustAssertFailure(const char *expression, const char *file, u32 line)
-{
-	CRUST_UNUSED(expression);
-	CRUST_UNUSED(file);
-	CRUST_UNUSED(line);
-
-	__debugbreak();
-}
-
-//
 static CRUST_INLINE f32 crustAbsF32(f32 v)
 {
 	float32x2_t x = vdup_n_f32(v);

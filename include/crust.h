@@ -203,6 +203,22 @@ extern "C" {
 #endif
 
 //
+static CRUST_INLINE void crustAssertFailure(const char *expression, const char *file, u32 line)
+{
+	CRUST_UNUSED(expression);
+	CRUST_UNUSED(file);
+	CRUST_UNUSED(line);
+
+#if CRUST_COMPILER_MSVC
+	__debugbreak();
+#elif CRUST_COMPILER_CLANG
+	__builtin_debugtrap();
+#else
+	__builtin_trap();
+#endif
+}
+
+//
 typedef enum Crust_MemoryOrder_t
 {
 	CRUST_MEMORY_ORDER_RELAXED = 0,
