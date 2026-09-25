@@ -78,7 +78,7 @@
 	#define CRUST_ARCH_ARM64 1
 	#undef  CRUST_ARCH_64BIT
 	#define CRUST_ARCH_64BIT 1
-#elif defined(_M_ARM) || defined(__arm__)
+#elif defined(__arm__)
 	#undef  CRUST_ARCH_ARM
 	#define CRUST_ARCH_ARM 1
 	#undef  CRUST_ARCH_32BIT
