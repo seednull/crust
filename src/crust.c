@@ -1,3 +1,7 @@
+#define CRUST_IMPLEMENTATION
+#include <crust.h>
+#undef CRUST_IMPLEMENTATION
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,104 +10,75 @@
 	#include <intrin.h>
 #endif
 
-#define CRUST_IMPLEMENTATION
-#include <crust.h>
-#undef CRUST_IMPLEMENTATION
-
 //
-CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
+static CRUST_INLINE void *crustAlignedMalloc(usize size, usize alignment)
 {
-	memcpy(dst, src, size);
-}
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
 
-CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
-{
-	memset(dst, value, size);
-}
+	if (size == 0)
+		return CRUST_NULL;
 
 #if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
-	static CRUST_INLINE void *crustAlignedMalloc(usize size, usize alignment)
-	{
-		CRUST_ASSERT(alignment > 0);
-		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
+	return _aligned_malloc(size, alignment);
+#else
+	alignment = crustMaxUSize(alignment, sizeof(void *));
 
-		if (size == 0)
-			return CRUST_NULL;
+	void *ptr = CRUST_NULL;
+	if (posix_memalign(&ptr, alignment, size) != 0)
+		return CRUST_NULL;
 
-		return _aligned_malloc(size, alignment);
-	}
+	return ptr;
+#endif
+}
 
-	static CRUST_INLINE void *crustAlignedRealloc(void *ptr, usize old_size, usize size, usize alignment)
-	{
-		CRUST_ASSERT(alignment > 0);
-		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
-		CRUST_ASSERT(ptr == CRUST_NULL || old_size > 0);
+static CRUST_INLINE void *crustAlignedRealloc(void *ptr, usize old_size, usize size, usize alignment)
+{
+	CRUST_ASSERT(alignment > 0);
+	CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
+	CRUST_ASSERT(ptr == CRUST_NULL || old_size > 0);
 
-		CRUST_UNUSED(old_size);
+#if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
+	CRUST_UNUSED(old_size);
 
-		if (size == 0)
-		{
-			_aligned_free(ptr);
-			return CRUST_NULL;
-		}
-
-		return _aligned_realloc(ptr, size, alignment);
-	}
-
-	static CRUST_INLINE void crustAlignedFree(void *ptr)
+	if (size == 0)
 	{
 		_aligned_free(ptr);
+		return CRUST_NULL;
 	}
+
+	return _aligned_realloc(ptr, size, alignment);
 #else
-	static CRUST_INLINE void *crustAlignedMalloc(usize size, usize alignment)
-	{
-		CRUST_ASSERT(alignment > 0);
-		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
-
-		if (size == 0)
-			return CRUST_NULL;
-
-		alignment = crustMaxUSize(alignment, sizeof(void *));
-
-		void *ptr = CRUST_NULL;
-		if (posix_memalign(&ptr, alignment, size) != 0)
-			return CRUST_NULL;
-
-		return ptr;
-	}
-
-	static CRUST_INLINE void *crustAlignedRealloc(void *ptr, usize old_size, usize size, usize alignment)
-	{
-		CRUST_ASSERT(alignment > 0);
-		CRUST_ASSERT(crustIsPow2USize(alignment) != 0);
-		CRUST_ASSERT(ptr == CRUST_NULL || old_size > 0);
-
-		if (size == 0)
-		{
-			free(ptr);
-			return CRUST_NULL;
-		}
-
-		void *new_ptr = crustAlignedMalloc(size, alignment);
-		if (new_ptr == CRUST_NULL)
-			return CRUST_NULL;
-
-		if (ptr != CRUST_NULL)
-		{
-			usize copy_size = crustMinUSize(old_size, size);
-			memcpy(new_ptr, ptr, copy_size);
-
-			free(ptr);
-		}
-
-		return new_ptr;
-	}
-
-	static CRUST_INLINE void crustAlignedFree(void *ptr)
+	if (size == 0)
 	{
 		free(ptr);
+		return CRUST_NULL;
 	}
+
+	void *new_ptr = crustAlignedMalloc(size, alignment);
+	if (new_ptr == CRUST_NULL)
+		return CRUST_NULL;
+
+	if (ptr != CRUST_NULL)
+	{
+		usize copy_size = crustMinUSize(old_size, size);
+		memcpy(new_ptr, ptr, copy_size);
+
+		free(ptr);
+	}
+
+	return new_ptr;
 #endif
+}
+
+static CRUST_INLINE void crustAlignedFree(void *ptr)
+{
+#if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
+	_aligned_free(ptr);
+#else
+	free(ptr);
+#endif
+}
 
 //
 typedef enum Crust_MemoryOrder_t
@@ -116,125 +91,396 @@ typedef enum Crust_MemoryOrder_t
 	CRUST_MEMORY_ORDER_SEQ_CST = 5,
 } Crust_MemoryOrder;
 
+static CRUST_INLINE int crustAtomicIsValidFailureOrder(Crust_MemoryOrder success, Crust_MemoryOrder failure)
+{
+	if (failure == CRUST_MEMORY_ORDER_RELEASE || failure == CRUST_MEMORY_ORDER_ACQ_REL)
+		return 0;
 
-#if defined(_MSC_VER)
-	static CRUST_INLINE u32 crustAtomicSwapU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
+	switch (success)
 	{
+		case CRUST_MEMORY_ORDER_RELAXED:
+			return failure == CRUST_MEMORY_ORDER_RELAXED;
+
+		case CRUST_MEMORY_ORDER_CONSUME:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME;
+
+		case CRUST_MEMORY_ORDER_ACQUIRE:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME ||
+				   failure == CRUST_MEMORY_ORDER_ACQUIRE;
+
+		case CRUST_MEMORY_ORDER_RELEASE:
+			return failure == CRUST_MEMORY_ORDER_RELAXED;
+
+		case CRUST_MEMORY_ORDER_ACQ_REL:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME ||
+				   failure == CRUST_MEMORY_ORDER_ACQUIRE;
+
+		case CRUST_MEMORY_ORDER_SEQ_CST:
+			return failure == CRUST_MEMORY_ORDER_RELAXED ||
+				   failure == CRUST_MEMORY_ORDER_CONSUME ||
+				   failure == CRUST_MEMORY_ORDER_ACQUIRE ||
+				   failure == CRUST_MEMORY_ORDER_SEQ_CST;
+	}
+
+	return 0;
+}
+
+static CRUST_INLINE u32 crustAtomicSwapU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
+{
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM64
+		switch (order)
+		{
+			case CRUST_MEMORY_ORDER_RELAXED: return (u32)_InterlockedExchange_nf((volatile long *)p, (long)v);
+
+			case CRUST_MEMORY_ORDER_CONSUME:
+			case CRUST_MEMORY_ORDER_ACQUIRE: return (u32)_InterlockedExchange_acq((volatile long *)p, (long)v);
+
+			case CRUST_MEMORY_ORDER_RELEASE: return (u32)_InterlockedExchange_rel((volatile long *)p, (long)v);
+
+			case CRUST_MEMORY_ORDER_ACQ_REL:
+			case CRUST_MEMORY_ORDER_SEQ_CST: return (u32)_InterlockedExchange((volatile long *)p, (long)v);
+		}
+
+		CRUST_ASSERT(0);
+		return 0;
+	#else
 		CRUST_UNUSED(order);
 		return (u32)_InterlockedExchange((volatile long *)p, (long)v);
-	}
+	#endif
+#else
+	return __atomic_exchange_n((u32 *)p, v, (int)order);
+#endif
+}
 
-	static CRUST_INLINE u32 crustAtomicCompareAndSwapU32(volatile u32 *p, u32 desired, u32 expected, Crust_MemoryOrder order)
-	{
-		CRUST_UNUSED(order);
+static CRUST_INLINE u32 crustAtomicCompareAndSwapU32(volatile u32 *p, u32 desired, u32 expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
+{
+	CRUST_ASSERT(crustAtomicIsValidFailureOrder(success_order, failure_order));
+
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM64
+		CRUST_UNUSED(failure_order);
+
+		switch (success_order)
+		{
+			case CRUST_MEMORY_ORDER_RELAXED: return (u32)_InterlockedCompareExchange_nf((volatile long *)p, (long)desired, (long)expected);
+
+			case CRUST_MEMORY_ORDER_CONSUME:
+			case CRUST_MEMORY_ORDER_ACQUIRE: return (u32)_InterlockedCompareExchange_acq((volatile long *)p, (long)desired, (long)expected);
+
+			case CRUST_MEMORY_ORDER_RELEASE: return (u32)_InterlockedCompareExchange_rel((volatile long *)p, (long)desired, (long)expected);
+
+			case CRUST_MEMORY_ORDER_ACQ_REL:
+			case CRUST_MEMORY_ORDER_SEQ_CST: return (u32)_InterlockedCompareExchange((volatile long *)p, (long)desired, (long)expected);
+		}
+
+		CRUST_ASSERT(0);
+		return 0;
+	#else
+		CRUST_UNUSED(success_order);
+		CRUST_UNUSED(failure_order);
+
 		return (u32)_InterlockedCompareExchange((volatile long *)p, (long)desired, (long)expected);
+	#endif
+#else
+	u32 e = expected;
+	__atomic_compare_exchange_n((u32 *)p, &e, desired, 0, (int)success_order, (int)failure_order);
+
+	return e;
+#endif
+}
+
+static CRUST_INLINE u32 crustAtomicLoadU32(volatile u32 *p, Crust_MemoryOrder order)
+{
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
+
+#if CRUST_COMPILER_MSVC
+	if (order == CRUST_MEMORY_ORDER_SEQ_CST)
+		return (u32)_InterlockedCompareExchange((volatile long *)p, 0, 0);
+
+	if (order == CRUST_MEMORY_ORDER_RELAXED)
+		return (u32)__iso_volatile_load32((const volatile int *)p);
+
+	#if CRUST_ARCH_X86 || CRUST_ARCH_X64
+		u32 result = (u32)__iso_volatile_load32((const volatile int *)p);
+		_ReadWriteBarrier();
+
+		return result;
+	#elif CRUST_ARCH_ARM64
+		return (u32)__ldar32((volatile unsigned __int32 *)p);
+	#endif
+#else
+	return __atomic_load_n((u32 *)p, (int)order);
+#endif
+}
+
+static CRUST_INLINE void crustAtomicStoreU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
+{
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQUIRE);
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_CONSUME);
+
+#if CRUST_COMPILER_MSVC
+	if (order == CRUST_MEMORY_ORDER_SEQ_CST)
+	{
+		_InterlockedExchange((volatile long *)p, (long)v);
+		return;
 	}
 
-	static CRUST_INLINE u32 crustAtomicLoadU32(volatile u32 *p, Crust_MemoryOrder order)
+	if (order == CRUST_MEMORY_ORDER_RELAXED)
+	{
+		__iso_volatile_store32((volatile int *)p, (int)v);
+		return;
+	}
+
+	#if CRUST_ARCH_X86 || CRUST_ARCH_X64
+		_ReadWriteBarrier();
+		__iso_volatile_store32((volatile int *)p, (int)v);
+	#elif CRUST_ARCH_ARM64
+		__stlr32((volatile unsigned __int32 *)p, (unsigned __int32)v);
+	#endif
+#else
+	__atomic_store_n((u32 *)p, v, (int)order);
+#endif
+}
+
+static CRUST_INLINE u32 crustAtomicIncrementU32(volatile u32 *p, Crust_MemoryOrder order)
+{
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM64
+		switch (order)
+		{
+			case CRUST_MEMORY_ORDER_RELAXED: return (u32)_InterlockedIncrement_nf((volatile long *)p);
+
+			case CRUST_MEMORY_ORDER_CONSUME:
+			case CRUST_MEMORY_ORDER_ACQUIRE: return (u32)_InterlockedIncrement_acq((volatile long *)p);
+
+			case CRUST_MEMORY_ORDER_RELEASE: return (u32)_InterlockedIncrement_rel((volatile long *)p);
+
+			case CRUST_MEMORY_ORDER_ACQ_REL:
+			case CRUST_MEMORY_ORDER_SEQ_CST: return (u32)_InterlockedIncrement((volatile long *)p);
+		}
+
+		CRUST_ASSERT(0);
+		return 0;
+	#else
+		CRUST_UNUSED(order);
+		return (u32)_InterlockedIncrement((volatile long *)p);
+	#endif
+#else
+	return __atomic_add_fetch((u32 *)p, 1, (int)order);
+#endif
+}
+
+static CRUST_INLINE u32 crustAtomicDecrementU32(volatile u32 *p, Crust_MemoryOrder order)
+{
+#if CRUST_COMPILER_MSVC
+	#if CRUST_ARCH_ARM64
+		switch (order)
+		{
+			case CRUST_MEMORY_ORDER_RELAXED: return (u32)_InterlockedDecrement_nf((volatile long *)p);
+
+			case CRUST_MEMORY_ORDER_CONSUME:
+			case CRUST_MEMORY_ORDER_ACQUIRE: return (u32)_InterlockedDecrement_acq((volatile long *)p);
+
+			case CRUST_MEMORY_ORDER_RELEASE: return (u32)_InterlockedDecrement_rel((volatile long *)p);
+
+			case CRUST_MEMORY_ORDER_ACQ_REL:
+			case CRUST_MEMORY_ORDER_SEQ_CST: return (u32)_InterlockedDecrement((volatile long *)p);
+		}
+
+		CRUST_ASSERT(0);
+		return 0;
+	#else
+		CRUST_UNUSED(order);
+		return (u32)_InterlockedDecrement((volatile long *)p);
+	#endif
+#else
+	return __atomic_sub_fetch((u32 *)p, 1, (int)order);
+#endif
+}
+
+#if CRUST_ARCH_64BIT
+	static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
+	{
+	#if CRUST_COMPILER_MSVC
+		#if CRUST_ARCH_ARM64
+			switch (order)
+			{
+				case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedExchange64_nf((volatile long long *)p, (long long)v);
+
+				case CRUST_MEMORY_ORDER_CONSUME:
+				case CRUST_MEMORY_ORDER_ACQUIRE: return (u64)_InterlockedExchange64_acq((volatile long long *)p, (long long)v);
+
+				case CRUST_MEMORY_ORDER_RELEASE: return (u64)_InterlockedExchange64_rel((volatile long long *)p, (long long)v);
+
+				case CRUST_MEMORY_ORDER_ACQ_REL:
+				case CRUST_MEMORY_ORDER_SEQ_CST: return (u64)_InterlockedExchange64((volatile long long *)p, (long long)v);
+			}
+
+			CRUST_ASSERT(0);
+			return 0;
+		#else
+			CRUST_UNUSED(order);
+			return (u64)_InterlockedExchange64((volatile long long *)p, (long long)v);
+		#endif
+	#else
+		return __atomic_exchange_n((u64 *)p, v, (int)order);
+	#endif
+	}
+
+	static CRUST_INLINE u64 crustAtomicCompareAndSwapU64(volatile u64 *p, u64 desired, u64 expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
+	{
+		CRUST_ASSERT(crustAtomicIsValidFailureOrder(success_order, failure_order));
+
+	#if CRUST_COMPILER_MSVC
+		#if CRUST_ARCH_ARM64
+			CRUST_UNUSED(failure_order);
+
+			switch (success_order)
+			{
+				case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedCompareExchange64_nf((volatile long long *)p, (long long)desired, (long long)expected);
+
+				case CRUST_MEMORY_ORDER_CONSUME:
+				case CRUST_MEMORY_ORDER_ACQUIRE: return (u64)_InterlockedCompareExchange64_acq((volatile long long *)p, (long long)desired, (long long)expected);
+
+				case CRUST_MEMORY_ORDER_RELEASE: return (u64)_InterlockedCompareExchange64_rel((volatile long long *)p, (long long)desired, (long long)expected);
+
+				case CRUST_MEMORY_ORDER_ACQ_REL:
+				case CRUST_MEMORY_ORDER_SEQ_CST: return (u64)_InterlockedCompareExchange64((volatile long long *)p, (long long)desired, (long long)expected);
+			}
+
+			CRUST_ASSERT(0);
+			return 0;
+		#else
+			CRUST_UNUSED(success_order);
+			CRUST_UNUSED(failure_order);
+
+			return (u64)_InterlockedCompareExchange64((volatile long long *)p, (long long)desired, (long long)expected);
+		#endif
+	#else
+		u64 e = expected;
+		__atomic_compare_exchange_n((u64 *)p, &e, desired, 0, (int)success_order, (int)failure_order);
+
+		return e;
+	#endif
+	}
+
+	static CRUST_INLINE u64 crustAtomicLoadU64(volatile u64 *p, Crust_MemoryOrder order)
 	{
 		CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
 		CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
 
-		u32 result = (u32)__iso_volatile_load32((const volatile int *)p);
-		if (order != CRUST_MEMORY_ORDER_RELAXED)
+	#if CRUST_COMPILER_MSVC
+		if (order == CRUST_MEMORY_ORDER_SEQ_CST)
+			return (u64)_InterlockedCompareExchange64((volatile long long *)p, 0, 0);
+
+		if (order == CRUST_MEMORY_ORDER_RELAXED)
+			return (u64)__iso_volatile_load64((const volatile long long *)p);
+
+		#if CRUST_ARCH_X64
+			u64 result = (u64)__iso_volatile_load64((const volatile long long *)p);
 			_ReadWriteBarrier();
 
-		return result;
+			return result;
+		#elif CRUST_ARCH_ARM64
+			return (u64)__ldar64((volatile unsigned __int64 *)p);
+		#endif
+	#else
+		return __atomic_load_n((u64 *)p, (int)order);
+	#endif
 	}
 
-	static CRUST_INLINE void crustAtomicStoreU32(volatile u32 *p, u32 v, Crust_MemoryOrder order)
+	static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
 	{
 		CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQUIRE);
 		CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
 		CRUST_ASSERT(order != CRUST_MEMORY_ORDER_CONSUME);
 
+	#if CRUST_COMPILER_MSVC
 		if (order == CRUST_MEMORY_ORDER_SEQ_CST)
 		{
-			_InterlockedExchange((volatile long *)p, (long)v);
+			_InterlockedExchange64((volatile long long *)p, (long long)v);
 			return;
 		}
 
-		if (order != CRUST_MEMORY_ORDER_RELAXED)
+		if (order == CRUST_MEMORY_ORDER_RELAXED)
+		{
+			__iso_volatile_store64((volatile long long *)p, (long long)v);
+			return;
+		}
+
+		#if CRUST_ARCH_X64
 			_ReadWriteBarrier();
-
-		__iso_volatile_store32((volatile int *)p, (int)v);
+			__iso_volatile_store64((volatile long long *)p, (long long)v);
+		#elif CRUST_ARCH_ARM64
+			__stlr64((volatile unsigned __int64 *)p, (unsigned __int64)v);
+		#endif
+	#else
+		__atomic_store_n((u64 *)p, v, (int)order);
+	#endif
 	}
 
-	static CRUST_INLINE u32 crustAtomicIncrementU32(volatile u32 *p, Crust_MemoryOrder order)
+	static CRUST_INLINE u64 crustAtomicIncrementU64(volatile u64 *p, Crust_MemoryOrder order)
 	{
-		CRUST_UNUSED(order);
-		return (u32)_InterlockedIncrement((volatile long *)p);
-	}
-
-	static CRUST_INLINE u32 crustAtomicDecrementU32(volatile u32 *p, Crust_MemoryOrder order)
-	{
-		CRUST_UNUSED(order);
-		return (u32)_InterlockedDecrement((volatile long *)p);
-	}
-
-	#if defined(CRUST_ARCH_64BIT)
-		static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
-		{
-			CRUST_UNUSED(order);
-			return (u64)_InterlockedExchange64((volatile long long *)p, (long long)v);
-		}
-
-		static CRUST_INLINE u64 crustAtomicCompareAndSwapU64(volatile u64 *p, u64 desired, u64 expected, Crust_MemoryOrder order)
-		{
-			CRUST_UNUSED(order);
-			return (u64)_InterlockedCompareExchange64((volatile long long *)p, (long long)desired, (long long)expected);
-		}
-
-		static CRUST_INLINE u64 crustAtomicLoadU64(volatile u64 *p, Crust_MemoryOrder order)
-		{
-			CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
-			CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
-
-			u64 result = (u64)__iso_volatile_load64((const volatile long long *)p);
-			if (order != CRUST_MEMORY_ORDER_RELAXED)
-				_ReadWriteBarrier();
-
-			return result;
-		}
-
-		static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
-		{
-			CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQUIRE);
-			CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
-			CRUST_ASSERT(order != CRUST_MEMORY_ORDER_CONSUME);
-
-			if (order == CRUST_MEMORY_ORDER_SEQ_CST)
+	#if CRUST_COMPILER_MSVC
+		#if CRUST_ARCH_ARM64
+			switch (order)
 			{
-				_InterlockedExchange64((volatile long long *)p, (long long)v);
-				return;
+				case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedIncrement64_nf((volatile long long *)p);
+
+				case CRUST_MEMORY_ORDER_CONSUME:
+				case CRUST_MEMORY_ORDER_ACQUIRE: return (u64)_InterlockedIncrement64_acq((volatile long long *)p);
+
+				case CRUST_MEMORY_ORDER_RELEASE: return (u64)_InterlockedIncrement64_rel((volatile long long *)p);
+
+				case CRUST_MEMORY_ORDER_ACQ_REL:
+				case CRUST_MEMORY_ORDER_SEQ_CST: return (u64)_InterlockedIncrement64((volatile long long *)p);
 			}
 
-			if (order != CRUST_MEMORY_ORDER_RELAXED)
-				_ReadWriteBarrier();
-
-			__iso_volatile_store64((volatile long long *)p, (long long)v);
-		}
-
-		static CRUST_INLINE u64 crustAtomicIncrementU64(volatile u64 *p, Crust_MemoryOrder order)
-		{
+			CRUST_ASSERT(0);
+			return 0;
+		#else
 			CRUST_UNUSED(order);
 			return (u64)_InterlockedIncrement64((volatile long long *)p);
-		}
+		#endif
+	#else
+		return __atomic_add_fetch((u64 *)p, 1, (int)order);
+	#endif
+	}
 
-		static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrder order)
-		{
+	static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrder order)
+	{
+	#if CRUST_COMPILER_MSVC
+		#if CRUST_ARCH_ARM64
+			switch (order)
+			{
+				case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedDecrement64_nf((volatile long long *)p);
+
+				case CRUST_MEMORY_ORDER_CONSUME:
+				case CRUST_MEMORY_ORDER_ACQUIRE: return (u64)_InterlockedDecrement64_acq((volatile long long *)p);
+
+				case CRUST_MEMORY_ORDER_RELEASE: return (u64)_InterlockedDecrement64_rel((volatile long long *)p);
+
+				case CRUST_MEMORY_ORDER_ACQ_REL:
+				case CRUST_MEMORY_ORDER_SEQ_CST: return (u64)_InterlockedDecrement64((volatile long long *)p);
+			}
+
+			CRUST_ASSERT(0);
+			return 0;
+		#else
 			CRUST_UNUSED(order);
 			return (u64)_InterlockedDecrement64((volatile long long *)p);
-		}
+		#endif
+	#else
+		return __atomic_sub_fetch((u64 *)p, 1, (int)order);
 	#endif
-
-	static CRUST_INLINE void crustCpuRelax(void)
-	{
-		_mm_pause();
 	}
-#endif
 
-#if CRUST_ARCH_64BIT
 	#define crustAtomicSwapUSize crustAtomicSwapU64
 	#define crustAtomicCompareAndSwapUSize crustAtomicCompareAndSwapU64
 	#define crustAtomicLoadUSize crustAtomicLoadU64
@@ -250,13 +496,34 @@ typedef enum Crust_MemoryOrder_t
 	#define crustAtomicDecrementUSize crustAtomicDecrementU32
 #endif
 
+static CRUST_INLINE void crustCpuRelax(void)
+{
+#if CRUST_ARCH_X86 || CRUST_ARCH_X64
+	#if CRUST_COMPILER_MSVC
+		_mm_pause();
+	#else
+		__builtin_ia32_pause();
+	#endif
+#elif CRUST_ARCH_ARM64
+	#if CRUST_COMPILER_MSVC
+		__yield();
+	#else
+		__asm__ __volatile__("yield" ::: "memory");
+	#endif
+#elif CRUST_ARCH_ARM
+	__asm__ __volatile__("yield" ::: "memory");
+#else
+	__asm__ __volatile__("" ::: "memory");
+#endif
+}
+
 //
 static CRUST_INLINE u32 crustLzcntU32(u32 value)
 {
 	CRUST_ASSERT(value != 0);
 
 #if CRUST_COMPILER_MSVC
-	#if CRUST_ARCH_ARM || CRUST_ARCH_ARM64
+	#if CRUST_ARCH_ARM64
 		return (u32)_CountLeadingZeros(value);
 	#else
 		unsigned long result;
@@ -273,7 +540,7 @@ static CRUST_INLINE u32 crustTzcntU32(u32 value)
 	CRUST_ASSERT(value != 0);
 
 #if CRUST_COMPILER_MSVC
-	#if CRUST_ARCH_ARM || CRUST_ARCH_ARM64
+	#if CRUST_ARCH_ARM64
 		return (u32)_CountTrailingZeros(value);
 	#else
 		unsigned long result;
@@ -288,7 +555,7 @@ static CRUST_INLINE u32 crustTzcntU32(u32 value)
 static CRUST_INLINE u32 crustPopcntU32(u32 value)
 {
 #if CRUST_COMPILER_MSVC
-	#if CRUST_ARCH_ARM || CRUST_ARCH_ARM64
+	#if CRUST_ARCH_ARM64
 		return (u32)_CountOneBits(value);
 	#elif CRUST_ARCH_X86 || CRUST_ARCH_X64
 		return (u32)__popcnt(value);
@@ -312,6 +579,17 @@ CRUST_APIENTRY void crustAssertFailure(const char *expression, const char *file,
 #else
 	__builtin_trap();
 #endif
+}
+
+//
+CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size)
+{
+	memcpy(dst, src, size);
+}
+
+CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size)
+{
+	memset(dst, value, size);
 }
 
 //
