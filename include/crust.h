@@ -195,6 +195,9 @@ typedef double						f64;
 #define CRUST_F32_MIN				(-CRUST_F32_MAX)
 #define CRUST_F32_POSITIVE_MIN		1.175494351e-38F
 
+#define CRUST_PI					3.14159265358979323846
+#define CRUST_TAU					6.28318530717958647693
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -210,10 +213,22 @@ CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
 CRUST_APIENTRY f32 crustAbsF32(f32 v);
 CRUST_APIENTRY f32 crustSqrtF32(f32 v);
 CRUST_APIENTRY f32 crustRsqrtF32(f32 v);
+CRUST_APIENTRY f32 crustCosF32(f32 v);
+CRUST_APIENTRY f32 crustAcosF32(f32 v);
+CRUST_APIENTRY f32 crustSinF32(f32 v);
+CRUST_APIENTRY f32 crustAsinF32(f32 v);
+CRUST_APIENTRY f32 crustTanF32(f32 v);
+CRUST_APIENTRY f32 crustAtan2F32(f32 y, f32 x);
 
 CRUST_APIENTRY f64 crustAbsF64(f64 v);
 CRUST_APIENTRY f64 crustSqrtF64(f64 v);
 CRUST_APIENTRY f64 crustRsqrtF64(f64 v);
+CRUST_APIENTRY f64 crustCosF64(f64 v);
+CRUST_APIENTRY f64 crustAcosF64(f64 v);
+CRUST_APIENTRY f64 crustSinF64(f64 v);
+CRUST_APIENTRY f64 crustAsinF64(f64 v);
+CRUST_APIENTRY f64 crustTanF64(f64 v);
+CRUST_APIENTRY f64 crustAtan2F64(f64 y, f64 x);
 
 //
 static CRUST_INLINE u8 crustIsPow2U8(u8 v)
