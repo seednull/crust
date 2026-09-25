@@ -670,7 +670,7 @@ CRUST_APIENTRY void crustSpinLockAcquire(Crust_SpinLock *lock)
 				backoff *= 2;
 		}
 
-		if (crustAtomicCompareAndSwapU32(&lock->counter, 1, 0, CRUST_MEMORY_ORDER_ACQUIRE) == 0)
+		if (crustAtomicCompareAndSwapU32(&lock->counter, 1, 0, CRUST_MEMORY_ORDER_ACQUIRE, CRUST_MEMORY_ORDER_RELAXED) == 0)
 			break;
 
 		if (backoff < 1024)
@@ -681,7 +681,7 @@ CRUST_APIENTRY void crustSpinLockAcquire(Crust_SpinLock *lock)
 CRUST_APIENTRY u8 crustSpinLockTryAcquire(Crust_SpinLock *lock)
 {
 	CRUST_ASSERT(lock != CRUST_NULL);
-	return (crustAtomicCompareAndSwapU32(&lock->counter, 1, 0, CRUST_MEMORY_ORDER_ACQUIRE) == 0);
+	return (crustAtomicCompareAndSwapU32(&lock->counter, 1, 0, CRUST_MEMORY_ORDER_ACQUIRE, CRUST_MEMORY_ORDER_RELAXED) == 0);
 }
 
 CRUST_APIENTRY void crustSpinLockRelease(Crust_SpinLock *lock)
@@ -718,7 +718,7 @@ CRUST_APIENTRY void crustRwLockAcquireRead(Crust_RwLock *lock)
 		{
 			CRUST_ASSERT((value & CRUST_RWLOCK_READER_MASK) != CRUST_RWLOCK_READER_MASK);
 
-			u32 result = crustAtomicCompareAndSwapU32(&lock->counter, value + 1, value, CRUST_MEMORY_ORDER_ACQUIRE);
+			u32 result = crustAtomicCompareAndSwapU32(&lock->counter, value + 1, value, CRUST_MEMORY_ORDER_ACQUIRE, CRUST_MEMORY_ORDER_RELAXED);
 
 			if (result == value)
 				break;
@@ -746,7 +746,7 @@ CRUST_APIENTRY void crustRwLockAcquireWrite(Crust_RwLock *lock)
 		if ((value & CRUST_RWLOCK_WRITER_MASK) == 0)
 		{
 			u32 new_value = value | CRUST_RWLOCK_PENDING_BIT;
-			u32 result = crustAtomicCompareAndSwapU32(&lock->counter, new_value, value, CRUST_MEMORY_ORDER_RELAXED);
+			u32 result = crustAtomicCompareAndSwapU32(&lock->counter, new_value, value, CRUST_MEMORY_ORDER_RELAXED, CRUST_MEMORY_ORDER_RELAXED);
 
 			if (result == value)
 				break;
@@ -772,7 +772,7 @@ CRUST_APIENTRY void crustRwLockAcquireWrite(Crust_RwLock *lock)
 			backoff *= 2;
 	}
 
-	u32 result = crustAtomicCompareAndSwapU32(&lock->counter, CRUST_RWLOCK_WRITE_BIT, CRUST_RWLOCK_PENDING_BIT, CRUST_MEMORY_ORDER_ACQUIRE);
+	u32 result = crustAtomicCompareAndSwapU32(&lock->counter, CRUST_RWLOCK_WRITE_BIT, CRUST_RWLOCK_PENDING_BIT, CRUST_MEMORY_ORDER_ACQUIRE, CRUST_MEMORY_ORDER_RELAXED);
 	CRUST_ASSERT(result == CRUST_RWLOCK_PENDING_BIT);
 	CRUST_UNUSED(result);
 }
@@ -789,7 +789,7 @@ CRUST_APIENTRY u8 crustRwLockTryAcquireRead(Crust_RwLock *lock)
 	if ((value & CRUST_RWLOCK_READER_MASK) == CRUST_RWLOCK_READER_MASK)
 		return 0;
 
-	u32 result = crustAtomicCompareAndSwapU32(&lock->counter, value + 1, value, CRUST_MEMORY_ORDER_ACQUIRE);
+	u32 result = crustAtomicCompareAndSwapU32(&lock->counter, value + 1, value, CRUST_MEMORY_ORDER_ACQUIRE, CRUST_MEMORY_ORDER_RELAXED);
 	return (result == value);
 }
 
@@ -797,7 +797,7 @@ CRUST_APIENTRY u8 crustRwLockTryAcquireWrite(Crust_RwLock *lock)
 {
 	CRUST_ASSERT(lock != CRUST_NULL);
 
-	u32 result = crustAtomicCompareAndSwapU32(&lock->counter, CRUST_RWLOCK_WRITE_BIT, 0, CRUST_MEMORY_ORDER_ACQUIRE);
+	u32 result = crustAtomicCompareAndSwapU32(&lock->counter, CRUST_RWLOCK_WRITE_BIT, 0, CRUST_MEMORY_ORDER_ACQUIRE, CRUST_MEMORY_ORDER_RELAXED);
 	return (result == 0);
 }
 
