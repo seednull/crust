@@ -208,15 +208,12 @@ CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
 
 //
 CRUST_APIENTRY f32 crustAbsF32(f32 v);
-CRUST_APIENTRY f64 crustAbsF64(f64 v);
 CRUST_APIENTRY f32 crustSqrtF32(f32 v);
 CRUST_APIENTRY f32 crustRsqrtF32(f32 v);
-CRUST_APIENTRY f32 crustCosF32(f32 v);
-CRUST_APIENTRY f32 crustAcosF32(f32 v);
-CRUST_APIENTRY f32 crustSinF32(f32 v);
-CRUST_APIENTRY f32 crustAsinF32(f32 v);
-CRUST_APIENTRY f32 crustTanF32(f32 v);
-CRUST_APIENTRY f32 crustAtan2F32(f32 y, f32 x);
+
+CRUST_APIENTRY f64 crustAbsF64(f64 v);
+CRUST_APIENTRY f64 crustSqrtF64(f64 v);
+CRUST_APIENTRY f64 crustRsqrtF64(f64 v);
 
 //
 static CRUST_INLINE u8 crustIsPow2U8(u8 v)
