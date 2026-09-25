@@ -33,7 +33,7 @@ static CRUST_INLINE f64 crustSqrtF64(f64 v)
 
 static CRUST_INLINE f64 crustRsqrtF64(f64 v)
 {
-	return 1.0 / crustSqrt(v);
+	return 1.0 / crustSqrtF64(v);
 }
 
 //
