@@ -10,10 +10,11 @@ set(TARGET crust)
 # ==================================================================================================
 
 if (CRUST_BUILD_STATIC)
-    set(CRUST_TARGET_TYPE STATIC)
+	set(CRUST_TARGET_TYPE STATIC)
+	set(CRUST_PLATFORM_DEFINES CRUST_IMPLEMENTATION)
 else()
-    set(CRUST_TARGET_TYPE SHARED)
-    set(CRUST_PLATFORM_DEFINES CRUST_SHARED_LIBRARY)
+	set(CRUST_TARGET_TYPE SHARED)
+	set(CRUST_PLATFORM_DEFINES CRUST_SHARED_LIBRARY CRUST_IMPLEMENTATION)
 endif()
 
 # ==================================================================================================
@@ -25,9 +26,11 @@ endif()
 # ==================================================================================================
 file(GLOB SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/*.c
+	${CMAKE_CURRENT_SOURCE_DIR}/libc/*.c
 )
 
 file(GLOB HEADERS
+	${CMAKE_CURRENT_SOURCE_DIR}/platform/*.inl
 	${CMAKE_CURRENT_SOURCE_DIR}/*.h
 )
 
