@@ -6,7 +6,7 @@ static CRUST_INLINE f32 crustAbsF32(f32 v)
 
 static CRUST_INLINE f32 crustSqrtF32(f32 v)
 {
-    return __builtin_sqrtf(v);
+	return __builtin_sqrtf(v);
 }
 
 static CRUST_INLINE f64 crustAbsF64(f64 v)
@@ -16,7 +16,7 @@ static CRUST_INLINE f64 crustAbsF64(f64 v)
 
 static CRUST_INLINE f64 crustSqrtF64(f64 v)
 {
-    return __builtin_sqrt(v);
+	return __builtin_sqrt(v);
 }
 
 //
