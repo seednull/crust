@@ -38,17 +38,13 @@ file (GLOB PUBLIC_HEADERS
 	${CRUST_DIR_API}/platform/*.inl
 )
 
-file (GLOB PUBLIC_HEADER
-	${CRUST_DIR_API}/crust.h
-)
-
 # ==================================================================================================
 # Target
 # ==================================================================================================
 add_library(${TARGET} ${CRUST_TARGET_TYPE} ${SOURCES} ${HEADERS} ${PUBLIC_HEADERS})
 
 set_target_properties(${TARGET} PROPERTIES DEBUG_POSTFIX d)
-set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER ${PUBLIC_HEADER})
+set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${PUBLIC_HEADERS}")
 
 if (WIN32)
 	set_target_properties(${TARGET} PROPERTIES PREFIX "")
