@@ -123,14 +123,12 @@ install(
 	DESTINATION lib/cmake/crust
 )
 
-# Генерируем crustConfig.cmake из шаблона
 configure_package_config_file(
 	${PROJECT_SOURCE_DIR}/cmake/crustConfig.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/crustConfig.cmake
 	INSTALL_DESTINATION lib/cmake/crust
 )
 
-# Генерируем crustConfigVersion.cmake для проверки версий
 write_basic_package_version_file(
 	${CMAKE_CURRENT_BINARY_DIR}/crustConfigVersion.cmake
 	VERSION ${PROJECT_VERSION}
