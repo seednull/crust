@@ -248,27 +248,27 @@ static CRUST_INLINE int crustIsValidFailureOrder(Crust_MemoryOrder success, Crus
 			return failure == CRUST_MEMORY_ORDER_RELAXED;
 
 		case CRUST_MEMORY_ORDER_CONSUME:
-			return failure == CRUST_MEMORY_ORDER_RELAXED ||
-				   failure == CRUST_MEMORY_ORDER_CONSUME;
+			return failure == CRUST_MEMORY_ORDER_RELAXED
+				|| failure == CRUST_MEMORY_ORDER_CONSUME;
 
 		case CRUST_MEMORY_ORDER_ACQUIRE:
-			return failure == CRUST_MEMORY_ORDER_RELAXED ||
-				   failure == CRUST_MEMORY_ORDER_CONSUME ||
-				   failure == CRUST_MEMORY_ORDER_ACQUIRE;
+			return failure == CRUST_MEMORY_ORDER_RELAXED
+				|| failure == CRUST_MEMORY_ORDER_CONSUME
+				|| failure == CRUST_MEMORY_ORDER_ACQUIRE;
 
 		case CRUST_MEMORY_ORDER_RELEASE:
 			return failure == CRUST_MEMORY_ORDER_RELAXED;
 
 		case CRUST_MEMORY_ORDER_ACQ_REL:
-			return failure == CRUST_MEMORY_ORDER_RELAXED ||
-				   failure == CRUST_MEMORY_ORDER_CONSUME ||
-				   failure == CRUST_MEMORY_ORDER_ACQUIRE;
+			return failure == CRUST_MEMORY_ORDER_RELAXED
+				|| failure == CRUST_MEMORY_ORDER_CONSUME
+				|| failure == CRUST_MEMORY_ORDER_ACQUIRE;
 
 		case CRUST_MEMORY_ORDER_SEQ_CST:
-			return failure == CRUST_MEMORY_ORDER_RELAXED ||
-				   failure == CRUST_MEMORY_ORDER_CONSUME ||
-				   failure == CRUST_MEMORY_ORDER_ACQUIRE ||
-				   failure == CRUST_MEMORY_ORDER_SEQ_CST;
+			return failure == CRUST_MEMORY_ORDER_RELAXED
+				|| failure == CRUST_MEMORY_ORDER_CONSUME
+				|| failure == CRUST_MEMORY_ORDER_ACQUIRE
+				|| failure == CRUST_MEMORY_ORDER_SEQ_CST;
 	}
 
 	return 0;
@@ -304,21 +304,14 @@ static CRUST_INLINE int crustIsValidFailureOrder(Crust_MemoryOrder success, Crus
 	#define crustAtomicDecrementUSize crustAtomicDecrementU32
 #endif
 
+static CRUST_INLINE f32 crustRsqrtF32(f32 v) { return 1.0f / crustSqrtF32(v); }
+static CRUST_INLINE f64 crustRsqrtF64(f64 v) { return 1.0 / crustSqrtF64(v); }
+
 //
 CRUST_APIENTRY void crustMemcpy(void *dst, const void *src, usize size);
 CRUST_APIENTRY void crustMemset(void *dst, u8 value, usize size);
 
 //
-static CRUST_INLINE f32 crustRsqrtF32(f32 v)
-{
-	return 1.0f / crustSqrtF32(v);
-}
-
-static CRUST_INLINE f64 crustRsqrtF64(f64 v)
-{
-	return 1.0 / crustSqrtF64(v);
-}
-
 CRUST_APIENTRY f32 crustCosF32(f32 v);
 CRUST_APIENTRY f32 crustAcosF32(f32 v);
 CRUST_APIENTRY f32 crustSinF32(f32 v);
@@ -332,6 +325,52 @@ CRUST_APIENTRY f64 crustSinF64(f64 v);
 CRUST_APIENTRY f64 crustAsinF64(f64 v);
 CRUST_APIENTRY f64 crustTanF64(f64 v);
 CRUST_APIENTRY f64 crustAtan2F64(f64 y, f64 x);
+
+//
+static CRUST_INLINE u8 crustMinU8(u8 a, u8 b) { return (a < b) ? a : b; }
+static CRUST_INLINE u16 crustMinU16(u16 a, u16 b) { return (a < b) ? a : b; }
+static CRUST_INLINE u32 crustMinU32(u32 a, u32 b) { return (a < b) ? a : b; }
+static CRUST_INLINE u64 crustMinU64(u64 a, u64 b) { return (a < b) ? a : b; }
+static CRUST_INLINE usize crustMinUSize(usize a, usize b) { return (a < b) ? a : b; }
+static CRUST_INLINE i8 crustMinI8(i8 a, i8 b) { return (a < b) ? a : b; }
+static CRUST_INLINE i16 crustMinI16(i16 a, i16 b) { return (a < b) ? a : b; }
+static CRUST_INLINE i32 crustMinI32(i32 a, i32 b) { return (a < b) ? a : b; }
+static CRUST_INLINE i64 crustMinI64(i64 a, i64 b) { return (a < b) ? a : b; }
+static CRUST_INLINE isize crustMinISize(isize a, isize b) { return (a < b) ? a : b; }
+static CRUST_INLINE f32 crustMinF32(f32 a, f32 b) { return (a < b) ? a : b; }
+static CRUST_INLINE f64 crustMinF64(f64 a, f64 b) { return (a < b) ? a : b; }
+
+static CRUST_INLINE u8 crustMaxU8(u8 a, u8 b) { return (a < b) ? b : a; }
+static CRUST_INLINE u16 crustMaxU16(u16 a, u16 b) { return (a < b) ? b : a; }
+static CRUST_INLINE u32 crustMaxU32(u32 a, u32 b) { return (a < b) ? b : a; }
+static CRUST_INLINE u64 crustMaxU64(u64 a, u64 b) { return (a < b) ? b : a; }
+static CRUST_INLINE usize crustMaxUSize(usize a, usize b) { return (a < b) ? b : a; }
+static CRUST_INLINE i8 crustMaxI8(i8 a, i8 b) { return (a < b) ? b : a; }
+static CRUST_INLINE i16 crustMaxI16(i16 a, i16 b) { return (a < b) ? b : a; }
+static CRUST_INLINE i32 crustMaxI32(i32 a, i32 b) { return (a < b) ? b : a; }
+static CRUST_INLINE i64 crustMaxI64(i64 a, i64 b) { return (a < b) ? b : a; }
+static CRUST_INLINE isize crustMaxISize(isize a, isize b) { return (a < b) ? b : a; }
+static CRUST_INLINE f32 crustMaxF32(f32 a, f32 b) { return (a < b) ? b : a; }
+static CRUST_INLINE f64 crustMaxF64(f64 a, f64 b) { return (a < b) ? b : a; }
+
+static CRUST_INLINE u8 crustClampU8(u8 v, u8 v_min, u8 v_max) { return crustMaxU8(v_min, crustMinU8(v, v_max)); }
+static CRUST_INLINE u16 crustClampU16(u16 v, u16 v_min, u16 v_max) { return crustMaxU16(v_min, crustMinU16(v, v_max)); }
+static CRUST_INLINE u32 crustClampU32(u32 v, u32 v_min, u32 v_max) { return crustMaxU32(v_min, crustMinU32(v, v_max)); }
+static CRUST_INLINE u64 crustClampU64(u64 v, u64 v_min, u64 v_max) { return crustMaxU64(v_min, crustMinU64(v, v_max)); }
+static CRUST_INLINE usize crustClampUSize(usize v, usize v_min, usize v_max) { return crustMaxUSize(v_min, crustMinUSize(v, v_max)); }
+static CRUST_INLINE i8 crustClampI8(i8 v, i8 v_min, i8 v_max) { return crustMaxI8(v_min, crustMinI8(v, v_max)); }
+static CRUST_INLINE i16 crustClampI16(i16 v, i16 v_min, i16 v_max) { return crustMaxI16(v_min, crustMinI16(v, v_max)); }
+static CRUST_INLINE i32 crustClampI32(i32 v, i32 v_min, i32 v_max) { return crustMaxI32(v_min, crustMinI32(v, v_max)); }
+static CRUST_INLINE i64 crustClampI64(i64 v, i64 v_min, i64 v_max) { return crustMaxI64(v_min, crustMinI64(v, v_max)); }
+static CRUST_INLINE isize crustClampISize(isize v, isize v_min, isize v_max) { return crustMaxISize(v_min, crustMinISize(v, v_max)); }
+static CRUST_INLINE f32 crustClampF32(f32 v, f32 v_min, f32 v_max) { return crustMaxF32(v_min, crustMinF32(v, v_max)); }
+static CRUST_INLINE f64 crustClampF64(f64 v, f64 v_min, f64 v_max) { return crustMaxF64(v_min, crustMinF64(v, v_max)); }
+
+static CRUST_INLINE u8 crustAbsI8(i8 v) { return (v < 0) ? (u8)(-(i32)v) : (u8)v; }
+static CRUST_INLINE u16 crustAbsI16(i16 v) { return (v < 0) ? (u16)(-(i32)v) : (u16)v; }
+static CRUST_INLINE u32 crustAbsI32(i32 v) { return (v < 0) ? (u32)((u32)0 - (u32)v) : (u32)v; }
+static CRUST_INLINE u64 crustAbsI64(i64 v) { return (v < 0) ? (u64)((u64)0 - (u64)v) : (u64)v; }
+static CRUST_INLINE usize crustAbsISize(isize v) { return (v < 0) ? (usize)((usize)0 - (usize)v) : (usize)v; }
 
 //
 static CRUST_INLINE u8 crustIsPow2U8(u8 v)
@@ -487,211 +526,6 @@ static CRUST_INLINE usize crustAlignUpUSize(usize value, usize alignment)
 
 	usize mask = alignment - 1;
 	return (value + mask) & ~mask;
-}
-
-static CRUST_INLINE u8 crustMinU8(u8 a, u8 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE u16 crustMinU16(u16 a, u16 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE u32 crustMinU32(u32 a, u32 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE u64 crustMinU64(u64 a, u64 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE usize crustMinUSize(usize a, usize b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE i8 crustMinI8(i8 a, i8 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE i16 crustMinI16(i16 a, i16 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE i32 crustMinI32(i32 a, i32 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE i64 crustMinI64(i64 a, i64 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE isize crustMinISize(isize a, isize b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE f32 crustMinF32(f32 a, f32 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE f64 crustMinF64(f64 a, f64 b)
-{
-	return (a < b) ? a : b;
-}
-
-static CRUST_INLINE u8 crustMaxU8(u8 a, u8 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE u16 crustMaxU16(u16 a, u16 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE u32 crustMaxU32(u32 a, u32 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE u64 crustMaxU64(u64 a, u64 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE usize crustMaxUSize(usize a, usize b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE i8 crustMaxI8(i8 a, i8 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE i16 crustMaxI16(i16 a, i16 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE i32 crustMaxI32(i32 a, i32 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE i64 crustMaxI64(i64 a, i64 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE isize crustMaxISize(isize a, isize b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE f32 crustMaxF32(f32 a, f32 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE f64 crustMaxF64(f64 a, f64 b)
-{
-	return (a < b) ? b : a;
-}
-
-static CRUST_INLINE u8 crustClampU8(u8 v, u8 v_min, u8 v_max)
-{
-	return crustMaxU8(v_min, crustMinU8(v, v_max));
-}
-
-static CRUST_INLINE u16 crustClampU16(u16 v, u16 v_min, u16 v_max)
-{
-	return crustMaxU16(v_min, crustMinU16(v, v_max));
-}
-
-static CRUST_INLINE u32 crustClampU32(u32 v, u32 v_min, u32 v_max)
-{
-	return crustMaxU32(v_min, crustMinU32(v, v_max));
-}
-
-static CRUST_INLINE u64 crustClampU64(u64 v, u64 v_min, u64 v_max)
-{
-	return crustMaxU64(v_min, crustMinU64(v, v_max));
-}
-
-static CRUST_INLINE usize crustClampUSize(usize v, usize v_min, usize v_max)
-{
-	return crustMaxUSize(v_min, crustMinUSize(v, v_max));
-}
-
-static CRUST_INLINE i8 crustClampI8(i8 v, i8 v_min, i8 v_max)
-{
-	return crustMaxI8(v_min, crustMinI8(v, v_max));
-}
-
-static CRUST_INLINE i16 crustClampI16(i16 v, i16 v_min, i16 v_max)
-{
-	return crustMaxI16(v_min, crustMinI16(v, v_max));
-}
-
-static CRUST_INLINE i32 crustClampI32(i32 v, i32 v_min, i32 v_max)
-{
-	return crustMaxI32(v_min, crustMinI32(v, v_max));
-}
-
-static CRUST_INLINE i64 crustClampI64(i64 v, i64 v_min, i64 v_max)
-{
-	return crustMaxI64(v_min, crustMinI64(v, v_max));
-}
-
-static CRUST_INLINE isize crustClampISize(isize v, isize v_min, isize v_max)
-{
-	return crustMaxISize(v_min, crustMinISize(v, v_max));
-}
-
-static CRUST_INLINE f32 crustClampF32(f32 v, f32 v_min, f32 v_max)
-{
-	return crustMaxF32(v_min, crustMinF32(v, v_max));
-}
-
-static CRUST_INLINE f64 crustClampF64(f64 v, f64 v_min, f64 v_max)
-{
-	return crustMaxF64(v_min, crustMinF64(v, v_max));
-}
-
-static CRUST_INLINE u8 crustAbsI8(i8 v)
-{
-	return (v < 0) ? (u8)(-(i32)v) : (u8)v;
-}
-
-static CRUST_INLINE u16 crustAbsI16(i16 v)
-{
-	return (v < 0) ? (u16)(-(i32)v) : (u16)v;
-}
-
-static CRUST_INLINE u32 crustAbsI32(i32 v)
-{
-	return (v < 0) ? (u32)((u32)0 - (u32)v) : (u32)v;
-}
-
-static CRUST_INLINE u64 crustAbsI64(i64 v)
-{
-	return (v < 0) ? (u64)((u64)0 - (u64)v) : (u64)v;
-}
-
-static CRUST_INLINE usize crustAbsISize(isize v)
-{
-	return (v < 0) ? (usize)((usize)0 - (usize)v) : (usize)v;
 }
 
 //
