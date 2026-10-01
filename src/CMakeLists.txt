@@ -64,7 +64,7 @@ endif()
 # ==================================================================================================
 target_include_directories(${CRUST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${CRUST_TARGET} PUBLIC "$<BUILD_INTERFACE:${CRUST_DIR_API}>")
-target_include_directories(${CRUST_TARGET} PUBLIC "$<INSTALL_INTERFACE:include>")
+target_include_directories(${CRUST_TARGET} PUBLIC "$<INSTALL_INTERFACE:include/crust>")
 
 # ==================================================================================================
 # Preprocessor
@@ -107,12 +107,12 @@ install(
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
-	PUBLIC_HEADER DESTINATION include
+	PUBLIC_HEADER DESTINATION include/crust
 )
 
 install(
 	DIRECTORY ${CRUST_DIR_API}/platform
-	DESTINATION include
+	DESTINATION include/crust
 	FILES_MATCHING PATTERN "*.inl"
 )
 
