@@ -1421,9 +1421,7 @@ typedef struct Crust_HeapNode_t
 typedef struct Crust_HeapNodePool_t
 {
 	Crust_HeapNode *nodes;
-	u32 *node_masks;
-	u32 *free_indices;
-	u32 num_free_indices;
+	u32 free_head;
 	u32 capacity;
 } Crust_HeapNodePool;
 

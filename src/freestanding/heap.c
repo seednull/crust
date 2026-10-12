@@ -4,56 +4,44 @@
 static u32 crustHeapNodePoolAcquire(Crust_HeapNodePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->free_indices != CRUST_NULL);
-	CRUST_ASSERT(pool->num_free_indices > 0);
+	CRUST_ASSERT(pool->nodes != CRUST_NULL);
+	CRUST_ASSERT(pool->capacity > pool->free_head);
 
-	return pool->free_indices[--pool->num_free_indices];
+	u32 index = pool->free_head;
+	pool->free_head = pool->nodes[index].next_bin;
+
+	return index;
 }
 
 static void crustHeapNodePoolRelease(Crust_HeapNodePool *pool, u32 index)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->free_indices != CRUST_NULL);
-	CRUST_ASSERT(pool->num_free_indices < pool->capacity);
+	CRUST_ASSERT(pool->nodes != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity > index);
 
-	pool->free_indices[pool->num_free_indices++] = index;
+	pool->nodes[index].next_bin = pool->free_head;
+	pool->free_head = index;
 }
 
-static void crustHeapNodePoolAddMask(Crust_HeapNodePool *pool, u32 index)
+static void crustHeapNodePoolMarkUsed(Crust_HeapNodePool *pool, u32 index)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
+	CRUST_ASSERT(pool->nodes != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity > index);
 
-	u32 mask_index = index / 32;
-	u32 bit_index = index % 32;
+	Crust_HeapNode *node = &pool->nodes[index];
 
-	pool->node_masks[mask_index] |= (1u << bit_index);
+	node->prev_bin = index;
+	node->next_bin = index;
 }
 
-static void crustHeapNodePoolRemoveMask(Crust_HeapNodePool *pool, u32 index)
+static u8 crustHeapNodePoolIsUsed(const Crust_HeapNodePool *pool, u32 index)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
+	CRUST_ASSERT(pool->nodes != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity > index);
 
-	u32 mask_index = index / 32;
-	u32 bit_index = index % 32;
-
-	pool->node_masks[mask_index] &= ~(1u << bit_index);
-}
-
-static u8 crustHeapNodePoolCheckMask(const Crust_HeapNodePool *pool, u32 index)
-{
-	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(pool->node_masks != CRUST_NULL);
-	CRUST_ASSERT(pool->capacity > index);
-
-	u32 mask_index = index / 32;
-	u32 bit_index = index % 32;
-
-	return (pool->node_masks[mask_index] & (1u << bit_index)) != 0;
+	return pool->nodes[index].next_bin == index;
 }
 
 //
@@ -62,36 +50,25 @@ CRUST_APIENTRY void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_Heap
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
-	usize masks_capacity = crustAlignUpUSize(capacity, 32) / 32;
-
 	pool->nodes = crustAllocArray(allocator, Crust_HeapNode, capacity);
-	pool->node_masks = crustAllocArray(allocator, u32, masks_capacity);
-	pool->free_indices = crustAllocArray(allocator, u32, capacity);
-	pool->num_free_indices = capacity;
+	pool->free_head = 0;
 	pool->capacity = capacity;
 
-	for (u32 i = 0; i < capacity; ++i)
-		pool->free_indices[i] = capacity - i - 1;
+	for (u32 i = 0; i < capacity - 1; ++i)
+		pool->nodes[i].next_bin = i + 1;
 
-	for (u32 i = 0; i < masks_capacity; ++i)
-		pool->node_masks[i] = 0;
+	pool->nodes[capacity - 1].next_bin = CRUST_U32_MAX;
 }
 
 CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 
-	usize masks_capacity = crustAlignUpUSize(pool->capacity, 32) / 32;
-
 	crustFreeArray(allocator, pool->nodes, Crust_HeapNode, pool->capacity);
-	crustFreeArray(allocator, pool->node_masks, u32, masks_capacity);
-	crustFreeArray(allocator, pool->free_indices, u32, pool->capacity);
 
 	pool->nodes = CRUST_NULL;
-	pool->node_masks = CRUST_NULL;
-	pool->free_indices = CRUST_NULL;
 
-	pool->num_free_indices = 0;
+	pool->free_head = CRUST_U32_MAX;
 	pool->capacity = 0;
 }
 
@@ -224,14 +201,13 @@ static void crustHeapAddNodeToBin(Crust_Heap *heap, u32 index, u32 size, u32 off
 	node->next_bin = CRUST_U32_MAX;
 	node->prev_neighbour = CRUST_U32_MAX;
 	node->next_neighbour = CRUST_U32_MAX;
-	crustHeapNodePoolRemoveMask(pool, index);
 
 	u32 bin_head_index = heap->heads[bin_index];
 
 	if (bin_head_index != CRUST_U32_MAX)
 	{
 		Crust_HeapNode *bin_head_node = &pool->nodes[bin_head_index];
-		CRUST_ASSERT(crustHeapNodePoolCheckMask(pool, bin_head_index) == 0);
+		CRUST_ASSERT(crustHeapNodePoolIsUsed(pool, bin_head_index) == 0);
 
 		bin_head_node->prev_bin = index;
 		node->next_bin = bin_head_index;
@@ -252,7 +228,7 @@ static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 
 	Crust_HeapNode *node = &pool->nodes[index];
 	CRUST_ASSERT(node != CRUST_NULL);
-	CRUST_ASSERT(crustHeapNodePoolCheckMask(pool, index) == 0);
+	CRUST_ASSERT(crustHeapNodePoolIsUsed(pool, index) == 0);
 
 	u8 bin_index = crustHeapToBinIndex(node->size);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) <= node->size);
@@ -428,7 +404,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 
 	Crust_HeapNode *node = &pool->nodes[allocation.index];
 	CRUST_ASSERT(node != CRUST_NULL);
-	CRUST_ASSERT(crustHeapNodePoolCheckMask(pool, allocation.index) == 0);
+	CRUST_ASSERT(crustHeapNodePoolIsUsed(pool, allocation.index) == 0);
 	CRUST_ASSERT(allocation.offset >= node->offset);
 
 	u32 remainder_begin_size = allocation.offset - node->offset;
@@ -446,14 +422,14 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 	node->offset = allocation.offset;
 	node->size = size;
 
-	crustHeapNodePoolAddMask(pool, allocation.index);
+	crustHeapNodePoolMarkUsed(pool, allocation.index);
 
 	if (remainder_begin_size > 0)
 	{
 		Crust_HeapNode *prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
 
 		// try merge with previous free node
-		if (prev_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, prev_index) == 0)
+		if (prev_node != CRUST_NULL && crustHeapNodePoolIsUsed(pool, prev_index) == 0)
 		{
 			CRUST_ASSERT(prev_node->next_neighbour == allocation.index);
 
@@ -488,7 +464,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 		Crust_HeapNode *next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
 
 		// try merge with next free node
-		if (next_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, next_index) == 0)
+		if (next_node != CRUST_NULL && crustHeapNodePoolIsUsed(pool, next_index) == 0)
 		{
 			CRUST_ASSERT(next_node->prev_neighbour == allocation.index);
 
@@ -561,7 +537,7 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 
 	Crust_HeapNode *node = &pool->nodes[allocation.index];
 	CRUST_ASSERT(node != CRUST_NULL);
-	CRUST_ASSERT(crustHeapNodePoolCheckMask(pool, allocation.index) != 0);
+	CRUST_ASSERT(crustHeapNodePoolIsUsed(pool, allocation.index) != 0);
 	CRUST_ASSERT(allocation.offset >= node->offset);
 
 	u32 prev_index = node->prev_neighbour;
@@ -573,28 +549,32 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 	Crust_HeapNode *prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
 
 	// try merge with previous free node
-	if (prev_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, prev_index) == 0)
+	if (prev_node != CRUST_NULL && crustHeapNodePoolIsUsed(pool, prev_index) == 0)
 	{
 		offset = prev_node->offset;
 		size += prev_node->size;
 
+		u32 prev_prev_index = prev_node->prev_neighbour;
+
 		crustHeapRemoveNodeFromBin(heap, prev_index);
 		crustHeapNodePoolRelease(pool, prev_index);
 
-		prev_index = prev_node->prev_neighbour;
+		prev_index = prev_prev_index;
 	}
 
 	Crust_HeapNode *next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
 
 	// try merge with next free node
-	if (next_node != CRUST_NULL && crustHeapNodePoolCheckMask(pool, next_index) == 0)
+	if (next_node != CRUST_NULL && crustHeapNodePoolIsUsed(pool, next_index) == 0)
 	{
 		size += next_node->size;
+
+		u32 next_next_index = next_node->next_neighbour;
 
 		crustHeapRemoveNodeFromBin(heap, next_index);
 		crustHeapNodePoolRelease(pool, next_index);
 
-		next_index = next_node->next_neighbour;
+		next_index = next_next_index;
 	}
 
 	crustHeapAddNodeToBin(heap, allocation.index, size, offset);
