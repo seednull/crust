@@ -8,6 +8,7 @@ project(crust VERSION 1.0.0 LANGUAGES C)
 # ==================================================================================================
 # Global options
 # ==================================================================================================
+option(CRUST_BUILD_TESTS "Build crust tests" OFF)
 
 # ==================================================================================================
 # Global Variables
@@ -29,3 +30,8 @@ project(crust VERSION 1.0.0 LANGUAGES C)
 # Sub-projects
 # ==================================================================================================
 add_subdirectory(src)
+
+if (CRUST_BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
+endif()
