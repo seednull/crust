@@ -217,6 +217,7 @@ CRUST_APIENTRY const void *crustSpscBipBufferStageRead(Crust_SpscBipBuffer *bip,
 	CRUST_ASSERT(size > 0);
 
 	usize r = crustAtomicLoadUSize(&bip->reader, CRUST_MEMORY_ORDER_RELAXED);
+	usize w = crustAtomicLoadUSize(&bip->writer, CRUST_MEMORY_ORDER_ACQUIRE);
 
 	usize begin = crustAtomicLoadUSize(&bip->begin[r], CRUST_MEMORY_ORDER_RELAXED);
 	usize end = crustAtomicLoadUSize(&bip->end[r], CRUST_MEMORY_ORDER_ACQUIRE);
@@ -229,8 +230,6 @@ CRUST_APIENTRY const void *crustSpscBipBufferStageRead(Crust_SpscBipBuffer *bip,
 		bip->read_staged = size;
 		return (const u8 *)bip->memory + begin;
 	}
-
-	usize w = crustAtomicLoadUSize(&bip->writer, CRUST_MEMORY_ORDER_ACQUIRE);
 
 	if (r == w)
 		return CRUST_NULL;
