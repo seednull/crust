@@ -157,6 +157,7 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_Gen
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
 	CRUST_ASSERT(pool->free_head != CRUST_USIZE_MAX);
+	CRUST_ASSERT(max_generation > 0);
 
 	usize index = pool->free_head;
 	usize next = pool->nexts[index];
