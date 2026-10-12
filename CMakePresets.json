@@ -5,8 +5,8 @@
             "name": "msvc2022-common",
             "hidden": true,
             "generator": "Visual Studio 17 2022",
-            "binaryDir": "${workspaceFolder}/build",
-            "installDir": "${workspaceFolder}/build"
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build"
         },
         {
             "name": "msvc2022-x64",
@@ -19,8 +19,8 @@
             "name": "msvc2026-common",
             "hidden": true,
             "generator": "Visual Studio 18 2026",
-            "binaryDir": "${workspaceFolder}/build",
-            "installDir": "${workspaceFolder}/build"
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build"
         },
         {
             "name": "msvc2026-x64",
@@ -33,8 +33,8 @@
             "name": "emscripten-ninja-common",
             "hidden": true,
             "generator": "Ninja",
-            "binaryDir": "${workspaceFolder}/build",
-            "installDir": "${workspaceFolder}/build",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build",
             "toolchainFile": "$penv{EMROOT}/cmake/Modules/Platform/Emscripten.cmake"
         },
         {
@@ -57,11 +57,11 @@
             "name": "osx-clang-common",
             "hidden": true,
             "generator": "Unix Makefiles",
-            "binaryDir": "${workspaceFolder}/build",
-            "installDir": "${workspaceFolder}/build",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build",
             "cacheVariables": {
-                "C": "/usr/bin/clang",
-                "CXX": "/usr/bin/clang++"
+                "CMAKE_C_COMPILER": "/usr/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
             }
         },
         {
