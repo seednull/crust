@@ -1006,32 +1006,48 @@ static CRUST_INLINE Crust_Quat crustQuatNormalize(Crust_Quat q)
 
 static CRUST_INLINE Crust_Quat crustQuatNlerp(Crust_Quat a, Crust_Quat b, f32 t)
 {
+	f32 ta = 1.0f - t;
+	f32 tb = t;
+
+	if (crustQuatDot(a, b) < 0.0f)
+		tb = -tb;
+
 	Crust_Quat result;
-	result.x = a.x + (b.x - a.x) * t;
-	result.y = a.y + (b.y - a.y) * t;
-	result.z = a.z + (b.z - a.z) * t;
-	result.w = a.w + (b.w - a.w) * t;
+	result.x = a.x * ta + b.x * tb;
+	result.y = a.y * ta + b.y * tb;
+	result.z = a.z * ta + b.z * tb;
+	result.w = a.w * ta + b.w * tb;
 
 	return crustQuatNormalize(result);
 }
 
 static CRUST_INLINE Crust_Quat crustQuatSlerp(Crust_Quat a, Crust_Quat b, f32 t)
 {
-	f32 cos_half_theta = crustQuatDot(a, b);
+	f32 dot = crustQuatDot(a, b);
+	f32 cos_half_theta = crustAbsF32(dot);
 
-	f32 half_theta = crustAcosF32(cos_half_theta);
-	f32 sin_half_theta = crustSqrtF32(1.0f - cos_half_theta * cos_half_theta);
+	f32 ta = 1.0f - t;
+	f32 tb = t;
 
-	f32 ra = crustSinF32((1.0f - t) * half_theta) / sin_half_theta;
-	f32 rb = crustSinF32(t * half_theta) / sin_half_theta;
+	if (cos_half_theta <= 0.9995f)
+	{
+		f32 half_theta = crustAcosF32(cos_half_theta);
+		f32 sin_half_theta = crustSqrtF32(1.0f - cos_half_theta * cos_half_theta);
+
+		ta = crustSinF32((1.0f - t) * half_theta) / sin_half_theta;
+		tb = crustSinF32(t * half_theta) / sin_half_theta;
+	}
+
+	if (dot < 0.0f)
+		tb = -tb;
 
 	Crust_Quat result;
-	result.x = a.x * ra + b.x * rb;
-	result.y = a.y * ra + b.y * rb;
-	result.z = a.z * ra + b.z * rb;
-	result.w = a.w * ra + b.w * rb;
+	result.x = a.x * ta + b.x * tb;
+	result.y = a.y * ta + b.y * tb;
+	result.z = a.z * ta + b.z * tb;
+	result.w = a.w * ta + b.w * tb;
 
-	return result;
+	return crustQuatNormalize(result);
 }
 
 static CRUST_INLINE Crust_Vec3 crustQuatRotate(Crust_Quat a, Crust_Vec3 v)
