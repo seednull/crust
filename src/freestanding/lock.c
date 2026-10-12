@@ -165,6 +165,7 @@ CRUST_APIENTRY void crustRwLockReleaseRead(Crust_RwLock *lock)
 	u32 value = crustAtomicLoadU32(&lock->counter, CRUST_MEMORY_ORDER_RELAXED);
 	CRUST_ASSERT((value & CRUST_RWLOCK_WRITE_BIT) == 0);
 	CRUST_ASSERT((value & CRUST_RWLOCK_READER_MASK) != 0);
+	CRUST_UNUSED(value);
 
 	crustAtomicDecrementU32(&lock->counter, CRUST_MEMORY_ORDER_RELEASE);
 }

@@ -140,9 +140,11 @@ static u8 crustHeapFindBinForSize(const Crust_Heap *heap, u32 size)
 	Crust_HeapNodePool *pool = heap->pool;
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->nodes != CRUST_NULL);
+	CRUST_UNUSED(pool);
 
 	u8 bin_index = crustHeapToBinIndexRoundUp(size);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) >= size);
+	CRUST_UNUSED(crustHeapToBinSize);
 
 	u8 sparse_bin_index = bin_index >> CRUST_HEAP_PARAMETERS_MANTISSA_BITS;
 	u8 linear_bin_index = CRUST_U8_MAX;
