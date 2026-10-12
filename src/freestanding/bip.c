@@ -49,6 +49,7 @@ CRUST_APIENTRY const void *crustBipBufferStageRead(Crust_BipBuffer *bip, usize s
 	CRUST_ASSERT(size > 0);
 
 	usize r = bip->reader;
+	usize w = bip->writer;
 
 	usize begin = bip->begin[r];
 	usize end = bip->end[r];
@@ -61,8 +62,6 @@ CRUST_APIENTRY const void *crustBipBufferStageRead(Crust_BipBuffer *bip, usize s
 		bip->read_staged = size;
 		return (const u8 *)bip->memory + begin;
 	}
-
-	usize w = bip->writer;
 
 	if (r == w)
 		return CRUST_NULL;
