@@ -97,7 +97,21 @@ static CRUST_INLINE u32 crustAtomicDecrementU32(volatile u32 *p, Crust_MemoryOrd
 static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
 {
 	CRUST_UNUSED(order);
+
+#if CRUST_ARCH_X86
+	u64 expected = (u64)__iso_volatile_load64((const volatile long long *)p);
+
+	for (;;)
+	{
+		u64 actual = (u64)_InterlockedCompareExchange64((volatile long long *)p, (long long)v, (long long)expected);
+		if (actual == expected)
+			return actual;
+
+		expected = actual;
+	}
+#else
 	return (u64)_InterlockedExchange64((volatile long long *)p, (long long)v);
+#endif
 }
 
 static CRUST_INLINE u64 crustAtomicCompareAndSwapU64(volatile u64 *p, u64 desired, u64 expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
@@ -134,7 +148,7 @@ static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_Memor
 
 	if (order == CRUST_MEMORY_ORDER_SEQ_CST)
 	{
-		_InterlockedExchange64((volatile long long *)p, (long long)v);
+		crustAtomicSwapU64(p, v, order);
 		return;
 	}
 
@@ -151,13 +165,43 @@ static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_Memor
 static CRUST_INLINE u64 crustAtomicIncrementU64(volatile u64 *p, Crust_MemoryOrder order)
 {
 	CRUST_UNUSED(order);
+
+#if CRUST_ARCH_X86
+	u64 expected = (u64)__iso_volatile_load64((const volatile long long *)p);
+
+	for (;;)
+	{
+		u64 desired = expected + 1;
+		u64 actual = (u64)_InterlockedCompareExchange64((volatile long long *)p, (long long)desired, (long long)expected);
+		if (actual == expected)
+			return desired;
+
+		expected = actual;
+	}
+#else
 	return (u64)_InterlockedIncrement64((volatile long long *)p);
+#endif
 }
 
 static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrder order)
 {
 	CRUST_UNUSED(order);
+
+#if CRUST_ARCH_X86
+	u64 expected = (u64)__iso_volatile_load64((const volatile long long *)p);
+
+	for (;;)
+	{
+		u64 desired = expected - 1;
+		u64 actual = (u64)_InterlockedCompareExchange64((volatile long long *)p, (long long)desired, (long long)expected);
+		if (actual == expected)
+			return desired;
+
+		expected = actual;
+	}
+#else
 	return (u64)_InterlockedDecrement64((volatile long long *)p);
+#endif
 }
 
 //
