@@ -256,7 +256,7 @@ Comparisons produce lanes that are all ones or all zeros. `Select`, `And` and th
   | `ConvertI32FromF32Saturate` | 3–4 extra instructions | native | native |
 
 - **x86-32 with MSVC.** Scalars returned by value go through the x87 stack. `GetLaneF32` returns the same bits for every finite value, but it can turn a signaling NaN into a quiet one.
-- **Clang and `<stdlib.h>`.** Clang's `<xmmintrin.h>` includes `<mm_malloc.h>`, which includes `<stdlib.h>` in hosted builds. Freestanding builds are not affected.
+- **System headers.** The SIMD backends include only the compiler's intrinsic headers, never the C library, see [Platform](platform.md#system-headers). With SSE, `_mm_malloc` is not declared through `crust.h`.
 
 ## Examples
 

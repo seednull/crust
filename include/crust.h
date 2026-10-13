@@ -132,12 +132,26 @@
 
 // Includes
 #if CRUST_COMPILER_MSVC
-	#include <intrin.h>
+	#include <intrin0.h>
 #endif
 
-#if CRUST_SIMD_SSE
+#if CRUST_SIMD_SSE || (CRUST_COMPILER_MSVC && (CRUST_ARCH_X86 || CRUST_ARCH_X64))
+	#if !defined(_INC_MALLOC) && !defined(_MM_MALLOC_H_INCLUDED) && !defined(__MM_MALLOC_H)
+		#define _INC_MALLOC
+		#define _MM_MALLOC_H_INCLUDED
+		#define __MM_MALLOC_H
+		#define CRUST_SKIPPED_MM_MALLOC
+	#endif
+
 	#include <nmmintrin.h>
-#elif CRUST_SIMD_NEON
+
+	#if defined(CRUST_SKIPPED_MM_MALLOC)
+		#undef _INC_MALLOC
+		#undef _MM_MALLOC_H_INCLUDED
+		#undef __MM_MALLOC_H
+		#undef CRUST_SKIPPED_MM_MALLOC
+	#endif
+#elif CRUST_SIMD_NEON || (CRUST_COMPILER_MSVC && CRUST_ARCH_ARM64)
 	#include <arm_neon.h>
 #elif CRUST_SIMD_WASM
 	#include <wasm_simd128.h>

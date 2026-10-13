@@ -105,4 +105,21 @@ Keep debug builds in your workflow: they are what catches misuse.
 
 ## C and C++
 
-`crust.h` compiles as C99 and as C++. The prototypes are wrapped in `extern "C"`. The system intrinsic headers (`<intrin.h>`, `<nmmintrin.h>`, `<arm_neon.h>`, `<wasm_simd128.h>`) are included before that block, because in C++ some of them pull in declarations that cannot live inside `extern "C"`.
+`crust.h` compiles as C99 and as C++. The prototypes are wrapped in `extern "C"`. The system intrinsic headers are included before that block, because in C++ some of them pull in declarations that cannot live inside `extern "C"`.
+
+## System headers
+
+`crust.h` includes only compiler intrinsic headers and never a C library header such as `<stdlib.h>`, `<string.h>` or `<malloc.h>`:
+
+| Configuration | Included |
+|---|---|
+| GCC, Clang without SIMD | nothing |
+| GCC, Clang with SSE | `<nmmintrin.h>` |
+| GCC, Clang with NEON | `<arm_neon.h>`, which includes `<stdint.h>` |
+| WebAssembly SIMD | `<wasm_simd128.h>`, which includes `<stdint.h>` and `<stdbool.h>` |
+| MSVC x86, x64 | `<intrin0.h>` and `<nmmintrin.h>`, with or without SIMD |
+| MSVC ARM64 | `<intrin0.h>` and `<arm_neon.h>`, with or without SIMD |
+
+- **`<stdint.h>` and `<stdbool.h>`** come from the intrinsic headers themselves. The C standard requires them even from freestanding implementations; they declare only types and macros.
+- **`<intrin0.h>`** is the lightweight subset of `<intrin.h>` that MSVC's own standard library uses. It declares the interlocked, bit-scan and barrier intrinsics without pulling in the CRT. Code that needs other intrinsics, such as `__cpuid` or `__rdtsc`, must include `<intrin.h>` itself.
+- **`_mm_malloc` and `_mm_free`** normally arrive with the SSE headers through `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC), which include the C library. `crust.h` skips those two headers while it includes the SSE headers. If you include `<xmmintrin.h>` or `<immintrin.h>` after `crust.h` and use `_mm_malloc`, include `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC) explicitly.
