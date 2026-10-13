@@ -360,6 +360,247 @@ static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XYWZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[0], x[1], x[3], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XZYW(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[0], x[2], x[1], x[3]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XZWY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[0], x[2], x[3], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XWYZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[0], x[3], x[1], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XWZY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[0], x[3], x[2], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YXZW(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[0], x[2], x[3]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YXWZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[0], x[3], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YZXW(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[2], x[0], x[3]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YZWX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[2], x[3], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YWXZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[3], x[0], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YWZX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[3], x[2], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZXYW(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[0], x[1], x[3]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZXWY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[0], x[3], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZYXW(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[1], x[0], x[3]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZYWX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[1], x[3], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZWXY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[3], x[0], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZWYX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[3], x[1], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WXYZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[0], x[1], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WXZY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[0], x[2], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WYXZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[1], x[0], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WYZX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[1], x[2], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WZXY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[2], x[0], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WZYX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[2], x[1], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XXXX(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[0], x[0], x[0], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YYYY(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[1], x[1], x[1], x[1]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZZZZ(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[2], x[2], x[2], x[2]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WWWW(Crust_Simd128 v)
+{
+	u32 x[4];
+	crustSimd128StoreU32(x, v);
+
+	return crustSimd128MakeU32(x[3], x[3], x[3], x[3]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64YX(Crust_Simd128 v)
+{
+	u64 x[2];
+	crustSimd128StoreU64(x, v);
+
+	return crustSimd128MakeU64(x[1], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64XX(Crust_Simd128 v)
+{
+	u64 x[2];
+	crustSimd128StoreU64(x, v);
+
+	return crustSimd128MakeU64(x[0], x[0]);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64YY(Crust_Simd128 v)
+{
+	u64 x[2];
+	crustSimd128StoreU64(x, v);
+
+	return crustSimd128MakeU64(x[1], x[1]);
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b)
 {
 	Crust_Simd128 result;

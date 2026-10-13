@@ -237,6 +237,176 @@ static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XYWZ(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 13, 14, 15, 8, 9, 10, 11 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XZYW(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XZWY(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15, 4, 5, 6, 7 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XWYZ(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7, 8, 9, 10, 11 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XWZY(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YXZW(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 4, 5, 6, 7, 0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YXWZ(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vrev64q_u32(vreinterpretq_u32_u8(v)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YZXW(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 12, 13, 14, 15 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YZWX(Crust_Simd128 v)
+{
+	return vextq_u8(v, v, 4);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YWXZ(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 4, 5, 6, 7, 12, 13, 14, 15, 0, 1, 2, 3, 8, 9, 10, 11 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YWZX(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 4, 5, 6, 7, 12, 13, 14, 15, 8, 9, 10, 11, 0, 1, 2, 3 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZXYW(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 12, 13, 14, 15 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZXWY(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 8, 9, 10, 11, 0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZYXW(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZYWX(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15, 0, 1, 2, 3 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZWXY(Crust_Simd128 v)
+{
+	return vextq_u8(v, v, 8);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZWYX(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 8, 9, 10, 11, 12, 13, 14, 15, 4, 5, 6, 7, 0, 1, 2, 3 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WXYZ(Crust_Simd128 v)
+{
+	return vextq_u8(v, v, 12);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WXZY(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 12, 13, 14, 15, 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WYXZ(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 12, 13, 14, 15, 4, 5, 6, 7, 0, 1, 2, 3, 8, 9, 10, 11 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WYZX(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 12, 13, 14, 15, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WZXY(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 12, 13, 14, 15, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WZYX(Crust_Simd128 v)
+{
+	static const u8 indices[16] = { 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3 };
+	return vqtbl1q_u8(v, vld1q_u8(indices));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XXXX(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(v), 0));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YYYY(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(v), 1));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZZZZ(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(v), 2));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WWWW(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(v), 3));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64YX(Crust_Simd128 v)
+{
+	return vextq_u8(v, v, 8);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64XX(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u64(vdupq_laneq_u64(vreinterpretq_u64_u8(v), 0));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64YY(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u64(vdupq_laneq_u64(vreinterpretq_u64_u8(v), 1));
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return vandq_u8(a, b);

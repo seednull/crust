@@ -853,6 +853,50 @@ static u8 checkZip(PFN_simdBinary simd, u32 bits, u8 high)
 	return 1;
 }
 
+static u8 checkSwizzle32(PFN_simdUnary simd, u32 lane0, u32 lane1, u32 lane2, u32 lane3)
+{
+	u32 pattern[4] = { lane0, lane1, lane2, lane3 };
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u64 v[16];
+		u64 result[16];
+
+		randomLanes(32, v);
+		lanesOf(simd(vectorOf(v, 32)), 32, result);
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			if (result[lane] != v[pattern[lane]])
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkSwizzle64(PFN_simdUnary simd, u32 lane0, u32 lane1)
+{
+	u32 pattern[2] = { lane0, lane1 };
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u64 v[16];
+		u64 result[16];
+
+		randomLanes(64, v);
+		lanesOf(simd(vectorOf(v, 64)), 64, result);
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			if (result[lane] != v[pattern[lane]])
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
 //
 static int testLayout(void)
 {
@@ -1226,6 +1270,43 @@ static int testZip(void)
 	return 0;
 }
 
+static int testSwizzle(void)
+{
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32XYWZ, 0, 1, 3, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32XZYW, 0, 2, 1, 3));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32XZWY, 0, 2, 3, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32XWYZ, 0, 3, 1, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32XWZY, 0, 3, 2, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YXZW, 1, 0, 2, 3));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YXWZ, 1, 0, 3, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YZXW, 1, 2, 0, 3));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YZWX, 1, 2, 3, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YWXZ, 1, 3, 0, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YWZX, 1, 3, 2, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZXYW, 2, 0, 1, 3));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZXWY, 2, 0, 3, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZYXW, 2, 1, 0, 3));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZYWX, 2, 1, 3, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZWXY, 2, 3, 0, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZWYX, 2, 3, 1, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WXYZ, 3, 0, 1, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WXZY, 3, 0, 2, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WYXZ, 3, 1, 0, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WYZX, 3, 1, 2, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WZXY, 3, 2, 0, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WZYX, 3, 2, 1, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32XXXX, 0, 0, 0, 0));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32YYYY, 1, 1, 1, 1));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32ZZZZ, 2, 2, 2, 2));
+	CRUST_TEST_CHECK(checkSwizzle32(crustSimd128Swizzle32WWWW, 3, 3, 3, 3));
+
+	CRUST_TEST_CHECK(checkSwizzle64(crustSimd128Swizzle64YX, 1, 0));
+	CRUST_TEST_CHECK(checkSwizzle64(crustSimd128Swizzle64XX, 0, 0));
+	CRUST_TEST_CHECK(checkSwizzle64(crustSimd128Swizzle64YY, 1, 1));
+
+	return 0;
+}
+
 static int testBitwise(void)
 {
 	for (u32 i = 0; i < ITERATIONS; ++i)
@@ -1581,6 +1662,7 @@ int main(void)
 	CRUST_TEST_RUN(testConstructors);
 	CRUST_TEST_RUN(testLanes);
 	CRUST_TEST_RUN(testZip);
+	CRUST_TEST_RUN(testSwizzle);
 	CRUST_TEST_RUN(testBitwise);
 	CRUST_TEST_RUN(testMasks);
 	CRUST_TEST_RUN(testArithmeticInteger);

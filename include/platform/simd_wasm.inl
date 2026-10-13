@@ -235,6 +235,157 @@ static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XYWZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 0, 1, 3, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XZYW(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 0, 2, 1, 3);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XZWY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 0, 2, 3, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XWYZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 0, 3, 1, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XWZY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 0, 3, 2, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YXZW(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 0, 2, 3);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YXWZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 0, 3, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YZXW(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 2, 0, 3);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YZWX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 2, 3, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YWXZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 3, 0, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YWZX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 3, 2, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZXYW(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 0, 1, 3);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZXWY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 0, 3, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZYXW(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 1, 0, 3);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZYWX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 1, 3, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZWXY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 3, 0, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZWYX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 3, 1, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WXYZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 0, 1, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WXZY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 0, 2, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WYXZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 1, 0, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WYZX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 1, 2, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WZXY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 2, 0, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WZYX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 2, 1, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32XXXX(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 0, 0, 0, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32YYYY(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 1, 1, 1, 1);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32ZZZZ(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 2, 2, 2, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle32WWWW(Crust_Simd128 v)
+{
+	return wasm_i32x4_shuffle(v, v, 3, 3, 3, 3);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64YX(Crust_Simd128 v)
+{
+	return wasm_i64x2_shuffle(v, v, 1, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64XX(Crust_Simd128 v)
+{
+	return wasm_i64x2_shuffle(v, v, 0, 0);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Swizzle64YY(Crust_Simd128 v)
+{
+	return wasm_i64x2_shuffle(v, v, 1, 1);
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return wasm_v128_and(a, b);
