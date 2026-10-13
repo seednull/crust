@@ -40,6 +40,11 @@ set(CRUST_PUBLIC_HEADERS
 	${CRUST_DIR_API}/platform/cpu_gcc_clang.inl
 	${CRUST_DIR_API}/platform/cpu_msvc_arm64.inl
 	${CRUST_DIR_API}/platform/cpu_msvc_x86.inl
+	${CRUST_DIR_API}/platform/simd_common.inl
+	${CRUST_DIR_API}/platform/simd_neon.inl
+	${CRUST_DIR_API}/platform/simd_scalar.inl
+	${CRUST_DIR_API}/platform/simd_sse.inl
+	${CRUST_DIR_API}/platform/simd_wasm.inl
 )
 
 # ==================================================================================================
@@ -75,6 +80,10 @@ if (BUILD_SHARED_LIBS)
 	target_compile_definitions(${CRUST_TARGET} PUBLIC CRUST_SHARED_LIBRARY)
 endif()
 
+if (CRUST_USE_SIMD)
+	target_compile_definitions(${CRUST_TARGET} PUBLIC CRUST_USE_SIMD=1)
+endif()
+
 # ==================================================================================================
 # Compiler
 # ==================================================================================================
@@ -83,6 +92,21 @@ if(MSVC)
 	target_compile_definitions(${CRUST_TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
 	target_compile_options(${CRUST_TARGET} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+if (CRUST_USE_SIMD)
+	include(CheckCCompilerFlag)
+
+	check_c_compiler_flag(-msse4.2 CRUST_COMPILER_HAS_SSE42)
+	check_c_compiler_flag(-msimd128 CRUST_COMPILER_HAS_SIMD128)
+
+	if (CRUST_COMPILER_HAS_SSE42)
+		target_compile_options(${CRUST_TARGET} PUBLIC -msse4.2 -mpopcnt)
+	endif()
+
+	if (CRUST_COMPILER_HAS_SIMD128)
+		target_compile_options(${CRUST_TARGET} PUBLIC -msimd128)
+	endif()
 endif()
 
 # ==================================================================================================

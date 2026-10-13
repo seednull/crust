@@ -97,12 +97,50 @@
 	#error "Unsupported architecture"
 #endif
 
+// SIMD
+#define CRUST_SIMD_SSE 0
+#define CRUST_SIMD_NEON 0
+#define CRUST_SIMD_WASM 0
+#define CRUST_SIMD_SCALAR 0
+
+#if !defined(CRUST_USE_SIMD)
+	#define CRUST_USE_SIMD 0
+#endif
+
+#if !CRUST_USE_SIMD
+	#undef  CRUST_SIMD_SCALAR
+	#define CRUST_SIMD_SCALAR 1
+#elif CRUST_ARCH_X86 || CRUST_ARCH_X64
+	#if !CRUST_COMPILER_MSVC && (!defined(__SSE4_2__) || !defined(__POPCNT__))
+		#error "CRUST_USE_SIMD requires SSE4.2 and POPCNT on x86: compile with -msse4.2 -mpopcnt"
+	#endif
+	#undef  CRUST_SIMD_SSE
+	#define CRUST_SIMD_SSE 1
+#elif CRUST_ARCH_ARM64
+	#undef  CRUST_SIMD_NEON
+	#define CRUST_SIMD_NEON 1
+#elif CRUST_ARCH_WASM32 || CRUST_ARCH_WASM64
+	#if !defined(__wasm_simd128__)
+		#error "CRUST_USE_SIMD requires WebAssembly SIMD: compile with -msimd128"
+	#endif
+	#undef  CRUST_SIMD_WASM
+	#define CRUST_SIMD_WASM 1
+#else
+	#undef  CRUST_SIMD_SCALAR
+	#define CRUST_SIMD_SCALAR 1
+#endif
+
 // Includes
 #if CRUST_COMPILER_MSVC
 	#include <intrin.h>
-	#if CRUST_ARCH_ARM64
-		#include <arm64_neon.h>
-	#endif
+#endif
+
+#if CRUST_SIMD_SSE
+	#include <nmmintrin.h>
+#elif CRUST_SIMD_NEON
+	#include <arm_neon.h>
+#elif CRUST_SIMD_WASM
+	#include <wasm_simd128.h>
 #endif
 
 // Defines
@@ -527,6 +565,9 @@ static CRUST_INLINE usize crustAlignUpUSize(usize value, usize alignment)
 	usize mask = alignment - 1;
 	return (value + mask) & ~mask;
 }
+
+//
+#include "platform/simd_common.inl"
 
 //
 typedef struct Crust_Vec2_t

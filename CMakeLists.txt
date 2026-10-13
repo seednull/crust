@@ -9,6 +9,7 @@ project(crust VERSION 1.0.0 LANGUAGES C)
 # Global options
 # ==================================================================================================
 option(CRUST_BUILD_TESTS "Build crust tests" OFF)
+option(CRUST_USE_SIMD "Use SSE, NEON or WebAssembly SIMD instead of the scalar SIMD fallback" OFF)
 
 # ==================================================================================================
 # Global Variables

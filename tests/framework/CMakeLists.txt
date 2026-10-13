@@ -41,6 +41,8 @@ endif()
 # ==================================================================================================
 # Libraries
 # ==================================================================================================
+target_link_libraries(${CRUST_TEST_FRAMEWORK_TARGET} PUBLIC crust)
+
 if (CRUST_TESTS_THREADED AND NOT WIN32)
 	target_link_libraries(${CRUST_TEST_FRAMEWORK_TARGET} PUBLIC Threads::Threads)
 endif()
