@@ -37,6 +37,7 @@ set(CRUST_HEADERS
 
 set(CRUST_PUBLIC_HEADERS
 	${CRUST_DIR_API}/crust.h
+	${CRUST_DIR_API}/platform/cpu_common.inl
 	${CRUST_DIR_API}/platform/cpu_gcc_clang.inl
 	${CRUST_DIR_API}/platform/cpu_msvc_arm64.inl
 	${CRUST_DIR_API}/platform/cpu_msvc_x86.inl
