@@ -96,16 +96,29 @@ else()
 endif()
 
 if (CRUST_USE_SIMD)
-	include(CheckCCompilerFlag)
+	include(CheckCSourceCompiles)
 
-	check_c_compiler_flag(-msse4.2 CRUST_COMPILER_HAS_SSE42)
-	check_c_compiler_flag(-msimd128 CRUST_COMPILER_HAS_SIMD128)
+	set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpopcnt")
+	check_c_source_compiles("
+		#if !defined(__SSE4_2__) || !defined(__POPCNT__)
+			#error
+		#endif
+		int main(void) { return 0; }" CRUST_COMPILER_SUPPORTS_SSE42)
 
-	if (CRUST_COMPILER_HAS_SSE42)
+	set(CMAKE_REQUIRED_FLAGS "-msimd128")
+	check_c_source_compiles("
+		#if !defined(__wasm_simd128__)
+			#error
+		#endif
+		int main(void) { return 0; }" CRUST_COMPILER_SUPPORTS_SIMD128)
+
+	unset(CMAKE_REQUIRED_FLAGS)
+
+	if (CRUST_COMPILER_SUPPORTS_SSE42)
 		target_compile_options(${CRUST_TARGET} PUBLIC -msse4.2 -mpopcnt)
 	endif()
 
-	if (CRUST_COMPILER_HAS_SIMD128)
+	if (CRUST_COMPILER_SUPPORTS_SIMD128)
 		target_compile_options(${CRUST_TARGET} PUBLIC -msimd128)
 	endif()
 endif()

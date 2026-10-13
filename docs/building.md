@@ -23,7 +23,7 @@
 | `CRUST_BUILD_TESTS` | `OFF` | Build the tests |
 | `CRUST_USE_SIMD` | `OFF` | Use SSE, NEON or WebAssembly SIMD for `Crust_Simd128` instead of the scalar fallback, see [SIMD](simd.md#enabling-simd) |
 
-`CRUST_USE_SIMD=ON` adds a public `CRUST_USE_SIMD=1` definition to the `crust` target and the compiler flags the backend needs: `-msse4.2 -mpopcnt` on x86 and `-msimd128` on WebAssembly, when the compiler accepts them. MSVC needs no flags. Both the definition and the flags are `PUBLIC`, so every target that links `crust` sees the same configuration.
+`CRUST_USE_SIMD=ON` adds a public `CRUST_USE_SIMD=1` definition to the `crust` target and the compiler flags the backend needs: `-msse4.2 -mpopcnt` on x86 and `-msimd128` on WebAssembly. Before adding them, CMake compiles a small test with the flags and checks that they really enable the instruction set for the target being built (`__SSE4_2__` and `__POPCNT__`, or `__wasm_simd128__`), so other targets such as ARM64 and MSVC get no flags. Both the definition and the flags are `PUBLIC`, so every target that links `crust` sees the same configuration.
 
 ## Building with presets
 
