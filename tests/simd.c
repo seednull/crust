@@ -551,6 +551,282 @@ static u8 checkConvertF32FromF64(void)
 	return 1;
 }
 
+typedef Crust_Simd128 (*PFN_simdShift)(Crust_Simd128 v, u32 count);
+typedef u64 (*PFN_referenceInteger)(u64 a, u64 b, u32 bits);
+typedef u64 (*PFN_referenceShift)(u64 v, u32 count, u32 bits);
+
+//
+static u64 maskOf(u32 bits)
+{
+	return (bits == 64) ? CRUST_U64_MAX : ((u64)1 << bits) - 1;
+}
+
+static u64 signOf(u32 bits)
+{
+	return (u64)1 << (bits - 1);
+}
+
+static i64 signedOf(u64 v, u32 bits)
+{
+	CRUST_ASSERT(bits < 64);
+	return (i64)(v ^ signOf(bits)) - (i64)signOf(bits);
+}
+
+static u8 lessSigned(u64 a, u64 b, u32 bits)
+{
+	return (a ^ signOf(bits)) < (b ^ signOf(bits));
+}
+
+static u64 maskIf(u8 condition, u32 bits)
+{
+	return condition ? maskOf(bits) : 0;
+}
+
+static u64 saturateSigned(i64 v, u32 bits)
+{
+	return (u64)crustClampI64(v, -(i64)signOf(bits), (i64)signOf(bits) - 1) & maskOf(bits);
+}
+
+static void lanesOf(Crust_Simd128 v, u32 bits, u64 *lanes)
+{
+	switch (bits)
+	{
+		case 8:
+		{
+			u8 x[16];
+			crustSimd128StoreU8(x, v);
+
+			for (u32 i = 0; i < 16; ++i)
+				lanes[i] = x[i];
+
+			break;
+		}
+
+		case 16:
+		{
+			u16 x[8];
+			crustSimd128StoreU16(x, v);
+
+			for (u32 i = 0; i < 8; ++i)
+				lanes[i] = x[i];
+
+			break;
+		}
+
+		case 32:
+		{
+			u32 x[4];
+			crustSimd128StoreU32(x, v);
+
+			for (u32 i = 0; i < 4; ++i)
+				lanes[i] = x[i];
+
+			break;
+		}
+
+		default:
+		{
+			u64 x[2];
+			crustSimd128StoreU64(x, v);
+
+			for (u32 i = 0; i < 2; ++i)
+				lanes[i] = x[i];
+
+			break;
+		}
+	}
+}
+
+static Crust_Simd128 vectorOf(const u64 *lanes, u32 bits)
+{
+	switch (bits)
+	{
+		case 8:
+		{
+			u8 x[16];
+			for (u32 i = 0; i < 16; ++i)
+				x[i] = (u8)lanes[i];
+
+			return crustSimd128LoadU8(x);
+		}
+
+		case 16:
+		{
+			u16 x[8];
+			for (u32 i = 0; i < 8; ++i)
+				x[i] = (u16)lanes[i];
+
+			return crustSimd128LoadU16(x);
+		}
+
+		case 32:
+		{
+			u32 x[4];
+			for (u32 i = 0; i < 4; ++i)
+				x[i] = (u32)lanes[i];
+
+			return crustSimd128LoadU32(x);
+		}
+
+		default:
+			return crustSimd128LoadU64(lanes);
+	}
+}
+
+static void randomLanes(u32 bits, u64 *lanes)
+{
+	u64 mask = maskOf(bits);
+	u64 sign = signOf(bits);
+	u64 special[8] = { 0, 1, 2, mask, mask - 1, sign, sign - 1, sign + 1 };
+
+	for (u32 i = 0; i < 128 / bits; ++i)
+		lanes[i] = ((crustTestRandom() % 2) ? special[crustTestRandom() % 8] : randomU64()) & mask;
+}
+
+//
+static u64 referenceAdd(u64 a, u64 b, u32 bits) { return (a + b) & maskOf(bits); }
+static u64 referenceSub(u64 a, u64 b, u32 bits) { return (a - b) & maskOf(bits); }
+static u64 referenceMul(u64 a, u64 b, u32 bits) { return (a * b) & maskOf(bits); }
+
+static u64 referenceAddSaturateUnsigned(u64 a, u64 b, u32 bits) { return crustMinU64(a + b, maskOf(bits)); }
+static u64 referenceSubSaturateUnsigned(u64 a, u64 b, u32 bits) { CRUST_UNUSED(bits); return (a > b) ? a - b : 0; }
+static u64 referenceAddSaturateSigned(u64 a, u64 b, u32 bits) { return saturateSigned(signedOf(a, bits) + signedOf(b, bits), bits); }
+static u64 referenceSubSaturateSigned(u64 a, u64 b, u32 bits) { return saturateSigned(signedOf(a, bits) - signedOf(b, bits), bits); }
+
+static u64 referenceMinUnsigned(u64 a, u64 b, u32 bits) { CRUST_UNUSED(bits); return crustMinU64(a, b); }
+static u64 referenceMaxUnsigned(u64 a, u64 b, u32 bits) { CRUST_UNUSED(bits); return crustMaxU64(a, b); }
+static u64 referenceMinSigned(u64 a, u64 b, u32 bits) { return lessSigned(a, b, bits) ? a : b; }
+static u64 referenceMaxSigned(u64 a, u64 b, u32 bits) { return lessSigned(a, b, bits) ? b : a; }
+
+static u64 referenceEqual(u64 a, u64 b, u32 bits) { return maskIf(a == b, bits); }
+static u64 referenceNotEqual(u64 a, u64 b, u32 bits) { return maskIf(a != b, bits); }
+static u64 referenceLessUnsigned(u64 a, u64 b, u32 bits) { return maskIf(a < b, bits); }
+static u64 referenceLessSigned(u64 a, u64 b, u32 bits) { return maskIf(lessSigned(a, b, bits), bits); }
+static u64 referenceLessEqualUnsigned(u64 a, u64 b, u32 bits) { return maskIf(a <= b, bits); }
+static u64 referenceLessEqualSigned(u64 a, u64 b, u32 bits) { return maskIf(!lessSigned(b, a, bits), bits); }
+static u64 referenceGreaterUnsigned(u64 a, u64 b, u32 bits) { return maskIf(a > b, bits); }
+static u64 referenceGreaterSigned(u64 a, u64 b, u32 bits) { return maskIf(lessSigned(b, a, bits), bits); }
+static u64 referenceGreaterEqualUnsigned(u64 a, u64 b, u32 bits) { return maskIf(a >= b, bits); }
+static u64 referenceGreaterEqualSigned(u64 a, u64 b, u32 bits) { return maskIf(!lessSigned(a, b, bits), bits); }
+
+static u64 referenceShiftLeft(u64 v, u32 count, u32 bits)
+{
+	return (v << count) & maskOf(bits);
+}
+
+static u64 referenceShiftRightLogical(u64 v, u32 count, u32 bits)
+{
+	CRUST_UNUSED(bits);
+	return v >> count;
+}
+
+static u64 referenceShiftRightArithmetic(u64 v, u32 count, u32 bits)
+{
+	u64 sign = (v & signOf(bits)) ? maskOf(bits) : 0;
+	return (((v ^ sign) >> count) ^ sign) & maskOf(bits);
+}
+
+//
+static u8 checkBinaryInteger(PFN_simdBinary simd, PFN_referenceInteger reference, u32 bits)
+{
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u64 a[16];
+		u64 b[16];
+		u64 result[16];
+
+		randomLanes(bits, a);
+		randomLanes(bits, b);
+		lanesOf(simd(vectorOf(a, bits), vectorOf(b, bits)), bits, result);
+
+		for (u32 lane = 0; lane < 128 / bits; ++lane)
+		{
+			if (result[lane] != reference(a[lane], b[lane], bits))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkShiftInteger(PFN_simdShift simd, PFN_referenceShift reference, u32 bits)
+{
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u32 count = (i < bits) ? i : crustTestRandom() % bits;
+
+		u64 v[16];
+		u64 result[16];
+
+		randomLanes(bits, v);
+		lanesOf(simd(vectorOf(v, bits), count), bits, result);
+
+		for (u32 lane = 0; lane < 128 / bits; ++lane)
+		{
+			if (result[lane] != reference(v[lane], count, bits))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkWidenInteger(PFN_simdUnary simd, u32 source_bits, u8 high, u8 is_signed)
+{
+	u32 count = 64 / source_bits;
+	u64 extension = maskOf(2 * source_bits) & ~maskOf(source_bits);
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u64 v[16];
+		u64 result[8];
+
+		randomLanes(source_bits, v);
+		lanesOf(simd(vectorOf(v, source_bits)), 2 * source_bits, result);
+
+		for (u32 lane = 0; lane < count; ++lane)
+		{
+			u64 value = v[lane + (high ? count : 0)];
+			u64 expected = (is_signed && (value & signOf(source_bits))) ? value | extension : value;
+
+			if (result[lane] != expected)
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkNarrowInteger(PFN_simdBinary simd, u32 source_bits, u8 signed_output)
+{
+	u32 count = 128 / source_bits;
+	u32 result_bits = source_bits / 2;
+	i64 minimum = signed_output ? -(i64)signOf(result_bits) : 0;
+	i64 maximum = signed_output ? (i64)signOf(result_bits) - 1 : (i64)maskOf(result_bits);
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u64 low[8];
+		u64 high[8];
+		u64 result[16];
+
+		randomLanes(source_bits, low);
+		randomLanes(source_bits, high);
+		lanesOf(simd(vectorOf(low, source_bits), vectorOf(high, source_bits)), result_bits, result);
+
+		for (u32 lane = 0; lane < count; ++lane)
+		{
+			u64 expected_low = (u64)crustClampI64(signedOf(low[lane], source_bits), minimum, maximum) & maskOf(result_bits);
+			u64 expected_high = (u64)crustClampI64(signedOf(high[lane], source_bits), minimum, maximum) & maskOf(result_bits);
+
+			if (result[lane] != expected_low || result[lane + count] != expected_high)
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
 //
 static int testLayout(void)
 {
@@ -1010,38 +1286,161 @@ static int testMasks(void)
 	return 0;
 }
 
-static int testArithmeticU32(void)
+static int testArithmeticInteger(void)
 {
-	u32 lanes[4];
-	crustSimd128StoreU32(lanes, crustSimd128AddU32(crustSimd128MakeU32(0xffffffffu, 0x7fffffffu, 0, 1), crustSimd128MakeU32(2, 1, 0, 0xffffffffu)));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddU8, referenceAdd, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddI8, referenceAdd, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddU16, referenceAdd, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddI16, referenceAdd, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddU32, referenceAdd, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddI32, referenceAdd, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddU64, referenceAdd, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddI64, referenceAdd, 64));
 
-	CRUST_TEST_CHECK(lanes[0] == 1);
-	CRUST_TEST_CHECK(lanes[1] == 0x80000000u);
-	CRUST_TEST_CHECK(lanes[2] == 0);
-	CRUST_TEST_CHECK(lanes[3] == 0);
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubU8, referenceSub, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubI8, referenceSub, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubU16, referenceSub, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubI16, referenceSub, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubU32, referenceSub, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubI32, referenceSub, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubU64, referenceSub, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubI64, referenceSub, 64));
 
-	for (u32 i = 0; i < ITERATIONS; ++i)
-	{
-		u32 a[4];
-		u32 b[4];
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddSaturateU8, referenceAddSaturateUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddSaturateI8, referenceAddSaturateSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddSaturateU16, referenceAddSaturateUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128AddSaturateI16, referenceAddSaturateSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubSaturateU8, referenceSubSaturateUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubSaturateI8, referenceSubSaturateSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubSaturateU16, referenceSubSaturateUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128SubSaturateI16, referenceSubSaturateSigned, 16));
 
-		for (u32 lane = 0; lane < 4; ++lane)
-		{
-			a[lane] = crustTestRandom();
-			b[lane] = crustTestRandom();
-		}
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MulU16, referenceMul, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MulI16, referenceMul, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MulU32, referenceMul, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MulI32, referenceMul, 32));
 
-		u32 add_u32[4];
-		u32 add_i32[4];
-		crustSimd128StoreU32(add_u32, crustSimd128AddU32(crustSimd128LoadU32(a), crustSimd128LoadU32(b)));
-		crustSimd128StoreU32(add_i32, crustSimd128AddI32(crustSimd128LoadU32(a), crustSimd128LoadU32(b)));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinU8, referenceMinUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinI8, referenceMinSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinU16, referenceMinUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinI16, referenceMinSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinU32, referenceMinUnsigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinI32, referenceMinSigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinU64, referenceMinUnsigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MinI64, referenceMinSigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxU8, referenceMaxUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxI8, referenceMaxSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxU16, referenceMaxUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxI16, referenceMaxSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxU32, referenceMaxUnsigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxI32, referenceMaxSigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxU64, referenceMaxUnsigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128MaxI64, referenceMaxSigned, 64));
 
-		for (u32 lane = 0; lane < 4; ++lane)
-		{
-			CRUST_TEST_CHECK(add_u32[lane] == a[lane] + b[lane]);
-			CRUST_TEST_CHECK(add_i32[lane] == a[lane] + b[lane]);
-		}
-	}
+	return 0;
+}
+
+static int testShiftInteger(void)
+{
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftU8, referenceShiftLeft, 8));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftI8, referenceShiftLeft, 8));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftU16, referenceShiftLeft, 16));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftI16, referenceShiftLeft, 16));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftU32, referenceShiftLeft, 32));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftI32, referenceShiftLeft, 32));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftU64, referenceShiftLeft, 64));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftLeftI64, referenceShiftLeft, 64));
+
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightU8, referenceShiftRightLogical, 8));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightI8, referenceShiftRightArithmetic, 8));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightU16, referenceShiftRightLogical, 16));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightI16, referenceShiftRightArithmetic, 16));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightU32, referenceShiftRightLogical, 32));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightI32, referenceShiftRightArithmetic, 32));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightU64, referenceShiftRightLogical, 64));
+	CRUST_TEST_CHECK(checkShiftInteger(crustSimd128ShiftRightI64, referenceShiftRightArithmetic, 64));
+
+	return 0;
+}
+
+static int testCompareInteger(void)
+{
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualU8, referenceEqual, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualI8, referenceEqual, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualU16, referenceEqual, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualI16, referenceEqual, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualU32, referenceEqual, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualI32, referenceEqual, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualU64, referenceEqual, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128EqualI64, referenceEqual, 64));
+
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualU8, referenceNotEqual, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualI8, referenceNotEqual, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualU16, referenceNotEqual, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualI16, referenceNotEqual, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualU32, referenceNotEqual, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualI32, referenceNotEqual, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualU64, referenceNotEqual, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128NotEqualI64, referenceNotEqual, 64));
+
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessU8, referenceLessUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessI8, referenceLessSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessU16, referenceLessUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessI16, referenceLessSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessU32, referenceLessUnsigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessI32, referenceLessSigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessU64, referenceLessUnsigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessI64, referenceLessSigned, 64));
+
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualU8, referenceLessEqualUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualI8, referenceLessEqualSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualU16, referenceLessEqualUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualI16, referenceLessEqualSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualU32, referenceLessEqualUnsigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualI32, referenceLessEqualSigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualU64, referenceLessEqualUnsigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128LessEqualI64, referenceLessEqualSigned, 64));
+
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterU8, referenceGreaterUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterI8, referenceGreaterSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterU16, referenceGreaterUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterI16, referenceGreaterSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterU32, referenceGreaterUnsigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterI32, referenceGreaterSigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterU64, referenceGreaterUnsigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterI64, referenceGreaterSigned, 64));
+
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualU8, referenceGreaterEqualUnsigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualI8, referenceGreaterEqualSigned, 8));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualU16, referenceGreaterEqualUnsigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualI16, referenceGreaterEqualSigned, 16));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualU32, referenceGreaterEqualUnsigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualI32, referenceGreaterEqualSigned, 32));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualU64, referenceGreaterEqualUnsigned, 64));
+	CRUST_TEST_CHECK(checkBinaryInteger(crustSimd128GreaterEqualI64, referenceGreaterEqualSigned, 64));
+
+	return 0;
+}
+
+static int testConvertInteger(void)
+{
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertU16FromU8Low, 8, 0, 0));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertU16FromU8High, 8, 1, 0));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertI16FromI8Low, 8, 0, 1));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertI16FromI8High, 8, 1, 1));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertU32FromU16Low, 16, 0, 0));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertU32FromU16High, 16, 1, 0));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertI32FromI16Low, 16, 0, 1));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertI32FromI16High, 16, 1, 1));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertU64FromU32Low, 32, 0, 0));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertU64FromU32High, 32, 1, 0));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertI64FromI32Low, 32, 0, 1));
+	CRUST_TEST_CHECK(checkWidenInteger(crustSimd128ConvertI64FromI32High, 32, 1, 1));
+
+	CRUST_TEST_CHECK(checkNarrowInteger(crustSimd128ConvertI8FromI16Saturate, 16, 1));
+	CRUST_TEST_CHECK(checkNarrowInteger(crustSimd128ConvertU8FromI16Saturate, 16, 0));
+	CRUST_TEST_CHECK(checkNarrowInteger(crustSimd128ConvertI16FromI32Saturate, 32, 1));
+	CRUST_TEST_CHECK(checkNarrowInteger(crustSimd128ConvertU16FromI32Saturate, 32, 0));
 
 	return 0;
 }
@@ -1130,7 +1529,10 @@ int main(void)
 	CRUST_TEST_RUN(testLanes);
 	CRUST_TEST_RUN(testBitwise);
 	CRUST_TEST_RUN(testMasks);
-	CRUST_TEST_RUN(testArithmeticU32);
+	CRUST_TEST_RUN(testArithmeticInteger);
+	CRUST_TEST_RUN(testShiftInteger);
+	CRUST_TEST_RUN(testCompareInteger);
+	CRUST_TEST_RUN(testConvertInteger);
 	CRUST_TEST_RUN(testArithmeticF32);
 	CRUST_TEST_RUN(testCompareF32);
 	CRUST_TEST_RUN(testArithmeticF64);

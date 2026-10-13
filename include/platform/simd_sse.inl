@@ -288,9 +288,300 @@ static CRUST_INLINE u32 crustSimd128BitmaskU64(Crust_Simd128 v)
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_add_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_add_epi16(a, b);
+}
+
 static CRUST_INLINE Crust_Simd128 crustSimd128AddU32(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return _mm_add_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_add_epi64(a, b);
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_sub_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_sub_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_sub_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_sub_epi64(a, b);
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_adds_epu8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_adds_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_adds_epu16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_adds_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_subs_epu8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_subs_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_subs_epu16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_subs_epi16(a, b);
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128MulU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_mullo_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MulU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_mullo_epi32(a, b);
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128MinU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_min_epu8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_min_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_min_epu16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_min_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_min_epu32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_min_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_max_epu8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_max_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_max_epu16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_max_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_max_epu32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_max_epi32(a, b);
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU8(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 8);
+	return _mm_and_si128(_mm_sll_epi16(v, _mm_cvtsi32_si128((int)count)), _mm_set1_epi8((char)(CRUST_U8_MAX << count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU16(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 16);
+	return _mm_sll_epi16(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU32(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 32);
+	return _mm_sll_epi32(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU64(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 64);
+	return _mm_sll_epi64(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU8(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 8);
+	return _mm_and_si128(_mm_srl_epi16(v, _mm_cvtsi32_si128((int)count)), _mm_set1_epi8((char)(CRUST_U8_MAX >> count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI8(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 8);
+
+	__m128i sign = _mm_set1_epi8(CRUST_I8_MIN);
+	return _mm_sub_epi8(crustSimd128ShiftRightU8(_mm_xor_si128(v, sign), count), _mm_set1_epi8((char)(0x80u >> count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU16(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 16);
+	return _mm_srl_epi16(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI16(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 16);
+	return _mm_sra_epi16(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU32(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 32);
+	return _mm_srl_epi32(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI32(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 32);
+	return _mm_sra_epi32(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU64(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 64);
+	return _mm_srl_epi64(v, _mm_cvtsi32_si128((int)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI64(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 64);
+
+	__m128i sign = _mm_cmpgt_epi64(_mm_setzero_si128(), v);
+	return _mm_xor_si128(_mm_srl_epi64(_mm_xor_si128(v, sign), _mm_cvtsi32_si128((int)count)), sign);
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmpeq_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmpeq_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmpeq_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmpeq_epi64(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	__m128i sign = _mm_set1_epi8(CRUST_I8_MIN);
+	return _mm_cmplt_epi8(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmplt_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	__m128i sign = _mm_set1_epi16(CRUST_I16_MIN);
+	return _mm_cmplt_epi16(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmplt_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	__m128i sign = _mm_set1_epi32(CRUST_I32_MIN);
+	return _mm_cmplt_epi32(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmplt_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	__m128i sign = _mm_set1_epi64x(CRUST_I64_MIN);
+	return _mm_cmpgt_epi64(_mm_xor_si128(b, sign), _mm_xor_si128(a, sign));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_cmpgt_epi64(b, a);
 }
 
 //
@@ -501,4 +792,86 @@ static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF64FromF32High(Crust_Simd12
 static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF32FromF64(Crust_Simd128 low, Crust_Simd128 high)
 {
 	return _mm_castps_si128(_mm_movelh_ps(_mm_cvtpd_ps(_mm_castsi128_pd(low)), _mm_cvtpd_ps(_mm_castsi128_pd(high))));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU16FromU8Low(Crust_Simd128 v)
+{
+	return _mm_cvtepu8_epi16(v);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU16FromU8High(Crust_Simd128 v)
+{
+	return _mm_unpackhi_epi8(v, _mm_setzero_si128());
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI16FromI8Low(Crust_Simd128 v)
+{
+	return _mm_cvtepi8_epi16(v);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI16FromI8High(Crust_Simd128 v)
+{
+	return _mm_cvtepi8_epi16(_mm_unpackhi_epi64(v, v));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU32FromU16Low(Crust_Simd128 v)
+{
+	return _mm_cvtepu16_epi32(v);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU32FromU16High(Crust_Simd128 v)
+{
+	return _mm_unpackhi_epi16(v, _mm_setzero_si128());
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI32FromI16Low(Crust_Simd128 v)
+{
+	return _mm_cvtepi16_epi32(v);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI32FromI16High(Crust_Simd128 v)
+{
+	return _mm_cvtepi16_epi32(_mm_unpackhi_epi64(v, v));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU64FromU32Low(Crust_Simd128 v)
+{
+	return _mm_cvtepu32_epi64(v);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU64FromU32High(Crust_Simd128 v)
+{
+	return _mm_unpackhi_epi32(v, _mm_setzero_si128());
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI64FromI32Low(Crust_Simd128 v)
+{
+	return _mm_cvtepi32_epi64(v);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI64FromI32High(Crust_Simd128 v)
+{
+	return _mm_cvtepi32_epi64(_mm_unpackhi_epi64(v, v));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI8FromI16Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return _mm_packs_epi16(low, high);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU8FromI16Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return _mm_packus_epi16(low, high);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI16FromI32Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return _mm_packs_epi32(low, high);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU16FromI32Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return _mm_packus_epi32(low, high);
 }

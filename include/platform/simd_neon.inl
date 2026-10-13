@@ -277,9 +277,292 @@ static CRUST_INLINE u32 crustSimd128BitmaskU64(Crust_Simd128 v)
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vaddq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vaddq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
 static CRUST_INLINE Crust_Simd128 crustSimd128AddU32(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return vreinterpretq_u8_u32(vaddq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u64(vaddq_u64(vreinterpretq_u64_u8(a), vreinterpretq_u64_u8(b)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vsubq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vsubq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vsubq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u64(vsubq_u64(vreinterpretq_u64_u8(a), vreinterpretq_u64_u8(b)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vqaddq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s8(vqaddq_s8(vreinterpretq_s8_u8(a), vreinterpretq_s8_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vqaddq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddSaturateI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s16(vqaddq_s16(vreinterpretq_s16_u8(a), vreinterpretq_s16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vqsubq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s8(vqsubq_s8(vreinterpretq_s8_u8(a), vreinterpretq_s8_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vqsubq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SubSaturateI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s16(vqsubq_s16(vreinterpretq_s16_u8(a), vreinterpretq_s16_u8(b)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128MulU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vmulq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MulU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vmulq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128MinU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vminq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s8(vminq_s8(vreinterpretq_s8_u8(a), vreinterpretq_s8_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vminq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s16(vminq_s16(vreinterpretq_s16_u8(a), vreinterpretq_s16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vminq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MinI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s32(vminq_s32(vreinterpretq_s32_u8(a), vreinterpretq_s32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vmaxq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s8(vmaxq_s8(vreinterpretq_s8_u8(a), vreinterpretq_s8_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vmaxq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s16(vmaxq_s16(vreinterpretq_s16_u8(a), vreinterpretq_s16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vmaxq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_s32(vmaxq_s32(vreinterpretq_s32_u8(a), vreinterpretq_s32_u8(b)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU8(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 8);
+	return vshlq_u8(v, vdupq_n_s8((i8)count));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU16(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 16);
+	return vreinterpretq_u8_u16(vshlq_u16(vreinterpretq_u16_u8(v), vdupq_n_s16((i16)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU32(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 32);
+	return vreinterpretq_u8_u32(vshlq_u32(vreinterpretq_u32_u8(v), vdupq_n_s32((i32)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftLeftU64(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 64);
+	return vreinterpretq_u8_u64(vshlq_u64(vreinterpretq_u64_u8(v), vdupq_n_s64((i64)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU8(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 8);
+	return vshlq_u8(v, vdupq_n_s8((i8)(-(i32)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI8(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 8);
+	return vreinterpretq_u8_s8(vshlq_s8(vreinterpretq_s8_u8(v), vdupq_n_s8((i8)(-(i32)count))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU16(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 16);
+	return vreinterpretq_u8_u16(vshlq_u16(vreinterpretq_u16_u8(v), vdupq_n_s16((i16)(-(i32)count))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI16(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 16);
+	return vreinterpretq_u8_s16(vshlq_s16(vreinterpretq_s16_u8(v), vdupq_n_s16((i16)(-(i32)count))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU32(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 32);
+	return vreinterpretq_u8_u32(vshlq_u32(vreinterpretq_u32_u8(v), vdupq_n_s32(-(i32)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI32(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 32);
+	return vreinterpretq_u8_s32(vshlq_s32(vreinterpretq_s32_u8(v), vdupq_n_s32(-(i32)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightU64(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 64);
+	return vreinterpretq_u8_u64(vshlq_u64(vreinterpretq_u64_u8(v), vdupq_n_s64(-(i64)count)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ShiftRightI64(Crust_Simd128 v, u32 count)
+{
+	CRUST_ASSERT(count < 64);
+	return vreinterpretq_u8_s64(vshlq_s64(vreinterpretq_s64_u8(v), vdupq_n_s64(-(i64)count)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vceqq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vceqq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vceqq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u64(vceqq_u64(vreinterpretq_u64_u8(a), vreinterpretq_u64_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vcltq_u8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vcltq_s8(vreinterpretq_s8_u8(a), vreinterpretq_s8_u8(b));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vcltq_u16(vreinterpretq_u16_u8(a), vreinterpretq_u16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u16(vcltq_s16(vreinterpretq_s16_u8(a), vreinterpretq_s16_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vcltq_u32(vreinterpretq_u32_u8(a), vreinterpretq_u32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u32(vcltq_s32(vreinterpretq_s32_u8(a), vreinterpretq_s32_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u64(vcltq_u64(vreinterpretq_u64_u8(a), vreinterpretq_u64_u8(b)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LessI64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return vreinterpretq_u8_u64(vcltq_s64(vreinterpretq_s64_u8(a), vreinterpretq_s64_u8(b)));
 }
 
 //
@@ -484,4 +767,86 @@ static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF64FromF32High(Crust_Simd12
 static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF32FromF64(Crust_Simd128 low, Crust_Simd128 high)
 {
 	return vreinterpretq_u8_f32(vcvt_high_f32_f64(vcvt_f32_f64(vreinterpretq_f64_u8(low)), vreinterpretq_f64_u8(high)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU16FromU8Low(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u16(vmovl_u8(vget_low_u8(v)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU16FromU8High(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u16(vmovl_high_u8(v));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI16FromI8Low(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_s16(vmovl_s8(vget_low_s8(vreinterpretq_s8_u8(v))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI16FromI8High(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_s16(vmovl_high_s8(vreinterpretq_s8_u8(v)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU32FromU16Low(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vmovl_u16(vget_low_u16(vreinterpretq_u16_u8(v))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU32FromU16High(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u32(vmovl_high_u16(vreinterpretq_u16_u8(v)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI32FromI16Low(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_s32(vmovl_s16(vget_low_s16(vreinterpretq_s16_u8(v))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI32FromI16High(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_s32(vmovl_high_s16(vreinterpretq_s16_u8(v)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU64FromU32Low(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u64(vmovl_u32(vget_low_u32(vreinterpretq_u32_u8(v))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU64FromU32High(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_u64(vmovl_high_u32(vreinterpretq_u32_u8(v)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI64FromI32Low(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_s64(vmovl_s32(vget_low_s32(vreinterpretq_s32_u8(v))));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI64FromI32High(Crust_Simd128 v)
+{
+	return vreinterpretq_u8_s64(vmovl_high_s32(vreinterpretq_s32_u8(v)));
+}
+
+//
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI8FromI16Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return vreinterpretq_u8_s8(vqmovn_high_s16(vqmovn_s16(vreinterpretq_s16_u8(low)), vreinterpretq_s16_u8(high)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU8FromI16Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return vqmovun_high_s16(vqmovun_s16(vreinterpretq_s16_u8(low)), vreinterpretq_s16_u8(high));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI16FromI32Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return vreinterpretq_u8_s16(vqmovn_high_s32(vqmovn_s32(vreinterpretq_s32_u8(low)), vreinterpretq_s32_u8(high)));
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertU16FromI32Saturate(Crust_Simd128 low, Crust_Simd128 high)
+{
+	return vreinterpretq_u8_u16(vqmovun_high_s32(vqmovun_s32(vreinterpretq_s32_u8(low)), vreinterpretq_s32_u8(high)));
 }
