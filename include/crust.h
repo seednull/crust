@@ -570,26 +570,156 @@ static CRUST_INLINE u32 crustPopcntU32(u32 value);
 	} Crust_Simd128;
 #endif
 
-static CRUST_INLINE Crust_Simd128 crustSimd128Zero(void);
-static CRUST_INLINE Crust_Simd128 crustSimd128LoadU(const void *ptr);
-static CRUST_INLINE void crustSimd128StoreU(void *ptr, Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128AllZeros(void);
+static CRUST_INLINE Crust_Simd128 crustSimd128AllOnes(void);
 
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadU8(const u8 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadI8(const i8 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadU16(const u16 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadI16(const i16 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadU32(const u32 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadI32(const i32 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadU64(const u64 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadI64(const i64 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadF32(const f32 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadF64(const f64 *ptr);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedU8(const u8 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedI8(const i8 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedU16(const u16 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedI16(const i16 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedU32(const u32 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedI32(const i32 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedU64(const u64 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedI64(const i64 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedF32(const f32 *ptr);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadAlignedF64(const f64 *ptr);
+
+static CRUST_INLINE void crustSimd128StoreU8(u8 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreI8(i8 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreU16(u16 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreI16(i16 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreU32(u32 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreI32(i32 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreU64(u64 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreI64(i64 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreF32(f32 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreF64(f64 *ptr, Crust_Simd128 v);
+
+static CRUST_INLINE void crustSimd128StoreAlignedU8(u8 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedI8(i8 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedU16(u16 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedI16(i16 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedU32(u32 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedI32(i32 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedU64(u64 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedI64(i64 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedF32(f32 *ptr, Crust_Simd128 v);
+static CRUST_INLINE void crustSimd128StoreAlignedF64(f64 *ptr, Crust_Simd128 v);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatU8(u8 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatI8(i8 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatU16(u16 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatI16(i16 v);
 static CRUST_INLINE Crust_Simd128 crustSimd128SplatU32(u32 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatI32(i32 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatU64(u64 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatI64(i64 v);
 static CRUST_INLINE Crust_Simd128 crustSimd128SplatF32(f32 v);
-static CRUST_INLINE Crust_Simd128 crustSimd128SetU32(u32 v0, u32 v1, u32 v2, u32 v3);
-static CRUST_INLINE Crust_Simd128 crustSimd128SetF32(f32 v0, f32 v1, f32 v2, f32 v3);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatF64(f64 v);
 
+static CRUST_INLINE Crust_Simd128 crustSimd128MakeU32(u32 v0, u32 v1, u32 v2, u32 v3);
+static CRUST_INLINE Crust_Simd128 crustSimd128MakeI32(i32 v0, i32 v1, i32 v2, i32 v3);
+static CRUST_INLINE Crust_Simd128 crustSimd128MakeF32(f32 v0, f32 v1, f32 v2, f32 v3);
+static CRUST_INLINE Crust_Simd128 crustSimd128MakeU64(u64 v0, u64 v1);
+static CRUST_INLINE Crust_Simd128 crustSimd128MakeI64(i64 v0, i64 v1);
+static CRUST_INLINE Crust_Simd128 crustSimd128MakeF64(f64 v0, f64 v1);
+
+static CRUST_INLINE u8 crustSimd128GetLaneU8(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE i8 crustSimd128GetLaneI8(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE u16 crustSimd128GetLaneU16(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE i16 crustSimd128GetLaneI16(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE u32 crustSimd128GetLaneU32(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE i32 crustSimd128GetLaneI32(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE u64 crustSimd128GetLaneU64(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE i64 crustSimd128GetLaneI64(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE f32 crustSimd128GetLaneF32(Crust_Simd128 v, u32 lane);
+static CRUST_INLINE f64 crustSimd128GetLaneF64(Crust_Simd128 v, u32 lane);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneU8(Crust_Simd128 v, u32 lane, u8 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneI8(Crust_Simd128 v, u32 lane, i8 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneU16(Crust_Simd128 v, u32 lane, u16 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneI16(Crust_Simd128 v, u32 lane, i16 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneU32(Crust_Simd128 v, u32 lane, u32 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneI32(Crust_Simd128 v, u32 lane, i32 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneU64(Crust_Simd128 v, u32 lane, u64 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneI64(Crust_Simd128 v, u32 lane, i64 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneF32(Crust_Simd128 v, u32 lane, f32 value);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneF64(Crust_Simd128 v, u32 lane, f64 value);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128Or(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128Xor(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128AndNot(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128Not(Crust_Simd128 v);
 static CRUST_INLINE Crust_Simd128 crustSimd128Select(Crust_Simd128 mask, Crust_Simd128 a, Crust_Simd128 b);
+
+static CRUST_INLINE u32 crustSimd128Any(Crust_Simd128 v);
+static CRUST_INLINE u32 crustSimd128All(Crust_Simd128 v);
+static CRUST_INLINE u32 crustSimd128BitmaskU8(Crust_Simd128 v);
+static CRUST_INLINE u32 crustSimd128BitmaskU16(Crust_Simd128 v);
+static CRUST_INLINE u32 crustSimd128BitmaskU32(Crust_Simd128 v);
+static CRUST_INLINE u32 crustSimd128BitmaskU64(Crust_Simd128 v);
 
 static CRUST_INLINE Crust_Simd128 crustSimd128AddU32(Crust_Simd128 a, Crust_Simd128 b);
 static CRUST_INLINE Crust_Simd128 crustSimd128AddI32(Crust_Simd128 a, Crust_Simd128 b);
 
 static CRUST_INLINE Crust_Simd128 crustSimd128AddF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128SubF32(Crust_Simd128 a, Crust_Simd128 b);
 static CRUST_INLINE Crust_Simd128 crustSimd128MulF32(Crust_Simd128 a, Crust_Simd128 b);
-static CRUST_INLINE Crust_Simd128 crustSimd128LtF32(Crust_Simd128 a, Crust_Simd128 b);
-static CRUST_INLINE Crust_Simd128 crustSimd128GtF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128DivF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128SqrtF32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128AbsF32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128NegateF32(Crust_Simd128 v);
 static CRUST_INLINE Crust_Simd128 crustSimd128MinF32(Crust_Simd128 a, Crust_Simd128 b);
 static CRUST_INLINE Crust_Simd128 crustSimd128MaxF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128NotEqualF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128LessF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128LessEqualF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128GreaterF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128GreaterEqualF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128FloorF32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128CeilF32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128RoundEvenF32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128TruncateF32(Crust_Simd128 v);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128SubF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128MulF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128DivF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128SqrtF64(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128AbsF64(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128NegateF64(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128MinF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128EqualF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128NotEqualF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128LessF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128LessEqualF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128GreaterF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128GreaterEqualF64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128FloorF64(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128CeilF64(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128RoundEvenF64(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128TruncateF64(Crust_Simd128 v);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF32FromI32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI32FromF32(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertI32FromF32Saturate(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF64FromF32Low(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF64FromF32High(Crust_Simd128 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128ConvertF32FromF64(Crust_Simd128 low, Crust_Simd128 high);
 
 //
 #include "platform/cpu_common.inl"

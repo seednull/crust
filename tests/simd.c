@@ -1,5 +1,8 @@
 #include "crust_test.h"
 
+#include <math.h>
+#include <string.h>
+
 enum
 {
 	ITERATIONS = 10000,
@@ -11,6 +14,16 @@ static const u32 special_f32_bits[] =
 	0x80000000u,
 	0x3f800000u,
 	0xbf800000u,
+	0x3f000000u,
+	0xbf000000u,
+	0x3fc00000u,
+	0x40200000u,
+	0xc0200000u,
+	0x4affffffu,
+	0x4b000000u,
+	0x4effffffu,
+	0x4f000000u,
+	0xcf000000u,
 	0x00000001u,
 	0x807fffffu,
 	0x00800000u,
@@ -22,9 +35,49 @@ static const u32 special_f32_bits[] =
 	0xffc00001u,
 };
 
-#define SPECIAL_F32_COUNT ((u32)(sizeof(special_f32_bits) / sizeof(special_f32_bits[0])))
+static const u64 special_f64_bits[] =
+{
+	0x0000000000000000ULL,
+	0x8000000000000000ULL,
+	0x3ff0000000000000ULL,
+	0xbff0000000000000ULL,
+	0x3fe0000000000000ULL,
+	0xbfe0000000000000ULL,
+	0x3ff8000000000000ULL,
+	0x4004000000000000ULL,
+	0xc004000000000000ULL,
+	0x432fffffffffffffULL,
+	0x4330000000000000ULL,
+	0x47efffffe0000000ULL,
+	0x47f0000000000000ULL,
+	0x36a0000000000000ULL,
+	0x0000000000000001ULL,
+	0x800fffffffffffffULL,
+	0x0010000000000000ULL,
+	0x7fefffffffffffffULL,
+	0xffefffffffffffffULL,
+	0x7ff0000000000000ULL,
+	0xfff0000000000000ULL,
+	0x7ff8000000000000ULL,
+	0xfff8000000000001ULL,
+};
 
-typedef void (*PFN_checkF32)(const f32 *a, const f32 *b);
+#define SPECIAL_F32_COUNT ((u32)(sizeof(special_f32_bits) / sizeof(special_f32_bits[0])))
+#define SPECIAL_F64_COUNT ((u32)(sizeof(special_f64_bits) / sizeof(special_f64_bits[0])))
+
+#define INPUTS_F32 (SPECIAL_F32_COUNT * SPECIAL_F32_COUNT + ITERATIONS)
+#define INPUTS_F64 (SPECIAL_F64_COUNT * SPECIAL_F64_COUNT + ITERATIONS)
+
+typedef Crust_Simd128 (*PFN_simdUnary)(Crust_Simd128 v);
+typedef Crust_Simd128 (*PFN_simdBinary)(Crust_Simd128 a, Crust_Simd128 b);
+
+typedef void (*PFN_unaryF32)(f32 v, f32 *result);
+typedef void (*PFN_binaryF32)(f32 a, f32 b, f32 *result);
+typedef u8 (*PFN_compareF32)(f32 a, f32 b);
+
+typedef void (*PFN_unaryF64)(f64 v, f64 *result);
+typedef void (*PFN_binaryF64)(f64 a, f64 b, f64 *result);
+typedef u8 (*PFN_compareF64)(f64 a, f64 b);
 
 //
 static u32 bitsF32(f32 v)
@@ -41,20 +94,55 @@ static f32 fromBitsF32(u32 v)
 	return result;
 }
 
-static u8 isNanBits(u32 bits)
+static u64 bitsF64(f64 v)
+{
+	u64 result;
+	crustMemcpy(&result, &v, sizeof(result));
+	return result;
+}
+
+static f64 fromBitsF64(u64 v)
+{
+	f64 result;
+	crustMemcpy(&result, &v, sizeof(result));
+	return result;
+}
+
+static u8 isNanBitsF32(u32 bits)
 {
 	return (bits & 0x7f800000u) == 0x7f800000u && (bits & 0x007fffffu) != 0;
 }
 
-static u8 sameF32(f32 expected, f32 actual)
+static u8 isNanBitsF64(u64 bits)
+{
+	return (bits & 0x7ff0000000000000ULL) == 0x7ff0000000000000ULL && (bits & 0x000fffffffffffffULL) != 0;
+}
+
+static u8 sameF32(f32 expected, f32 actual, u8 exact)
 {
 	u32 expected_bits = bitsF32(expected);
 	u32 actual_bits = bitsF32(actual);
 
-	if (isNanBits(expected_bits))
-		return isNanBits(actual_bits);
+	if (!exact && isNanBitsF32(expected_bits))
+		return isNanBitsF32(actual_bits);
 
 	return expected_bits == actual_bits;
+}
+
+static u8 sameF64(f64 expected, f64 actual, u8 exact)
+{
+	u64 expected_bits = bitsF64(expected);
+	u64 actual_bits = bitsF64(actual);
+
+	if (!exact && isNanBitsF64(expected_bits))
+		return isNanBitsF64(actual_bits);
+
+	return expected_bits == actual_bits;
+}
+
+static u64 randomU64(void)
+{
+	return ((u64)crustTestRandom() << 32) | crustTestRandom();
 }
 
 static f32 randomF32(void)
@@ -70,7 +158,7 @@ static f32 randomF32(void)
 		default:
 		{
 			u32 bits = crustTestRandom();
-			if (isNanBits(bits))
+			if (isNanBitsF32(bits))
 				bits |= 0x00400000u;
 
 			return fromBitsF32(bits);
@@ -78,87 +166,389 @@ static f32 randomF32(void)
 	}
 }
 
-static void runF32(PFN_checkF32 check)
+static f64 randomF64(void)
 {
-	f32 a[4];
-	f32 b[4];
-
-	for (u32 i = 0; i < SPECIAL_F32_COUNT; ++i)
+	switch (crustTestRandom() % 3)
 	{
-		for (u32 j = 0; j < SPECIAL_F32_COUNT; ++j)
-		{
-			for (u32 lane = 0; lane < 4; ++lane)
-			{
-				a[lane] = fromBitsF32(special_f32_bits[i]);
-				b[lane] = fromBitsF32(special_f32_bits[j]);
-			}
+		case 0:
+			return fromBitsF64(special_f64_bits[crustTestRandom() % SPECIAL_F64_COUNT]);
 
-			check(a, b);
+		case 1:
+			return crustTestRandomF64() * 200.0 - 100.0;
+
+		default:
+		{
+			u64 bits = randomU64();
+			if (isNanBitsF64(bits))
+				bits |= 0x0008000000000000ULL;
+
+			return fromBitsF64(bits);
 		}
 	}
+}
 
-	for (u32 i = 0; i < ITERATIONS; ++i)
+static void inputF32(u32 index, f32 *a, f32 *b)
+{
+	u32 count = SPECIAL_F32_COUNT;
+
+	for (u32 lane = 0; lane < 4; ++lane)
 	{
-		for (u32 lane = 0; lane < 4; ++lane)
-		{
-			a[lane] = randomF32();
-			b[lane] = randomF32();
-		}
+		a[lane] = (index < count * count) ? fromBitsF32(special_f32_bits[index / count]) : randomF32();
+		b[lane] = (index < count * count) ? fromBitsF32(special_f32_bits[index % count]) : randomF32();
+	}
+}
 
-		check(a, b);
+static void inputF64(u32 index, f64 *a, f64 *b)
+{
+	u32 count = SPECIAL_F64_COUNT;
+
+	for (u32 lane = 0; lane < 2; ++lane)
+	{
+		a[lane] = (index < count * count) ? fromBitsF64(special_f64_bits[index / count]) : randomF64();
+		b[lane] = (index < count * count) ? fromBitsF64(special_f64_bits[index % count]) : randomF64();
 	}
 }
 
 //
-static void checkArithmeticF32(const f32 *a, const f32 *b)
+static void addF32(f32 a, f32 b, f32 *result) { *result = a + b; }
+static void subF32(f32 a, f32 b, f32 *result) { *result = a - b; }
+static void mulF32(f32 a, f32 b, f32 *result) { *result = a * b; }
+static void divF32(f32 a, f32 b, f32 *result) { *result = a / b; }
+static void minF32(f32 a, f32 b, f32 *result) { *result = (a < b) ? a : b; }
+static void maxF32(f32 a, f32 b, f32 *result) { *result = (a < b) ? b : a; }
+
+static void sqrtF32(f32 v, f32 *result) { *result = sqrtf(v); }
+static void absF32(f32 v, f32 *result) { *result = fromBitsF32(bitsF32(v) & 0x7fffffffu); }
+static void negateF32(f32 v, f32 *result) { *result = fromBitsF32(bitsF32(v) ^ 0x80000000u); }
+static void floorF32(f32 v, f32 *result) { *result = floorf(v); }
+static void ceilF32(f32 v, f32 *result) { *result = ceilf(v); }
+static void roundEvenF32(f32 v, f32 *result) { *result = nearbyintf(v); }
+static void truncateF32(f32 v, f32 *result) { *result = truncf(v); }
+
+static u8 equalF32(f32 a, f32 b) { return a == b; }
+static u8 notEqualF32(f32 a, f32 b) { return a != b; }
+static u8 lessF32(f32 a, f32 b) { return a < b; }
+static u8 lessEqualF32(f32 a, f32 b) { return a <= b; }
+static u8 greaterF32(f32 a, f32 b) { return a > b; }
+static u8 greaterEqualF32(f32 a, f32 b) { return a >= b; }
+
+static void addF64(f64 a, f64 b, f64 *result) { *result = a + b; }
+static void subF64(f64 a, f64 b, f64 *result) { *result = a - b; }
+static void mulF64(f64 a, f64 b, f64 *result) { *result = a * b; }
+static void divF64(f64 a, f64 b, f64 *result) { *result = a / b; }
+static void minF64(f64 a, f64 b, f64 *result) { *result = (a < b) ? a : b; }
+static void maxF64(f64 a, f64 b, f64 *result) { *result = (a < b) ? b : a; }
+
+static void sqrtF64(f64 v, f64 *result) { *result = sqrt(v); }
+static void absF64(f64 v, f64 *result) { *result = fromBitsF64(bitsF64(v) & 0x7fffffffffffffffULL); }
+static void negateF64(f64 v, f64 *result) { *result = fromBitsF64(bitsF64(v) ^ 0x8000000000000000ULL); }
+static void floorF64(f64 v, f64 *result) { *result = floor(v); }
+static void ceilF64(f64 v, f64 *result) { *result = ceil(v); }
+static void roundEvenF64(f64 v, f64 *result) { *result = nearbyint(v); }
+static void truncateF64(f64 v, f64 *result) { *result = trunc(v); }
+
+static u8 equalF64(f64 a, f64 b) { return a == b; }
+static u8 notEqualF64(f64 a, f64 b) { return a != b; }
+static u8 lessF64(f64 a, f64 b) { return a < b; }
+static u8 lessEqualF64(f64 a, f64 b) { return a <= b; }
+static u8 greaterF64(f64 a, f64 b) { return a > b; }
+static u8 greaterEqualF64(f64 a, f64 b) { return a >= b; }
+
+static i32 saturateI32(f32 v)
 {
-	Crust_Simd128 va = crustSimd128LoadU(a);
-	Crust_Simd128 vb = crustSimd128LoadU(b);
+	if (v != v)
+		return 0;
 
-	f32 add[4];
-	f32 mul[4];
-	crustSimd128StoreU(add, crustSimd128AddF32(va, vb));
-	crustSimd128StoreU(mul, crustSimd128MulF32(va, vb));
+	if (v >= 2147483648.0f)
+		return CRUST_I32_MAX;
 
-	for (u32 i = 0; i < 4; ++i)
-	{
-		CRUST_TEST_CHECK(sameF32(a[i] + b[i], add[i]));
-		CRUST_TEST_CHECK(sameF32(a[i] * b[i], mul[i]));
-	}
+	if (v <= -2147483648.0f)
+		return CRUST_I32_MIN;
+
+	return (i32)v;
 }
 
-static void checkCompareF32(const f32 *a, const f32 *b)
+//
+static u8 checkUnaryF32(PFN_simdUnary simd, PFN_unaryF32 reference, u8 exact)
 {
-	Crust_Simd128 va = crustSimd128LoadU(a);
-	Crust_Simd128 vb = crustSimd128LoadU(b);
-
-	u32 lt[4];
-	u32 gt[4];
-	crustSimd128StoreU(lt, crustSimd128LtF32(va, vb));
-	crustSimd128StoreU(gt, crustSimd128GtF32(va, vb));
-
-	for (u32 i = 0; i < 4; ++i)
+	for (u32 i = 0; i < INPUTS_F32; ++i)
 	{
-		CRUST_TEST_CHECK(lt[i] == ((a[i] < b[i]) ? CRUST_U32_MAX : 0u));
-		CRUST_TEST_CHECK(gt[i] == ((a[i] > b[i]) ? CRUST_U32_MAX : 0u));
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		f32 result[4];
+		crustSimd128StoreF32(result, simd(crustSimd128LoadF32(a)));
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			f32 expected;
+			reference(a[lane], &expected);
+
+			if (!sameF32(expected, result[lane], exact))
+				return 0;
+		}
 	}
+
+	return 1;
 }
 
-static void checkMinMaxF32(const f32 *a, const f32 *b)
+static u8 checkBinaryF32(PFN_simdBinary simd, PFN_binaryF32 reference, u8 exact)
 {
-	Crust_Simd128 va = crustSimd128LoadU(a);
-	Crust_Simd128 vb = crustSimd128LoadU(b);
-
-	f32 min[4];
-	f32 max[4];
-	crustSimd128StoreU(min, crustSimd128MinF32(va, vb));
-	crustSimd128StoreU(max, crustSimd128MaxF32(va, vb));
-
-	for (u32 i = 0; i < 4; ++i)
+	for (u32 i = 0; i < INPUTS_F32; ++i)
 	{
-		CRUST_TEST_CHECK(bitsF32(crustMinF32(a[i], b[i])) == bitsF32(min[i]));
-		CRUST_TEST_CHECK(bitsF32(crustMaxF32(a[i], b[i])) == bitsF32(max[i]));
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		f32 result[4];
+		crustSimd128StoreF32(result, simd(crustSimd128LoadF32(a), crustSimd128LoadF32(b)));
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			f32 expected;
+			reference(a[lane], b[lane], &expected);
+
+			if (!sameF32(expected, result[lane], exact))
+				return 0;
+		}
 	}
+
+	return 1;
+}
+
+static u8 checkCompareF32(PFN_simdBinary simd, PFN_compareF32 reference)
+{
+	for (u32 i = 0; i < INPUTS_F32; ++i)
+	{
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		u32 result[4];
+		crustSimd128StoreU32(result, simd(crustSimd128LoadF32(a), crustSimd128LoadF32(b)));
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			if (result[lane] != (reference(a[lane], b[lane]) ? CRUST_U32_MAX : 0u))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkUnaryF64(PFN_simdUnary simd, PFN_unaryF64 reference, u8 exact)
+{
+	for (u32 i = 0; i < INPUTS_F64; ++i)
+	{
+		f64 a[2];
+		f64 b[2];
+		inputF64(i, a, b);
+
+		f64 result[2];
+		crustSimd128StoreF64(result, simd(crustSimd128LoadF64(a)));
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			f64 expected;
+			reference(a[lane], &expected);
+
+			if (!sameF64(expected, result[lane], exact))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkBinaryF64(PFN_simdBinary simd, PFN_binaryF64 reference, u8 exact)
+{
+	for (u32 i = 0; i < INPUTS_F64; ++i)
+	{
+		f64 a[2];
+		f64 b[2];
+		inputF64(i, a, b);
+
+		f64 result[2];
+		crustSimd128StoreF64(result, simd(crustSimd128LoadF64(a), crustSimd128LoadF64(b)));
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			f64 expected;
+			reference(a[lane], b[lane], &expected);
+
+			if (!sameF64(expected, result[lane], exact))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkCompareF64(PFN_simdBinary simd, PFN_compareF64 reference)
+{
+	for (u32 i = 0; i < INPUTS_F64; ++i)
+	{
+		f64 a[2];
+		f64 b[2];
+		inputF64(i, a, b);
+
+		u64 result[2];
+		crustSimd128StoreU64(result, simd(crustSimd128LoadF64(a), crustSimd128LoadF64(b)));
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			if (result[lane] != (reference(a[lane], b[lane]) ? CRUST_U64_MAX : 0u))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+//
+static u8 checkConvertF32FromI32(void)
+{
+	static const i32 special[] = { 0, 1, -1, 16777217, -16777217, CRUST_I32_MAX, CRUST_I32_MIN };
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		i32 x[4];
+		for (u32 lane = 0; lane < 4; ++lane)
+			x[lane] = (i < 7) ? special[i] : (i32)crustTestRandom();
+
+		f32 result[4];
+		crustSimd128StoreF32(result, crustSimd128ConvertF32FromI32(crustSimd128LoadI32(x)));
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			if (!sameF32((f32)x[lane], result[lane], 1))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkConvertI32FromF32(void)
+{
+	for (u32 i = 0; i < INPUTS_F32; ++i)
+	{
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			if (!(crustAbsF32(a[lane]) < 2147483648.0f))
+				a[lane] = (f32)(crustTestRandomF64() * 4.0e9 - 2.0e9);
+		}
+
+		i32 result[4];
+		crustSimd128StoreI32(result, crustSimd128ConvertI32FromF32(crustSimd128LoadF32(a)));
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			if (result[lane] != (i32)a[lane])
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkConvertI32FromF32Saturate(void)
+{
+	for (u32 i = 0; i < INPUTS_F32; ++i)
+	{
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		i32 result[4];
+		crustSimd128StoreI32(result, crustSimd128ConvertI32FromF32Saturate(crustSimd128LoadF32(a)));
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			if (result[lane] != saturateI32(a[lane]))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkConvertF64FromF32Low(void)
+{
+	for (u32 i = 0; i < INPUTS_F32; ++i)
+	{
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		a[1] = b[0];
+
+		f64 result[2];
+		crustSimd128StoreF64(result, crustSimd128ConvertF64FromF32Low(crustSimd128LoadF32(a)));
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			if (!sameF64((f64)a[lane], result[lane], 0))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkConvertF64FromF32High(void)
+{
+	for (u32 i = 0; i < INPUTS_F32; ++i)
+	{
+		f32 a[4];
+		f32 b[4];
+		inputF32(i, a, b);
+
+		a[3] = b[0];
+
+		f64 result[2];
+		crustSimd128StoreF64(result, crustSimd128ConvertF64FromF32High(crustSimd128LoadF32(a)));
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			if (!sameF64((f64)a[lane + 2], result[lane], 0))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+static u8 checkConvertF32FromF64(void)
+{
+	for (u32 i = 0; i < INPUTS_F64; ++i)
+	{
+		f64 a[2];
+		f64 b[2];
+		inputF64(i, a, b);
+
+		a[1] = b[0];
+
+		f32 result[4];
+		crustSimd128StoreF32(result, crustSimd128ConvertF32FromF64(crustSimd128LoadF64(a), crustSimd128LoadF64(b)));
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			if (!sameF32((f32)a[lane], result[lane], 0))
+				return 0;
+
+			if (!sameF32((f32)b[lane], result[lane + 2], 0))
+				return 0;
+		}
+	}
+
+	return 1;
 }
 
 //
@@ -188,7 +578,7 @@ static int testMemory(void)
 	for (u32 offset = 0; offset < 16; ++offset)
 	{
 		crustMemset(dst, 0, sizeof(dst));
-		crustSimd128StoreU(dst + offset + 1, crustSimd128LoadU(src + offset));
+		crustSimd128StoreU8(dst + offset + 1, crustSimd128LoadU8(src + offset));
 
 		for (u32 i = 0; i < 48; ++i)
 		{
@@ -197,32 +587,317 @@ static int testMemory(void)
 		}
 	}
 
-	u32 lanes[4];
-	crustSimd128StoreU(lanes, crustSimd128Zero());
-	for (u32 i = 0; i < 4; ++i)
-		CRUST_TEST_CHECK(lanes[i] == 0);
+	u8 u8_src[16];
+	i8 i8_src[16];
+	u16 u16_src[8];
+	i16 i16_src[8];
+	u32 u32_src[4];
+	i32 i32_src[4];
+	u64 u64_src[2];
+	i64 i64_src[2];
+	f32 f32_src[4];
+	f64 f64_src[2];
 
-	crustSimd128StoreU(lanes, crustSimd128SetU32(1, 2, 3, 4));
-	for (u32 i = 0; i < 4; ++i)
-		CRUST_TEST_CHECK(lanes[i] == i + 1);
+	for (u32 i = 0; i < 16; ++i)
+	{
+		u8_src[i] = (u8)crustTestRandom();
+		i8_src[i] = (i8)(i * 13 - 100);
+	}
 
-	crustSimd128StoreU(lanes, crustSimd128SplatU32(0xdeadbeefu));
-	for (u32 i = 0; i < 4; ++i)
-		CRUST_TEST_CHECK(lanes[i] == 0xdeadbeefu);
+	for (u32 i = 0; i < 8; ++i)
+	{
+		u16_src[i] = (u16)crustTestRandom();
+		i16_src[i] = (i16)(i * 1000 - 30000);
+	}
 
-	f32 floats[4];
-	crustSimd128StoreU(floats, crustSimd128SetF32(1.0f, 2.0f, 3.0f, 4.0f));
 	for (u32 i = 0; i < 4; ++i)
-		CRUST_TEST_CHECK(floats[i] == (f32)(i + 1));
+	{
+		u32_src[i] = crustTestRandom();
+		i32_src[i] = (i32)i * 100000 - 2000000000;
+		f32_src[i] = (f32)i * 1.5f - 2.0f;
+	}
 
-	crustSimd128StoreU(floats, crustSimd128SplatF32(-0.0f));
-	for (u32 i = 0; i < 4; ++i)
-		CRUST_TEST_CHECK(bitsF32(floats[i]) == 0x80000000u);
+	for (u32 i = 0; i < 2; ++i)
+	{
+		u64_src[i] = randomU64();
+		i64_src[i] = (i64)i * 7 - 9000000000000000000LL;
+		f64_src[i] = (f64)i * 2.5 - 1.0;
+	}
+
+	u8 u8_dst[16];
+	i8 i8_dst[16];
+	u16 u16_dst[8];
+	i16 i16_dst[8];
+	u32 u32_dst[4];
+	i32 i32_dst[4];
+	u64 u64_dst[2];
+	i64 i64_dst[2];
+	f32 f32_dst[4];
+	f64 f64_dst[2];
+
+	crustSimd128StoreU8(u8_dst, crustSimd128LoadU8(u8_src));
+	crustSimd128StoreI8(i8_dst, crustSimd128LoadI8(i8_src));
+	crustSimd128StoreU16(u16_dst, crustSimd128LoadU16(u16_src));
+	crustSimd128StoreI16(i16_dst, crustSimd128LoadI16(i16_src));
+	crustSimd128StoreU32(u32_dst, crustSimd128LoadU32(u32_src));
+	crustSimd128StoreI32(i32_dst, crustSimd128LoadI32(i32_src));
+	crustSimd128StoreU64(u64_dst, crustSimd128LoadU64(u64_src));
+	crustSimd128StoreI64(i64_dst, crustSimd128LoadI64(i64_src));
+	crustSimd128StoreF32(f32_dst, crustSimd128LoadF32(f32_src));
+	crustSimd128StoreF64(f64_dst, crustSimd128LoadF64(f64_src));
+
+	CRUST_TEST_CHECK(memcmp(u8_dst, u8_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i8_dst, i8_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(u16_dst, u16_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i16_dst, i16_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(u32_dst, u32_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i32_dst, i32_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(u64_dst, u64_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i64_dst, i64_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(f32_dst, f32_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(f64_dst, f64_src, 16) == 0);
+
+	CRUST_ALIGNAS(16) u8 aligned_u8[16];
+	CRUST_ALIGNAS(16) i8 aligned_i8[16];
+	CRUST_ALIGNAS(16) u16 aligned_u16[8];
+	CRUST_ALIGNAS(16) i16 aligned_i16[8];
+	CRUST_ALIGNAS(16) u32 aligned_u32[4];
+	CRUST_ALIGNAS(16) i32 aligned_i32[4];
+	CRUST_ALIGNAS(16) u64 aligned_u64[2];
+	CRUST_ALIGNAS(16) i64 aligned_i64[2];
+	CRUST_ALIGNAS(16) f32 aligned_f32[4];
+	CRUST_ALIGNAS(16) f64 aligned_f64[2];
+
+	crustSimd128StoreAlignedU8(aligned_u8, crustSimd128LoadU8(u8_src));
+	crustSimd128StoreAlignedI8(aligned_i8, crustSimd128LoadI8(i8_src));
+	crustSimd128StoreAlignedU16(aligned_u16, crustSimd128LoadU16(u16_src));
+	crustSimd128StoreAlignedI16(aligned_i16, crustSimd128LoadI16(i16_src));
+	crustSimd128StoreAlignedU32(aligned_u32, crustSimd128LoadU32(u32_src));
+	crustSimd128StoreAlignedI32(aligned_i32, crustSimd128LoadI32(i32_src));
+	crustSimd128StoreAlignedU64(aligned_u64, crustSimd128LoadU64(u64_src));
+	crustSimd128StoreAlignedI64(aligned_i64, crustSimd128LoadI64(i64_src));
+	crustSimd128StoreAlignedF32(aligned_f32, crustSimd128LoadF32(f32_src));
+	crustSimd128StoreAlignedF64(aligned_f64, crustSimd128LoadF64(f64_src));
+
+	crustSimd128StoreU8(u8_dst, crustSimd128LoadAlignedU8(aligned_u8));
+	crustSimd128StoreI8(i8_dst, crustSimd128LoadAlignedI8(aligned_i8));
+	crustSimd128StoreU16(u16_dst, crustSimd128LoadAlignedU16(aligned_u16));
+	crustSimd128StoreI16(i16_dst, crustSimd128LoadAlignedI16(aligned_i16));
+	crustSimd128StoreU32(u32_dst, crustSimd128LoadAlignedU32(aligned_u32));
+	crustSimd128StoreI32(i32_dst, crustSimd128LoadAlignedI32(aligned_i32));
+	crustSimd128StoreU64(u64_dst, crustSimd128LoadAlignedU64(aligned_u64));
+	crustSimd128StoreI64(i64_dst, crustSimd128LoadAlignedI64(aligned_i64));
+	crustSimd128StoreF32(f32_dst, crustSimd128LoadAlignedF32(aligned_f32));
+	crustSimd128StoreF64(f64_dst, crustSimd128LoadAlignedF64(aligned_f64));
+
+	CRUST_TEST_CHECK(memcmp(u8_dst, u8_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i8_dst, i8_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(u16_dst, u16_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i16_dst, i16_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(u32_dst, u32_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i32_dst, i32_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(u64_dst, u64_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(i64_dst, i64_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(f32_dst, f32_src, 16) == 0);
+	CRUST_TEST_CHECK(memcmp(f64_dst, f64_src, 16) == 0);
+
+	u8 bytes[16];
+	crustSimd128StoreU8(bytes, crustSimd128AllZeros());
+	for (u32 i = 0; i < 16; ++i)
+		CRUST_TEST_CHECK(bytes[i] == 0);
+
+	crustSimd128StoreU8(bytes, crustSimd128AllOnes());
+	for (u32 i = 0; i < 16; ++i)
+		CRUST_TEST_CHECK(bytes[i] == CRUST_U8_MAX);
 
 	return 0;
 }
 
-static int testSelect(void)
+static int testConstructors(void)
+{
+	u8 u8_lanes[16];
+	i8 i8_lanes[16];
+	u16 u16_lanes[8];
+	i16 i16_lanes[8];
+	u32 u32_lanes[4];
+	i32 i32_lanes[4];
+	u64 u64_lanes[2];
+	i64 i64_lanes[2];
+	f32 f32_lanes[4];
+	f64 f64_lanes[2];
+
+	crustSimd128StoreU8(u8_lanes, crustSimd128SplatU8(0xab));
+	crustSimd128StoreI8(i8_lanes, crustSimd128SplatI8(-2));
+	crustSimd128StoreU16(u16_lanes, crustSimd128SplatU16(0xabcd));
+	crustSimd128StoreI16(i16_lanes, crustSimd128SplatI16(-2));
+
+	for (u32 i = 0; i < 16; ++i)
+	{
+		CRUST_TEST_CHECK(u8_lanes[i] == 0xab);
+		CRUST_TEST_CHECK(i8_lanes[i] == -2);
+	}
+
+	for (u32 i = 0; i < 8; ++i)
+	{
+		CRUST_TEST_CHECK(u16_lanes[i] == 0xabcd);
+		CRUST_TEST_CHECK(i16_lanes[i] == -2);
+	}
+
+	crustSimd128StoreU32(u32_lanes, crustSimd128SplatU32(0xdeadbeefu));
+	crustSimd128StoreI32(i32_lanes, crustSimd128SplatI32(-2));
+	crustSimd128StoreF32(f32_lanes, crustSimd128SplatF32(-0.0f));
+
+	for (u32 i = 0; i < 4; ++i)
+	{
+		CRUST_TEST_CHECK(u32_lanes[i] == 0xdeadbeefu);
+		CRUST_TEST_CHECK(i32_lanes[i] == -2);
+		CRUST_TEST_CHECK(bitsF32(f32_lanes[i]) == 0x80000000u);
+	}
+
+	crustSimd128StoreU64(u64_lanes, crustSimd128SplatU64(0x0123456789abcdefULL));
+	crustSimd128StoreI64(i64_lanes, crustSimd128SplatI64(-2));
+	crustSimd128StoreF64(f64_lanes, crustSimd128SplatF64(-1.5));
+
+	for (u32 i = 0; i < 2; ++i)
+	{
+		CRUST_TEST_CHECK(u64_lanes[i] == 0x0123456789abcdefULL);
+		CRUST_TEST_CHECK(i64_lanes[i] == -2);
+		CRUST_TEST_CHECK(f64_lanes[i] == -1.5);
+	}
+
+	crustSimd128StoreU32(u32_lanes, crustSimd128MakeU32(1, 2, 3, 0xffffffffu));
+	CRUST_TEST_CHECK(u32_lanes[0] == 1 && u32_lanes[1] == 2 && u32_lanes[2] == 3 && u32_lanes[3] == 0xffffffffu);
+
+	crustSimd128StoreI32(i32_lanes, crustSimd128MakeI32(-1, 2, -3, CRUST_I32_MIN));
+	CRUST_TEST_CHECK(i32_lanes[0] == -1 && i32_lanes[1] == 2 && i32_lanes[2] == -3 && i32_lanes[3] == CRUST_I32_MIN);
+
+	crustSimd128StoreF32(f32_lanes, crustSimd128MakeF32(1.0f, 2.0f, 3.0f, 4.0f));
+	CRUST_TEST_CHECK(f32_lanes[0] == 1.0f && f32_lanes[1] == 2.0f && f32_lanes[2] == 3.0f && f32_lanes[3] == 4.0f);
+
+	crustSimd128StoreU64(u64_lanes, crustSimd128MakeU64(1, CRUST_U64_MAX));
+	CRUST_TEST_CHECK(u64_lanes[0] == 1 && u64_lanes[1] == CRUST_U64_MAX);
+
+	crustSimd128StoreI64(i64_lanes, crustSimd128MakeI64(-1, CRUST_I64_MIN));
+	CRUST_TEST_CHECK(i64_lanes[0] == -1 && i64_lanes[1] == CRUST_I64_MIN);
+
+	crustSimd128StoreF64(f64_lanes, crustSimd128MakeF64(1.5, -2.5));
+	CRUST_TEST_CHECK(f64_lanes[0] == 1.5 && f64_lanes[1] == -2.5);
+
+	return 0;
+}
+
+static int testLanes(void)
+{
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		f32 floats[4] = { randomF32(), randomF32(), randomF32(), randomF32() };
+		Crust_Simd128 v = (i % 2) ? crustSimd128MakeU64(randomU64(), randomU64()) : crustSimd128LoadF32(floats);
+
+		u8 u8_lanes[16];
+		i8 i8_lanes[16];
+		u16 u16_lanes[8];
+		i16 i16_lanes[8];
+		u32 u32_lanes[4];
+		i32 i32_lanes[4];
+		u64 u64_lanes[2];
+		i64 i64_lanes[2];
+		f32 f32_lanes[4];
+		f64 f64_lanes[2];
+
+		crustSimd128StoreU8(u8_lanes, v);
+		crustSimd128StoreI8(i8_lanes, v);
+		crustSimd128StoreU16(u16_lanes, v);
+		crustSimd128StoreI16(i16_lanes, v);
+		crustSimd128StoreU32(u32_lanes, v);
+		crustSimd128StoreI32(i32_lanes, v);
+		crustSimd128StoreU64(u64_lanes, v);
+		crustSimd128StoreI64(i64_lanes, v);
+		crustSimd128StoreF32(f32_lanes, v);
+		crustSimd128StoreF64(f64_lanes, v);
+
+		for (u32 lane = 0; lane < 16; ++lane)
+		{
+			CRUST_TEST_CHECK(crustSimd128GetLaneU8(v, lane) == u8_lanes[lane]);
+			CRUST_TEST_CHECK(crustSimd128GetLaneI8(v, lane) == i8_lanes[lane]);
+		}
+
+		for (u32 lane = 0; lane < 8; ++lane)
+		{
+			CRUST_TEST_CHECK(crustSimd128GetLaneU16(v, lane) == u16_lanes[lane]);
+			CRUST_TEST_CHECK(crustSimd128GetLaneI16(v, lane) == i16_lanes[lane]);
+		}
+
+		for (u32 lane = 0; lane < 4; ++lane)
+		{
+			CRUST_TEST_CHECK(crustSimd128GetLaneU32(v, lane) == u32_lanes[lane]);
+			CRUST_TEST_CHECK(crustSimd128GetLaneI32(v, lane) == i32_lanes[lane]);
+			CRUST_TEST_CHECK(sameF32(f32_lanes[lane], crustSimd128GetLaneF32(v, lane), 0));
+		}
+
+		for (u32 lane = 0; lane < 2; ++lane)
+		{
+			CRUST_TEST_CHECK(crustSimd128GetLaneU64(v, lane) == u64_lanes[lane]);
+			CRUST_TEST_CHECK(crustSimd128GetLaneI64(v, lane) == i64_lanes[lane]);
+			CRUST_TEST_CHECK(sameF64(f64_lanes[lane], crustSimd128GetLaneF64(v, lane), 0));
+		}
+
+		u32 lane = crustTestRandom();
+
+		u8_lanes[lane % 16] = (u8)crustTestRandom();
+		i8_lanes[lane % 16] = (i8)crustTestRandom();
+		u16_lanes[lane % 8] = (u16)crustTestRandom();
+		i16_lanes[lane % 8] = (i16)crustTestRandom();
+		u32_lanes[lane % 4] = crustTestRandom();
+		i32_lanes[lane % 4] = (i32)crustTestRandom();
+		u64_lanes[lane % 2] = randomU64();
+		i64_lanes[lane % 2] = (i64)randomU64();
+		f32_lanes[lane % 4] = (f32)crustTestRandomF64();
+		f64_lanes[lane % 2] = crustTestRandomF64();
+
+		u8 u8_result[16];
+		i8 i8_result[16];
+		u16 u16_result[8];
+		i16 i16_result[8];
+		u32 u32_result[4];
+		i32 i32_result[4];
+		u64 u64_result[2];
+		i64 i64_result[2];
+
+		crustSimd128StoreU8(u8_result, crustSimd128SetLaneU8(v, lane % 16, u8_lanes[lane % 16]));
+		crustSimd128StoreI8(i8_result, crustSimd128SetLaneI8(v, lane % 16, i8_lanes[lane % 16]));
+		crustSimd128StoreU16(u16_result, crustSimd128SetLaneU16(v, lane % 8, u16_lanes[lane % 8]));
+		crustSimd128StoreI16(i16_result, crustSimd128SetLaneI16(v, lane % 8, i16_lanes[lane % 8]));
+		crustSimd128StoreU32(u32_result, crustSimd128SetLaneU32(v, lane % 4, u32_lanes[lane % 4]));
+		crustSimd128StoreI32(i32_result, crustSimd128SetLaneI32(v, lane % 4, i32_lanes[lane % 4]));
+		crustSimd128StoreU64(u64_result, crustSimd128SetLaneU64(v, lane % 2, u64_lanes[lane % 2]));
+		crustSimd128StoreI64(i64_result, crustSimd128SetLaneI64(v, lane % 2, i64_lanes[lane % 2]));
+
+		CRUST_TEST_CHECK(memcmp(u8_result, u8_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(i8_result, i8_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(u16_result, u16_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(i16_result, i16_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(u32_result, u32_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(i32_result, i32_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(u64_result, u64_lanes, 16) == 0);
+		CRUST_TEST_CHECK(memcmp(i64_result, i64_lanes, 16) == 0);
+
+		f32 f32_result[4];
+		f64 f64_result[2];
+
+		crustSimd128StoreF32(f32_result, crustSimd128SetLaneF32(v, lane % 4, f32_lanes[lane % 4]));
+		crustSimd128StoreF64(f64_result, crustSimd128SetLaneF64(v, lane % 2, f64_lanes[lane % 2]));
+
+		for (u32 j = 0; j < 4; ++j)
+			CRUST_TEST_CHECK(sameF32(f32_lanes[j], f32_result[j], j != lane % 4));
+
+		for (u32 j = 0; j < 2; ++j)
+			CRUST_TEST_CHECK(sameF64(f64_lanes[j], f64_result[j], j != lane % 2));
+	}
+
+	return 0;
+}
+
+static int testBitwise(void)
 {
 	for (u32 i = 0; i < ITERATIONS; ++i)
 	{
@@ -237,11 +912,99 @@ static int testSelect(void)
 			b[lane] = crustTestRandom();
 		}
 
-		u32 result[4];
-		crustSimd128StoreU(result, crustSimd128Select(crustSimd128LoadU(mask), crustSimd128LoadU(a), crustSimd128LoadU(b)));
+		Crust_Simd128 vmask = crustSimd128LoadU32(mask);
+		Crust_Simd128 va = crustSimd128LoadU32(a);
+		Crust_Simd128 vb = crustSimd128LoadU32(b);
+
+		u32 and_result[4];
+		u32 or_result[4];
+		u32 xor_result[4];
+		u32 and_not_result[4];
+		u32 not_result[4];
+		u32 select_result[4];
+
+		crustSimd128StoreU32(and_result, crustSimd128And(va, vb));
+		crustSimd128StoreU32(or_result, crustSimd128Or(va, vb));
+		crustSimd128StoreU32(xor_result, crustSimd128Xor(va, vb));
+		crustSimd128StoreU32(and_not_result, crustSimd128AndNot(va, vb));
+		crustSimd128StoreU32(not_result, crustSimd128Not(va));
+		crustSimd128StoreU32(select_result, crustSimd128Select(vmask, va, vb));
 
 		for (u32 lane = 0; lane < 4; ++lane)
-			CRUST_TEST_CHECK(result[lane] == ((mask[lane] & a[lane]) | (~mask[lane] & b[lane])));
+		{
+			CRUST_TEST_CHECK(and_result[lane] == (a[lane] & b[lane]));
+			CRUST_TEST_CHECK(or_result[lane] == (a[lane] | b[lane]));
+			CRUST_TEST_CHECK(xor_result[lane] == (a[lane] ^ b[lane]));
+			CRUST_TEST_CHECK(and_not_result[lane] == (a[lane] & ~b[lane]));
+			CRUST_TEST_CHECK(not_result[lane] == ~a[lane]);
+			CRUST_TEST_CHECK(select_result[lane] == ((mask[lane] & a[lane]) | (~mask[lane] & b[lane])));
+		}
+	}
+
+	return 0;
+}
+
+static int testMasks(void)
+{
+	CRUST_TEST_CHECK(crustSimd128Any(crustSimd128AllZeros()) == 0);
+	CRUST_TEST_CHECK(crustSimd128All(crustSimd128AllZeros()) == 0);
+	CRUST_TEST_CHECK(crustSimd128Any(crustSimd128AllOnes()) == 1);
+	CRUST_TEST_CHECK(crustSimd128All(crustSimd128AllOnes()) == 1);
+
+	for (u32 bit = 0; bit < 128; ++bit)
+	{
+		u8 bytes[16];
+		crustMemset(bytes, 0, sizeof(bytes));
+		bytes[bit / 8] = (u8)(1u << (bit % 8));
+
+		Crust_Simd128 single = crustSimd128LoadU8(bytes);
+		Crust_Simd128 hole = crustSimd128Not(single);
+
+		CRUST_TEST_CHECK(crustSimd128Any(single) == 1);
+		CRUST_TEST_CHECK(crustSimd128All(single) == 0);
+		CRUST_TEST_CHECK(crustSimd128Any(hole) == 1);
+		CRUST_TEST_CHECK(crustSimd128All(hole) == 0);
+	}
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u32 random[4];
+		for (u32 lane = 0; lane < 4; ++lane)
+			random[lane] = crustTestRandom();
+
+		Crust_Simd128 v = crustSimd128LoadU32(random);
+
+		u8 u8_lanes[16];
+		u16 u16_lanes[8];
+		u32 u32_lanes[4];
+		u64 u64_lanes[2];
+
+		crustSimd128StoreU8(u8_lanes, v);
+		crustSimd128StoreU16(u16_lanes, v);
+		crustSimd128StoreU32(u32_lanes, v);
+		crustSimd128StoreU64(u64_lanes, v);
+
+		u32 expected_u8 = 0;
+		u32 expected_u16 = 0;
+		u32 expected_u32 = 0;
+		u32 expected_u64 = 0;
+
+		for (u32 lane = 0; lane < 16; ++lane)
+			expected_u8 |= (u32)(u8_lanes[lane] >> 7) << lane;
+
+		for (u32 lane = 0; lane < 8; ++lane)
+			expected_u16 |= (u32)(u16_lanes[lane] >> 15) << lane;
+
+		for (u32 lane = 0; lane < 4; ++lane)
+			expected_u32 |= (u32_lanes[lane] >> 31) << lane;
+
+		for (u32 lane = 0; lane < 2; ++lane)
+			expected_u64 |= (u32)(u64_lanes[lane] >> 63) << lane;
+
+		CRUST_TEST_CHECK(crustSimd128BitmaskU8(v) == expected_u8);
+		CRUST_TEST_CHECK(crustSimd128BitmaskU16(v) == expected_u16);
+		CRUST_TEST_CHECK(crustSimd128BitmaskU32(v) == expected_u32);
+		CRUST_TEST_CHECK(crustSimd128BitmaskU64(v) == expected_u64);
 	}
 
 	return 0;
@@ -250,7 +1013,7 @@ static int testSelect(void)
 static int testArithmeticU32(void)
 {
 	u32 lanes[4];
-	crustSimd128StoreU(lanes, crustSimd128AddU32(crustSimd128SetU32(0xffffffffu, 0x7fffffffu, 0, 1), crustSimd128SetU32(2, 1, 0, 0xffffffffu)));
+	crustSimd128StoreU32(lanes, crustSimd128AddU32(crustSimd128MakeU32(0xffffffffu, 0x7fffffffu, 0, 1), crustSimd128MakeU32(2, 1, 0, 0xffffffffu)));
 
 	CRUST_TEST_CHECK(lanes[0] == 1);
 	CRUST_TEST_CHECK(lanes[1] == 0x80000000u);
@@ -270,8 +1033,8 @@ static int testArithmeticU32(void)
 
 		u32 add_u32[4];
 		u32 add_i32[4];
-		crustSimd128StoreU(add_u32, crustSimd128AddU32(crustSimd128LoadU(a), crustSimd128LoadU(b)));
-		crustSimd128StoreU(add_i32, crustSimd128AddI32(crustSimd128LoadU(a), crustSimd128LoadU(b)));
+		crustSimd128StoreU32(add_u32, crustSimd128AddU32(crustSimd128LoadU32(a), crustSimd128LoadU32(b)));
+		crustSimd128StoreU32(add_i32, crustSimd128AddI32(crustSimd128LoadU32(a), crustSimd128LoadU32(b)));
 
 		for (u32 lane = 0; lane < 4; ++lane)
 		{
@@ -285,19 +1048,77 @@ static int testArithmeticU32(void)
 
 static int testArithmeticF32(void)
 {
-	runF32(checkArithmeticF32);
+	CRUST_TEST_CHECK(checkBinaryF32(crustSimd128AddF32, addF32, 0));
+	CRUST_TEST_CHECK(checkBinaryF32(crustSimd128SubF32, subF32, 0));
+	CRUST_TEST_CHECK(checkBinaryF32(crustSimd128MulF32, mulF32, 0));
+	CRUST_TEST_CHECK(checkBinaryF32(crustSimd128DivF32, divF32, 0));
+	CRUST_TEST_CHECK(checkBinaryF32(crustSimd128MinF32, minF32, 1));
+	CRUST_TEST_CHECK(checkBinaryF32(crustSimd128MaxF32, maxF32, 1));
+
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128SqrtF32, sqrtF32, 0));
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128AbsF32, absF32, 1));
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128NegateF32, negateF32, 1));
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128FloorF32, floorF32, 0));
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128CeilF32, ceilF32, 0));
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128RoundEvenF32, roundEvenF32, 0));
+	CRUST_TEST_CHECK(checkUnaryF32(crustSimd128TruncateF32, truncateF32, 0));
+
 	return 0;
 }
 
 static int testCompareF32(void)
 {
-	runF32(checkCompareF32);
+	CRUST_TEST_CHECK(checkCompareF32(crustSimd128EqualF32, equalF32));
+	CRUST_TEST_CHECK(checkCompareF32(crustSimd128NotEqualF32, notEqualF32));
+	CRUST_TEST_CHECK(checkCompareF32(crustSimd128LessF32, lessF32));
+	CRUST_TEST_CHECK(checkCompareF32(crustSimd128LessEqualF32, lessEqualF32));
+	CRUST_TEST_CHECK(checkCompareF32(crustSimd128GreaterF32, greaterF32));
+	CRUST_TEST_CHECK(checkCompareF32(crustSimd128GreaterEqualF32, greaterEqualF32));
+
 	return 0;
 }
 
-static int testMinMaxF32(void)
+static int testArithmeticF64(void)
 {
-	runF32(checkMinMaxF32);
+	CRUST_TEST_CHECK(checkBinaryF64(crustSimd128AddF64, addF64, 0));
+	CRUST_TEST_CHECK(checkBinaryF64(crustSimd128SubF64, subF64, 0));
+	CRUST_TEST_CHECK(checkBinaryF64(crustSimd128MulF64, mulF64, 0));
+	CRUST_TEST_CHECK(checkBinaryF64(crustSimd128DivF64, divF64, 0));
+	CRUST_TEST_CHECK(checkBinaryF64(crustSimd128MinF64, minF64, 1));
+	CRUST_TEST_CHECK(checkBinaryF64(crustSimd128MaxF64, maxF64, 1));
+
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128SqrtF64, sqrtF64, 0));
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128AbsF64, absF64, 1));
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128NegateF64, negateF64, 1));
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128FloorF64, floorF64, 0));
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128CeilF64, ceilF64, 0));
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128RoundEvenF64, roundEvenF64, 0));
+	CRUST_TEST_CHECK(checkUnaryF64(crustSimd128TruncateF64, truncateF64, 0));
+
+	return 0;
+}
+
+static int testCompareF64(void)
+{
+	CRUST_TEST_CHECK(checkCompareF64(crustSimd128EqualF64, equalF64));
+	CRUST_TEST_CHECK(checkCompareF64(crustSimd128NotEqualF64, notEqualF64));
+	CRUST_TEST_CHECK(checkCompareF64(crustSimd128LessF64, lessF64));
+	CRUST_TEST_CHECK(checkCompareF64(crustSimd128LessEqualF64, lessEqualF64));
+	CRUST_TEST_CHECK(checkCompareF64(crustSimd128GreaterF64, greaterF64));
+	CRUST_TEST_CHECK(checkCompareF64(crustSimd128GreaterEqualF64, greaterEqualF64));
+
+	return 0;
+}
+
+static int testConvert(void)
+{
+	CRUST_TEST_CHECK(checkConvertF32FromI32());
+	CRUST_TEST_CHECK(checkConvertI32FromF32());
+	CRUST_TEST_CHECK(checkConvertI32FromF32Saturate());
+	CRUST_TEST_CHECK(checkConvertF64FromF32Low());
+	CRUST_TEST_CHECK(checkConvertF64FromF32High());
+	CRUST_TEST_CHECK(checkConvertF32FromF64());
+
 	return 0;
 }
 
@@ -305,11 +1126,16 @@ int main(void)
 {
 	CRUST_TEST_RUN(testLayout);
 	CRUST_TEST_RUN(testMemory);
-	CRUST_TEST_RUN(testSelect);
+	CRUST_TEST_RUN(testConstructors);
+	CRUST_TEST_RUN(testLanes);
+	CRUST_TEST_RUN(testBitwise);
+	CRUST_TEST_RUN(testMasks);
 	CRUST_TEST_RUN(testArithmeticU32);
 	CRUST_TEST_RUN(testArithmeticF32);
 	CRUST_TEST_RUN(testCompareF32);
-	CRUST_TEST_RUN(testMinMaxF32);
+	CRUST_TEST_RUN(testArithmeticF64);
+	CRUST_TEST_RUN(testCompareF64);
+	CRUST_TEST_RUN(testConvert);
 
 	return crustTestResult();
 }
