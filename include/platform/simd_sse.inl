@@ -226,6 +226,47 @@ static CRUST_INLINE Crust_Simd128 crustSimd128MakeF64(f64 v0, f64 v1)
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpacklo_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpackhi_epi8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpacklo_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpackhi_epi16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpacklo_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpackhi_epi32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpacklo_epi64(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return _mm_unpackhi_epi64(a, b);
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return _mm_and_si128(a, b);

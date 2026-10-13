@@ -657,6 +657,28 @@ static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneI64(Crust_Simd128 v, u32 la
 static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneF32(Crust_Simd128 v, u32 lane, f32 value);
 static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneF64(Crust_Simd128 v, u32 lane, f64 value);
 
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU8(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI8(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU16(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI16(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowF64(Crust_Simd128 a, Crust_Simd128 b);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU8(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI8(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU16(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI16(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI64(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighF64(Crust_Simd128 a, Crust_Simd128 b);
+
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b);
 static CRUST_INLINE Crust_Simd128 crustSimd128Or(Crust_Simd128 a, Crust_Simd128 b);
 static CRUST_INLINE Crust_Simd128 crustSimd128Xor(Crust_Simd128 a, Crust_Simd128 b);

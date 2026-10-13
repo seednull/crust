@@ -223,6 +223,143 @@ static CRUST_INLINE Crust_Simd128 crustSimd128MakeF64(f64 v0, f64 v1)
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u8 x[16];
+	u8 y[16];
+	crustSimd128StoreU8(x, a);
+	crustSimd128StoreU8(y, b);
+
+	u8 result[16];
+	for (u32 i = 0; i < 8; ++i)
+	{
+		result[2 * i] = x[i];
+		result[2 * i + 1] = y[i];
+	}
+
+	return crustSimd128LoadU8(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u8 x[16];
+	u8 y[16];
+	crustSimd128StoreU8(x, a);
+	crustSimd128StoreU8(y, b);
+
+	u8 result[16];
+	for (u32 i = 0; i < 8; ++i)
+	{
+		result[2 * i] = x[i + 8];
+		result[2 * i + 1] = y[i + 8];
+	}
+
+	return crustSimd128LoadU8(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u16 x[8];
+	u16 y[8];
+	crustSimd128StoreU16(x, a);
+	crustSimd128StoreU16(y, b);
+
+	u16 result[8];
+	for (u32 i = 0; i < 4; ++i)
+	{
+		result[2 * i] = x[i];
+		result[2 * i + 1] = y[i];
+	}
+
+	return crustSimd128LoadU16(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u16 x[8];
+	u16 y[8];
+	crustSimd128StoreU16(x, a);
+	crustSimd128StoreU16(y, b);
+
+	u16 result[8];
+	for (u32 i = 0; i < 4; ++i)
+	{
+		result[2 * i] = x[i + 4];
+		result[2 * i + 1] = y[i + 4];
+	}
+
+	return crustSimd128LoadU16(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u32 x[4];
+	u32 y[4];
+	crustSimd128StoreU32(x, a);
+	crustSimd128StoreU32(y, b);
+
+	u32 result[4];
+	for (u32 i = 0; i < 2; ++i)
+	{
+		result[2 * i] = x[i];
+		result[2 * i + 1] = y[i];
+	}
+
+	return crustSimd128LoadU32(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u32 x[4];
+	u32 y[4];
+	crustSimd128StoreU32(x, a);
+	crustSimd128StoreU32(y, b);
+
+	u32 result[4];
+	for (u32 i = 0; i < 2; ++i)
+	{
+		result[2 * i] = x[i + 2];
+		result[2 * i + 1] = y[i + 2];
+	}
+
+	return crustSimd128LoadU32(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u64 x[2];
+	u64 y[2];
+	crustSimd128StoreU64(x, a);
+	crustSimd128StoreU64(y, b);
+
+	u64 result[2];
+	for (u32 i = 0; i < 1; ++i)
+	{
+		result[2 * i] = x[i];
+		result[2 * i + 1] = y[i];
+	}
+
+	return crustSimd128LoadU64(result);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	u64 x[2];
+	u64 y[2];
+	crustSimd128StoreU64(x, a);
+	crustSimd128StoreU64(y, b);
+
+	u64 result[2];
+	for (u32 i = 0; i < 1; ++i)
+	{
+		result[2 * i] = x[i + 1];
+		result[2 * i + 1] = y[i + 1];
+	}
+
+	return crustSimd128LoadU64(result);
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b)
 {
 	Crust_Simd128 result;

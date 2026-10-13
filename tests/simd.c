@@ -828,6 +828,32 @@ static u8 checkNarrowInteger(PFN_simdBinary simd, u32 source_bits, u8 signed_out
 }
 
 //
+static u8 checkZip(PFN_simdBinary simd, u32 bits, u8 high)
+{
+	u32 half = 64 / bits;
+	u32 offset = high ? half : 0;
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		u64 a[16];
+		u64 b[16];
+		u64 result[16];
+
+		randomLanes(bits, a);
+		randomLanes(bits, b);
+		lanesOf(simd(vectorOf(a, bits), vectorOf(b, bits)), bits, result);
+
+		for (u32 lane = 0; lane < half; ++lane)
+		{
+			if (result[2 * lane] != a[offset + lane] || result[2 * lane + 1] != b[offset + lane])
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+//
 static int testLayout(void)
 {
 	usize size = sizeof(Crust_Simd128);
@@ -1169,6 +1195,33 @@ static int testLanes(void)
 		for (u32 j = 0; j < 2; ++j)
 			CRUST_TEST_CHECK(sameF64(f64_lanes[j], f64_result[j], j != lane % 2));
 	}
+
+	return 0;
+}
+
+static int testZip(void)
+{
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowU8, 8, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowI8, 8, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowU16, 16, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowI16, 16, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowU32, 32, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowI32, 32, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowU64, 64, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowI64, 64, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowF32, 32, 0));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipLowF64, 64, 0));
+
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighU8, 8, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighI8, 8, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighU16, 16, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighI16, 16, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighU32, 32, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighI32, 32, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighU64, 64, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighI64, 64, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighF32, 32, 1));
+	CRUST_TEST_CHECK(checkZip(crustSimd128ZipHighF64, 64, 1));
 
 	return 0;
 }
@@ -1527,6 +1580,7 @@ int main(void)
 	CRUST_TEST_RUN(testMemory);
 	CRUST_TEST_RUN(testConstructors);
 	CRUST_TEST_RUN(testLanes);
+	CRUST_TEST_RUN(testZip);
 	CRUST_TEST_RUN(testBitwise);
 	CRUST_TEST_RUN(testMasks);
 	CRUST_TEST_RUN(testArithmeticInteger);

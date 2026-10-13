@@ -333,6 +333,67 @@ static CRUST_INLINE Crust_Simd128 crustSimd128SetLaneF64(Crust_Simd128 v, u32 la
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipLowU8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipLowU16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipLowU32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowI64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipLowU64(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowF32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipLowU32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowF64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipLowU64(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipHighU8(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipHighU16(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipHighU32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighI64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipHighU64(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighF32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipHighU32(a, b);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighF64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return crustSimd128ZipHighU64(a, b);
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128AddI8(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return crustSimd128AddU8(a, b);

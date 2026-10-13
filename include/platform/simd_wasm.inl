@@ -194,6 +194,47 @@ static CRUST_INLINE Crust_Simd128 crustSimd128MakeF64(f64 v0, f64 v1)
 }
 
 //
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i8x16_shuffle(a, b, 0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU8(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i8x16_shuffle(a, b, 8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i16x8_shuffle(a, b, 0, 8, 1, 9, 2, 10, 3, 11);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU16(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i16x8_shuffle(a, b, 4, 12, 5, 13, 6, 14, 7, 15);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i32x4_shuffle(a, b, 0, 4, 1, 5);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU32(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i32x4_shuffle(a, b, 2, 6, 3, 7);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipLowU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i64x2_shuffle(a, b, 0, 2);
+}
+
+static CRUST_INLINE Crust_Simd128 crustSimd128ZipHighU64(Crust_Simd128 a, Crust_Simd128 b)
+{
+	return wasm_i64x2_shuffle(a, b, 1, 3);
+}
+
+//
 static CRUST_INLINE Crust_Simd128 crustSimd128And(Crust_Simd128 a, Crust_Simd128 b)
 {
 	return wasm_v128_and(a, b);
