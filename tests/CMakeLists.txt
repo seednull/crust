@@ -46,6 +46,7 @@ crust_add_test(heap)
 crust_add_test(math)
 crust_add_test(pool)
 crust_add_test(ring)
+crust_add_test(simd)
 crust_add_test(stack)
 
 if (CRUST_TESTS_THREADED)
