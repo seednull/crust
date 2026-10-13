@@ -1,5 +1,7 @@
 #include "crust_test.h"
 
+#include <math.h>
+
 #define SQRT_HALF 0.70710678f
 #define SIN_22_5 0.38268343f
 #define COS_22_5 0.92387953f
@@ -122,6 +124,141 @@ static Crust_Transform randomTransform(void)
 }
 
 //
+static const u32 rounding_f32_bits[] =
+{
+	0x00000000u, 0x80000000u, 0x3f000000u, 0xbf000000u, 0x3fc00000u, 0xbfc00000u, 0x40200000u, 0xc0200000u,
+	0x3effffffu, 0xbeffffffu, 0x4affffffu, 0xcaffffffu, 0x4b000000u, 0x4b800000u, 0x7f7fffffu, 0xff7fffffu,
+	0x00000001u, 0x80000001u, 0x00800000u, 0x7f800000u, 0xff800000u, 0x7fc00000u, 0xffc00001u,
+};
+
+static const u64 rounding_f64_bits[] =
+{
+	0x0000000000000000ULL, 0x8000000000000000ULL, 0x3fe0000000000000ULL, 0xbfe0000000000000ULL,
+	0x3ff8000000000000ULL, 0xbff8000000000000ULL, 0x4004000000000000ULL, 0xc004000000000000ULL,
+	0x3fdfffffffffffffULL, 0xbfdfffffffffffffULL, 0x432fffffffffffffULL, 0xc32fffffffffffffULL,
+	0x4330000000000000ULL, 0x4340000000000000ULL, 0x7fefffffffffffffULL, 0xffefffffffffffffULL,
+	0x0000000000000001ULL, 0x8000000000000001ULL, 0x0010000000000000ULL, 0x7ff0000000000000ULL,
+	0xfff0000000000000ULL, 0x7ff8000000000000ULL, 0xfff8000000000001ULL,
+};
+
+static f32 fromBitsF32(u32 v)
+{
+	f32 result;
+	crustMemcpy(&result, &v, sizeof(result));
+	return result;
+}
+
+static f64 fromBitsF64(u64 v)
+{
+	f64 result;
+	crustMemcpy(&result, &v, sizeof(result));
+	return result;
+}
+
+static u8 sameF32(f32 expected, f32 actual)
+{
+	u32 expected_bits;
+	u32 actual_bits;
+	crustMemcpy(&expected_bits, &expected, sizeof(expected_bits));
+	crustMemcpy(&actual_bits, &actual, sizeof(actual_bits));
+
+	if (expected != expected)
+		return actual != actual;
+
+	return expected_bits == actual_bits;
+}
+
+static u8 sameF64(f64 expected, f64 actual)
+{
+	u64 expected_bits;
+	u64 actual_bits;
+	crustMemcpy(&expected_bits, &expected, sizeof(expected_bits));
+	crustMemcpy(&actual_bits, &actual, sizeof(actual_bits));
+
+	if (expected != expected)
+		return actual != actual;
+
+	return expected_bits == actual_bits;
+}
+
+static f32 roundingInputF32(u32 index)
+{
+	u32 count = (u32)(sizeof(rounding_f32_bits) / sizeof(rounding_f32_bits[0]));
+
+	if (index < count)
+		return fromBitsF32(rounding_f32_bits[index]);
+
+	switch (crustTestRandom() % 3)
+	{
+		case 0:
+			return (f32)((i32)(crustTestRandom() % 2001) - 1000) + 0.5f;
+
+		case 1:
+			return randomRange(-1000.0f, 1000.0f);
+
+		default:
+		{
+			u32 bits = crustTestRandom();
+			if ((bits & 0x7f800000u) == 0x7f800000u)
+				bits |= 0x00400000u;
+
+			return fromBitsF32(bits);
+		}
+	}
+}
+
+static f64 roundingInputF64(u32 index)
+{
+	u32 count = (u32)(sizeof(rounding_f64_bits) / sizeof(rounding_f64_bits[0]));
+
+	if (index < count)
+		return fromBitsF64(rounding_f64_bits[index]);
+
+	switch (crustTestRandom() % 3)
+	{
+		case 0:
+			return (f64)((i32)(crustTestRandom() % 2001) - 1000) + 0.5;
+
+		case 1:
+			return crustTestRandomF64() * 2000.0 - 1000.0;
+
+		default:
+		{
+			u64 bits = ((u64)crustTestRandom() << 32) | crustTestRandom();
+			if ((bits & 0x7ff0000000000000ULL) == 0x7ff0000000000000ULL)
+				bits |= 0x0008000000000000ULL;
+
+			return fromBitsF64(bits);
+		}
+	}
+}
+
+//
+static int testRounding(void)
+{
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		f32 v = roundingInputF32(i);
+
+		CRUST_TEST_CHECK(sameF32(floorf(v), crustFloorF32(v)));
+		CRUST_TEST_CHECK(sameF32(ceilf(v), crustCeilF32(v)));
+		CRUST_TEST_CHECK(sameF32(nearbyintf(v), crustRoundEvenF32(v)));
+		CRUST_TEST_CHECK(sameF32(truncf(v), crustTruncateF32(v)));
+	}
+
+	for (u32 i = 0; i < ITERATIONS; ++i)
+	{
+		f64 v = roundingInputF64(i);
+
+		CRUST_TEST_CHECK(sameF64(floor(v), crustFloorF64(v)));
+		CRUST_TEST_CHECK(sameF64(ceil(v), crustCeilF64(v)));
+		CRUST_TEST_CHECK(sameF64(nearbyint(v), crustRoundEvenF64(v)));
+		CRUST_TEST_CHECK(sameF64(trunc(v), crustTruncateF64(v)));
+	}
+
+	return 0;
+}
+
 static int testVecKnownValues(void)
 {
 	CRUST_TEST_CHECK(approxVec3(crustVec3Cross((Crust_Vec3){ 1, 0, 0 }, (Crust_Vec3){ 0, 1, 0 }), (Crust_Vec3){ 0, 0, 1 }, 0.0f));
@@ -328,6 +465,7 @@ static int testTransformProperties(void)
 
 int main(void)
 {
+	CRUST_TEST_RUN(testRounding);
 	CRUST_TEST_RUN(testVecKnownValues);
 	CRUST_TEST_RUN(testVecProperties);
 	CRUST_TEST_RUN(testQuatKnownValues);

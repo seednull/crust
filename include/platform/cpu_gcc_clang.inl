@@ -9,6 +9,26 @@ static CRUST_INLINE f32 crustSqrtF32(f32 v)
 	return __builtin_sqrtf(v);
 }
 
+static CRUST_INLINE f32 crustFloorF32(f32 v)
+{
+	return __builtin_floorf(v);
+}
+
+static CRUST_INLINE f32 crustCeilF32(f32 v)
+{
+	return __builtin_ceilf(v);
+}
+
+static CRUST_INLINE f32 crustRoundEvenF32(f32 v)
+{
+	return __builtin_rintf(v);
+}
+
+static CRUST_INLINE f32 crustTruncateF32(f32 v)
+{
+	return __builtin_truncf(v);
+}
+
 static CRUST_INLINE f64 crustAbsF64(f64 v)
 {
 	return __builtin_fabs(v);
@@ -17,6 +37,26 @@ static CRUST_INLINE f64 crustAbsF64(f64 v)
 static CRUST_INLINE f64 crustSqrtF64(f64 v)
 {
 	return __builtin_sqrt(v);
+}
+
+static CRUST_INLINE f64 crustFloorF64(f64 v)
+{
+	return __builtin_floor(v);
+}
+
+static CRUST_INLINE f64 crustCeilF64(f64 v)
+{
+	return __builtin_ceil(v);
+}
+
+static CRUST_INLINE f64 crustRoundEvenF64(f64 v)
+{
+	return __builtin_rint(v);
+}
+
+static CRUST_INLINE f64 crustTruncateF64(f64 v)
+{
+	return __builtin_trunc(v);
 }
 
 //

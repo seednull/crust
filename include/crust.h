@@ -507,6 +507,14 @@ static CRUST_INLINE f32 crustSqrtF32(f32 v);
 static CRUST_INLINE f64 crustSqrtF64(f64 v);
 static CRUST_INLINE f32 crustRsqrtF32(f32 v);
 static CRUST_INLINE f64 crustRsqrtF64(f64 v);
+static CRUST_INLINE f32 crustFloorF32(f32 v);
+static CRUST_INLINE f64 crustFloorF64(f64 v);
+static CRUST_INLINE f32 crustCeilF32(f32 v);
+static CRUST_INLINE f64 crustCeilF64(f64 v);
+static CRUST_INLINE f32 crustRoundEvenF32(f32 v);
+static CRUST_INLINE f64 crustRoundEvenF64(f64 v);
+static CRUST_INLINE f32 crustTruncateF32(f32 v);
+static CRUST_INLINE f64 crustTruncateF64(f64 v);
 
 //
 typedef enum Crust_MemoryOrder_t
