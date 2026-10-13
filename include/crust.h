@@ -486,6 +486,89 @@ static CRUST_INLINE usize crustAlignUpUSize(usize value, usize alignment)
 }
 
 //
+static CRUST_INLINE f32 crustAbsF32(f32 v);
+static CRUST_INLINE f64 crustAbsF64(f64 v);
+static CRUST_INLINE f32 crustSqrtF32(f32 v);
+static CRUST_INLINE f64 crustSqrtF64(f64 v);
+static CRUST_INLINE f32 crustRsqrtF32(f32 v);
+static CRUST_INLINE f64 crustRsqrtF64(f64 v);
+
+//
+typedef enum Crust_MemoryOrder_t
+{
+	CRUST_MEMORY_ORDER_RELAXED = 0,
+	CRUST_MEMORY_ORDER_CONSUME = 1,
+	CRUST_MEMORY_ORDER_ACQUIRE = 2,
+	CRUST_MEMORY_ORDER_RELEASE = 3,
+	CRUST_MEMORY_ORDER_ACQ_REL = 4,
+	CRUST_MEMORY_ORDER_SEQ_CST = 5,
+} Crust_MemoryOrder;
+
+static CRUST_INLINE u32 crustAtomicSwapU32(volatile u32 *p, u32 v, Crust_MemoryOrder order);
+static CRUST_INLINE u32 crustAtomicCompareAndSwapU32(volatile u32 *p, u32 desired, u32 expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order);
+static CRUST_INLINE u32 crustAtomicLoadU32(volatile u32 *p, Crust_MemoryOrder order);
+static CRUST_INLINE void crustAtomicStoreU32(volatile u32 *p, u32 v, Crust_MemoryOrder order);
+static CRUST_INLINE u32 crustAtomicIncrementU32(volatile u32 *p, Crust_MemoryOrder order);
+static CRUST_INLINE u32 crustAtomicDecrementU32(volatile u32 *p, Crust_MemoryOrder order);
+
+static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryOrder order);
+static CRUST_INLINE u64 crustAtomicCompareAndSwapU64(volatile u64 *p, u64 desired, u64 expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order);
+static CRUST_INLINE u64 crustAtomicLoadU64(volatile u64 *p, Crust_MemoryOrder order);
+static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_MemoryOrder order);
+static CRUST_INLINE u64 crustAtomicIncrementU64(volatile u64 *p, Crust_MemoryOrder order);
+static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrder order);
+
+static CRUST_INLINE usize crustAtomicSwapUSize(volatile usize *p, usize v, Crust_MemoryOrder order);
+static CRUST_INLINE usize crustAtomicCompareAndSwapUSize(volatile usize *p, usize desired, usize expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order);
+static CRUST_INLINE usize crustAtomicLoadUSize(volatile usize *p, Crust_MemoryOrder order);
+static CRUST_INLINE void crustAtomicStoreUSize(volatile usize *p, usize v, Crust_MemoryOrder order);
+static CRUST_INLINE usize crustAtomicIncrementUSize(volatile usize *p, Crust_MemoryOrder order);
+static CRUST_INLINE usize crustAtomicDecrementUSize(volatile usize *p, Crust_MemoryOrder order);
+
+//
+static CRUST_INLINE void crustCpuRelax(void);
+
+//
+static CRUST_INLINE u32 crustLzcntU32(u32 value);
+static CRUST_INLINE u32 crustTzcntU32(u32 value);
+static CRUST_INLINE u32 crustPopcntU32(u32 value);
+
+//
+#if CRUST_SIMD_SSE
+	typedef __m128i Crust_Simd128;
+#elif CRUST_SIMD_NEON
+	typedef uint8x16_t Crust_Simd128;
+#elif CRUST_SIMD_WASM
+	typedef v128_t Crust_Simd128;
+#else
+	typedef struct Crust_Simd128_t
+	{
+		CRUST_ALIGNAS(16) u8 bytes[16];
+	} Crust_Simd128;
+#endif
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Zero(void);
+static CRUST_INLINE Crust_Simd128 crustSimd128LoadU(const void *ptr);
+static CRUST_INLINE void crustSimd128StoreU(void *ptr, Crust_Simd128 v);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatU32(u32 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SplatF32(f32 v);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetU32(u32 v0, u32 v1, u32 v2, u32 v3);
+static CRUST_INLINE Crust_Simd128 crustSimd128SetF32(f32 v0, f32 v1, f32 v2, f32 v3);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128Select(Crust_Simd128 mask, Crust_Simd128 a, Crust_Simd128 b);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddU32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128AddI32(Crust_Simd128 a, Crust_Simd128 b);
+
+static CRUST_INLINE Crust_Simd128 crustSimd128AddF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128MulF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128LtF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128GtF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128MinF32(Crust_Simd128 a, Crust_Simd128 b);
+static CRUST_INLINE Crust_Simd128 crustSimd128MaxF32(Crust_Simd128 a, Crust_Simd128 b);
+
+//
 #include "platform/cpu_common.inl"
 #include "platform/simd_common.inl"
 

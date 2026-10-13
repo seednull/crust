@@ -1,10 +1,4 @@
 //
-typedef struct Crust_Simd128_t
-{
-	CRUST_ALIGNAS(16) u8 bytes[16];
-} Crust_Simd128;
-
-//
 static CRUST_INLINE Crust_Simd128 crustSimd128Zero(void)
 {
 	Crust_Simd128 result;

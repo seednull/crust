@@ -1,7 +1,4 @@
 //
-typedef __m128i Crust_Simd128;
-
-//
 static CRUST_INLINE Crust_Simd128 crustSimd128Zero(void)
 {
 	return _mm_setzero_si128();

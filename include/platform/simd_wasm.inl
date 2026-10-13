@@ -1,7 +1,4 @@
 //
-typedef v128_t Crust_Simd128;
-
-//
 static CRUST_INLINE Crust_Simd128 crustSimd128Zero(void)
 {
 	return wasm_i32x4_splat(0);

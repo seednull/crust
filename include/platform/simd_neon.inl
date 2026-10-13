@@ -1,7 +1,4 @@
 //
-typedef uint8x16_t Crust_Simd128;
-
-//
 static CRUST_INLINE Crust_Simd128 crustSimd128Zero(void)
 {
 	return vdupq_n_u8(0);
