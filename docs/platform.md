@@ -9,7 +9,7 @@
 | `CRUST_VERSION_MAJOR` | `1` |
 | `CRUST_VERSION_MINOR` | `0` |
 | `CRUST_VERSION_PATCH` | `0` |
-| `CRUST_VERSION` | `"1.0.0-dev"` |
+| `CRUST_VERSION` | `"1.0.0"` |
 
 ## Detection macros
 
