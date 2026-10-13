@@ -252,6 +252,36 @@ static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrd
 	return 0;
 }
 
+static CRUST_INLINE usize crustAtomicSwapUSize(volatile usize *p, usize v, Crust_MemoryOrder order)
+{
+	return crustAtomicSwapU64(p, v, order);
+}
+
+static CRUST_INLINE usize crustAtomicCompareAndSwapUSize(volatile usize *p, usize desired, usize expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
+{
+	return crustAtomicCompareAndSwapU64(p, desired, expected, success_order, failure_order);
+}
+
+static CRUST_INLINE usize crustAtomicLoadUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+	return crustAtomicLoadU64(p, order);
+}
+
+static CRUST_INLINE void crustAtomicStoreUSize(volatile usize *p, usize v, Crust_MemoryOrder order)
+{
+	crustAtomicStoreU64(p, v, order);
+}
+
+static CRUST_INLINE usize crustAtomicIncrementUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+	return crustAtomicIncrementU64(p, order);
+}
+
+static CRUST_INLINE usize crustAtomicDecrementUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+	return crustAtomicDecrementU64(p, order);
+}
+
 //
 static CRUST_INLINE void crustCpuRelax(void)
 {

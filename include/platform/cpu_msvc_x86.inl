@@ -204,6 +204,60 @@ static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrd
 #endif
 }
 
+static CRUST_INLINE usize crustAtomicSwapUSize(volatile usize *p, usize v, Crust_MemoryOrder order)
+{
+#if CRUST_ARCH_64BIT
+	return crustAtomicSwapU64(p, v, order);
+#else
+	return crustAtomicSwapU32(p, v, order);
+#endif
+}
+
+static CRUST_INLINE usize crustAtomicCompareAndSwapUSize(volatile usize *p, usize desired, usize expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
+{
+#if CRUST_ARCH_64BIT
+	return crustAtomicCompareAndSwapU64(p, desired, expected, success_order, failure_order);
+#else
+	return crustAtomicCompareAndSwapU32(p, desired, expected, success_order, failure_order);
+#endif
+}
+
+static CRUST_INLINE usize crustAtomicLoadUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+#if CRUST_ARCH_64BIT
+	return crustAtomicLoadU64(p, order);
+#else
+	return crustAtomicLoadU32(p, order);
+#endif
+}
+
+static CRUST_INLINE void crustAtomicStoreUSize(volatile usize *p, usize v, Crust_MemoryOrder order)
+{
+#if CRUST_ARCH_64BIT
+	crustAtomicStoreU64(p, v, order);
+#else
+	crustAtomicStoreU32(p, v, order);
+#endif
+}
+
+static CRUST_INLINE usize crustAtomicIncrementUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+#if CRUST_ARCH_64BIT
+	return crustAtomicIncrementU64(p, order);
+#else
+	return crustAtomicIncrementU32(p, order);
+#endif
+}
+
+static CRUST_INLINE usize crustAtomicDecrementUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+#if CRUST_ARCH_64BIT
+	return crustAtomicDecrementU64(p, order);
+#else
+	return crustAtomicDecrementU32(p, order);
+#endif
+}
+
 //
 static CRUST_INLINE void crustCpuRelax(void)
 {

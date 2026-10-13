@@ -104,6 +104,48 @@ static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrd
 	return __atomic_sub_fetch((u64 *)p, 1, (int)order);
 }
 
+static CRUST_INLINE usize crustAtomicSwapUSize(volatile usize *p, usize v, Crust_MemoryOrder order)
+{
+	return __atomic_exchange_n((usize *)p, v, (int)order);
+}
+
+static CRUST_INLINE usize crustAtomicCompareAndSwapUSize(volatile usize *p, usize desired, usize expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
+{
+	CRUST_ASSERT(crustIsValidFailureOrder(success_order, failure_order));
+
+	usize e = expected;
+	__atomic_compare_exchange_n((usize *)p, &e, desired, 0, (int)success_order, (int)failure_order);
+
+	return e;
+}
+
+static CRUST_INLINE usize crustAtomicLoadUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
+
+	return __atomic_load_n((usize *)p, (int)order);
+}
+
+static CRUST_INLINE void crustAtomicStoreUSize(volatile usize *p, usize v, Crust_MemoryOrder order)
+{
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQUIRE);
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
+	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_CONSUME);
+
+	__atomic_store_n((usize *)p, v, (int)order);
+}
+
+static CRUST_INLINE usize crustAtomicIncrementUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+	return __atomic_add_fetch((usize *)p, 1, (int)order);
+}
+
+static CRUST_INLINE usize crustAtomicDecrementUSize(volatile usize *p, Crust_MemoryOrder order)
+{
+	return __atomic_sub_fetch((usize *)p, 1, (int)order);
+}
+
 //
 static CRUST_INLINE void crustCpuRelax(void)
 {

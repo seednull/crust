@@ -187,22 +187,37 @@
 #endif
 
 // Types
-typedef signed char					i8;
-typedef signed short				i16;
-typedef signed int					i32;
-typedef signed long long			i64;
+#if CRUST_COMPILER_MSVC
+	typedef signed char				i8;
+	typedef signed short			i16;
+	typedef signed int				i32;
+	typedef signed long long		i64;
 
-typedef unsigned char				u8;
-typedef unsigned short				u16;
-typedef unsigned int				u32;
-typedef unsigned long long			u64;
+	typedef unsigned char			u8;
+	typedef unsigned short			u16;
+	typedef unsigned int			u32;
+	typedef unsigned long long		u64;
 
-#if CRUST_ARCH_64BIT
-	typedef i64						isize;
-	typedef u64						usize;
+	#if CRUST_ARCH_64BIT
+		typedef i64					isize;
+		typedef u64					usize;
+	#else
+		typedef i32					isize;
+		typedef u32					usize;
+	#endif
 #else
-	typedef i32						isize;
-	typedef u32						usize;
+	typedef __INT8_TYPE__			i8;
+	typedef __INT16_TYPE__			i16;
+	typedef __INT32_TYPE__			i32;
+	typedef __INT64_TYPE__			i64;
+
+	typedef __UINT8_TYPE__			u8;
+	typedef __UINT16_TYPE__			u16;
+	typedef __UINT32_TYPE__			u32;
+	typedef __UINT64_TYPE__			u64;
+
+	typedef __PTRDIFF_TYPE__		isize;
+	typedef __SIZE_TYPE__			usize;
 #endif
 
 typedef float						f32;

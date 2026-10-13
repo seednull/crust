@@ -48,6 +48,7 @@ crust_add_test(pool)
 crust_add_test(ring)
 crust_add_test(simd)
 crust_add_test(stack)
+crust_add_test(types)
 
 if (CRUST_TESTS_THREADED)
 	crust_add_test(lock)
