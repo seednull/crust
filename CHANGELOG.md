@@ -11,6 +11,10 @@
 
 - Linux presets: `linux-gcc-debug`, `linux-gcc-release`, `linux-clang-debug` and `linux-clang-release`, with matching `build-linux-*` build presets. They use `gcc`/`g++` or `clang`/`clang++` from `PATH`.
 
+### Fixed
+
+- With MSVC on ARM64, `atomic.h` and `scalar.h` didn't compile as C++: some of the intrinsics they use are declared only in `intrin.h`, which Crust doesn't include. Crust now declares them itself, with the signatures from `intrin.h`.
+
 ## 1.2.0 - 2026-10-14
 
 Running out of a resource is now reported through function results and stays well-defined in release builds, see [Assertions](docs/platform.md#assertions). Contract violations are still asserted.
