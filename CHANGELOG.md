@@ -58,7 +58,7 @@ Running out of a resource is now reported through function results and stays wel
 
 ### Changed
 
-- `crust.h` is split into 17 module headers in `include/crust`, such as `<crust/simd.h>` and `<crust/ring.h>`, see [Headers](docs/building.md#headers). `<crust.h>` includes all of them, so existing code compiles unchanged.
+- `crust.h` is split into 17 module headers in `include/crust`, such as `<crust/simd.h>` and `<crust/ring.h>`, see [Using Crust in your project](docs/building.md#using-crust-in-your-project). `<crust.h>` includes all of them, so existing code compiles unchanged.
 - The headers are installed as `include/crust.h` and `include/crust/*.h`, and the installed include directory is `include`. Before, `crust.h` was installed into `include/crust` and that directory was on the include path.
 - Only `scalar.h`, `atomic.h` and `simd.h` include system headers, and only the compiler's intrinsic headers. Modules that depend on nothing but `core.h` or `allocator.h` include none, see [System headers](docs/platform.md#system-headers).
 
