@@ -88,6 +88,10 @@ if (WIN32)
 	set_target_properties(${CRUST_TARGET} PROPERTIES PREFIX "")
 endif()
 
+if (BUILD_SHARED_LIBS)
+	set_target_properties(${CRUST_TARGET} PROPERTIES C_VISIBILITY_PRESET hidden)
+endif()
+
 # ==================================================================================================
 # Includes
 # ==================================================================================================

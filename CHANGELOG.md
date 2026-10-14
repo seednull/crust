@@ -10,6 +10,7 @@
 
 - Ring buffer reads and writes no longer divide by the capacity, which makes them about 45% faster.
 - 64-bit atomics assert that their address is 8-byte aligned.
+- Shared libraries on Linux and macOS export only the API.
 ## 1.2.1 - 2026-10-15
 
 ### Changed
