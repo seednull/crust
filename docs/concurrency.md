@@ -1,5 +1,10 @@
 # Atomics and locks
 
+| Header | Contents |
+|---|---|
+| `<crust/atomic.h>` | Memory orders, atomic operations, `crustCpuRelax` |
+| `<crust/lock.h>` | `Crust_SpinLock`, `Crust_RwLock` |
+
 ## Memory orders
 
 ```c

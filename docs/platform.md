@@ -1,6 +1,8 @@
 # Platform
 
-`crust.h` starts by detecting the compiler, toolchain, architecture and SIMD backend, then defines a handful of portability macros. Everything here is available as soon as the header is included.
+Header: `<crust/core.h>`, which every other Crust header includes.
+
+`core.h` detects the compiler, toolchain, architecture and SIMD backend, then defines a handful of portability macros. Everything here is available as soon as any Crust header is included.
 
 ## Version
 
@@ -105,21 +107,18 @@ Keep debug builds in your workflow: they are what catches misuse.
 
 ## C and C++
 
-`crust.h` compiles as C99 and as C++. The prototypes are wrapped in `extern "C"`. The system intrinsic headers are included before that block, because in C++ some of them pull in declarations that cannot live inside `extern "C"`.
+Every Crust header compiles as C99 and as C++. The declarations are wrapped in `extern "C"`. The system intrinsic headers are included before that block, because in C++ some of them pull in declarations that cannot live inside `extern "C"`.
 
 ## System headers
 
-`crust.h` includes only compiler intrinsic headers and never a C library header such as `<stdlib.h>`, `<string.h>` or `<malloc.h>`:
+Crust headers include only compiler intrinsic headers and never a C library header such as `<stdlib.h>`, `<string.h>` or `<malloc.h>`. Most modules include no system header at all:
 
-| Configuration | Included |
-|---|---|
-| GCC, Clang without SIMD | nothing |
-| GCC, Clang with SSE | `<nmmintrin.h>` |
-| GCC, Clang with NEON | `<arm_neon.h>`, which includes `<stdint.h>` |
-| WebAssembly SIMD | `<wasm_simd128.h>`, which includes `<stdint.h>` and `<stdbool.h>` |
-| MSVC x86, x64 | `<intrin0.h>` and `<nmmintrin.h>`, with or without SIMD |
-| MSVC ARM64 | `<intrin0.h>` and `<arm_neon.h>`, with or without SIMD |
+| Header | GCC, Clang | MSVC |
+|---|---|---|
+| `core.h`, `lock.h`, `memory.h`, `allocator.h`, `arena.h`, `ring.h`, `bip.h`, `stack.h`, `hash.h`, `pool.h`, `heap.h` | nothing | nothing |
+| `scalar.h`, `atomic.h`, and through `scalar.h` also `vec.h`, `quat.h`, `transform.h` | nothing | `<intrin0.h>`, plus `<nmmintrin.h>` on x86 and x64 or `<arm_neon.h>` on ARM64 |
+| `simd.h` | the active backend: `<nmmintrin.h>` (SSE), `<arm_neon.h>` (NEON, includes `<stdint.h>`), `<wasm_simd128.h>` (includes `<stdint.h>` and `<stdbool.h>`) or nothing (scalar) | the same as `scalar.h`, plus the SSE or NEON header |
 
 - **`<stdint.h>` and `<stdbool.h>`** come from the intrinsic headers themselves. The C standard requires them even from freestanding implementations; they declare only types and macros.
 - **`<intrin0.h>`** is the lightweight subset of `<intrin.h>` that MSVC's own standard library uses. It declares the interlocked, bit-scan and barrier intrinsics without pulling in the CRT. Code that needs other intrinsics, such as `__cpuid` or `__rdtsc`, must include `<intrin.h>` itself.
-- **`_mm_malloc` and `_mm_free`** normally arrive with the SSE headers through `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC), which include the C library. `crust.h` skips those two headers while it includes the SSE headers. If you include `<xmmintrin.h>` or `<immintrin.h>` after `crust.h` and use `_mm_malloc`, include `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC) explicitly.
+- **`_mm_malloc` and `_mm_free`** normally arrive with the SSE headers through `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC), which include the C library. Crust skips those two headers while it includes the SSE headers. If you include `<xmmintrin.h>` or `<immintrin.h>` after a Crust header and use `_mm_malloc`, include `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC) explicitly.

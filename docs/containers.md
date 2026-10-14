@@ -1,5 +1,10 @@
 # Containers
 
+| Header | Contents |
+|---|---|
+| `<crust/hash.h>` | `Crust_HashIndexMap` |
+| `<crust/pool.h>` | `Crust_GenerationalHandlePool` |
+
 ## Crust_HashIndexMap
 
 A hash table that maps keys to `usize` indices. It doesn't store values: keep your items in your own arrays and use the map to find their index by key.

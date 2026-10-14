@@ -2,6 +2,12 @@
 
 Crust never allocates behind your back. Data structures either work on memory you hand them (`*Attach` functions) or take a `Crust_Allocator` on every call that allocates (`*Alloc`, `*Grow`, `*Free`).
 
+| Header | Contents |
+|---|---|
+| `<crust/allocator.h>` | `Crust_Allocator`, the `crustAlloc*` macros, the system allocator |
+| `<crust/arena.h>` | `Crust_Arena` and the arena allocator |
+| `<crust/memory.h>` | `crustMemcpy`, `crustMemset` |
+
 ## Crust_Allocator
 
 An allocator is a small value: a context pointer and a table of three functions.
@@ -118,6 +124,15 @@ The allocator keeps a pointer to the arena, so the arena must outlive it and mus
 This makes an arena a good fit for temporary per-frame or per-task data, and for containers whose final size is known: allocate them from an arena and reset everything at once.
 
 The arena is not thread-safe.
+
+## Memory functions
+
+| Function | Meaning |
+|---|---|
+| `crustMemcpy(dst, src, size)` | `memcpy` |
+| `crustMemset(dst, value, size)` | `memset` |
+
+Both are exported functions in `src/libc`. The rest of Crust uses them instead of calling the C library directly, see [running without the C standard library](building.md#running-without-the-c-standard-library).
 
 ## Writing an allocator
 

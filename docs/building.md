@@ -9,8 +9,9 @@
 
 | Path | Contents |
 |---|---|
-| `include/crust.h` | The single public header: platform detection, types, every prototype and all inline functions |
-| `include/platform/*.inl` | Definitions of the inline CPU and SIMD functions, one file per backend. `crust.h` includes them, never include them yourself |
+| `include/crust.h` | Includes every module header, for when you want the whole library |
+| `include/crust/*.h` | One header per module, see [Headers](#headers) |
+| `include/crust/platform/*.inl` | System intrinsic includes and the per-backend definitions of the inline CPU and SIMD functions. The module headers include them, never include them yourself |
 | `src/freestanding` | Containers, buffers, allocators and locks. Nothing here calls the C standard library directly |
 | `src/libc` | The only code that talks to the C standard library: `crustMemcpy`/`crustMemset`, trigonometry and the system allocator |
 | `tests` | CTest-based tests and a minimal test framework |
@@ -42,7 +43,7 @@ Every configure preset writes into `build/<preset>`. The build presets (`build-m
 
 | Directory | Contents |
 |---|---|
-| `build/include/crust` | `crust.h` and `platform/*.inl` |
+| `build/include` | `crust.h` and the `crust` directory with the module headers and `platform/*.inl` |
 | `build/lib` | The library. Debug builds get a `d` suffix (`crustd.lib`, `libcrustd.a`), Windows builds have no `lib` prefix |
 | `build/lib/cmake/crust` | The CMake package |
 
@@ -73,11 +74,41 @@ target_link_libraries(app PRIVATE crust::crust)
 
 To turn an option on from the parent project, set the cache variable before `add_subdirectory`, for example `set(CRUST_USE_SIMD ON CACHE BOOL "")`, or pass `-DCRUST_USE_SIMD=ON` on the command line.
 
-Then include the header:
+Then include the whole library or only the modules you use:
 
 ```c
 #include <crust.h>
+#include <crust/simd.h>
 ```
+
+## Headers
+
+`<crust.h>` includes every module. Each module header can also be included on its own and pulls in what it depends on:
+
+| Header | Contents | Includes | Docs |
+|---|---|---|---|
+| `<crust/core.h>` | Version, platform detection, portability macros, assertions, base types, limits, min/max/clamp/abs, powers of two and alignment | — | [Platform](platform.md), [Types](types.md) |
+| `<crust/scalar.h>` | Floating-point functions, bit operations, trigonometry | `core.h` | [Types](types.md) |
+| `<crust/atomic.h>` | Memory orders, atomic operations, `crustCpuRelax` | `core.h` | [Atomics and locks](concurrency.md) |
+| `<crust/lock.h>` | `Crust_SpinLock`, `Crust_RwLock` | `core.h` | [Atomics and locks](concurrency.md) |
+| `<crust/simd.h>` | `Crust_Simd128` | `scalar.h` | [SIMD](simd.md) |
+| `<crust/vec.h>` | `Crust_Vec2`, `Crust_Vec3`, `Crust_Vec4` | `scalar.h` | [Math](math.md) |
+| `<crust/quat.h>` | `Crust_Quat` | `vec.h` | [Math](math.md) |
+| `<crust/transform.h>` | `Crust_Transform` | `quat.h` | [Math](math.md) |
+| `<crust/memory.h>` | `crustMemcpy`, `crustMemset` | `core.h` | [Memory](memory.md) |
+| `<crust/allocator.h>` | `Crust_Allocator`, the `crustAlloc*` macros, the system allocator | `core.h` | [Memory](memory.md) |
+| `<crust/arena.h>` | `Crust_Arena` and the arena allocator | `allocator.h` | [Memory](memory.md) |
+| `<crust/ring.h>` | `Crust_RingBuffer`, `Crust_SpscRingBuffer` | `core.h` | [Buffers](buffers.md) |
+| `<crust/bip.h>` | `Crust_BipBuffer`, `Crust_SpscBipBuffer` | `core.h` | [Buffers](buffers.md) |
+| `<crust/stack.h>` | `Crust_Stack` | `core.h` | [Buffers](buffers.md) |
+| `<crust/hash.h>` | `Crust_HashIndexMap` | `allocator.h` | [Containers](containers.md) |
+| `<crust/pool.h>` | `Crust_GenerationalHandlePool` | `allocator.h` | [Containers](containers.md) |
+| `<crust/heap.h>` | `Crust_Heap`, `Crust_HeapNodePool` | `allocator.h` | [Offset heap](heap.md) |
+
+- **Includes inside Crust are relative.** The headers include each other with quoted paths relative to their own location, so they work without any include path setup, for example after copying `include` into your project, and they never pick up a same-named header from another library.
+- **Include modules with the `crust/` prefix:** `<crust/ring.h>`. Never put `include/crust` itself on the include path.
+- **Only three modules include system headers:** `scalar.h`, `atomic.h` and `simd.h`, see [System headers](platform.md#system-headers). Everything that depends only on `core.h` or `allocator.h` includes no system header at all.
+- **Self-contained.** The tests compile every header on its own, so a module never relies on something that only another header happens to include.
 
 ### Without CMake
 
@@ -85,8 +116,8 @@ Compile every file in `src/freestanding` and `src/libc` with `include` on the in
 
 | Define | Where | Effect |
 |---|---|---|
-| `CRUST_USE_SIMD=1` | Everywhere `crust.h` is included | Enables the SIMD backend. Add `-msse4.2 -mpopcnt` (x86) or `-msimd128` (WebAssembly) for GCC and Clang |
-| `CRUST_SHARED_LIBRARY` | Everywhere `crust.h` is included | Marks the API as imported from a shared library |
+| `CRUST_USE_SIMD=1` | Everywhere a Crust header is included | Enables the SIMD backend. Add `-msse4.2 -mpopcnt` (x86) or `-msimd128` (WebAssembly) for GCC and Clang |
+| `CRUST_SHARED_LIBRARY` | Everywhere a Crust header is included | Marks the API as imported from a shared library |
 | `CRUST_IMPLEMENTATION` | Only when compiling Crust itself | Together with `CRUST_SHARED_LIBRARY`, exports the API instead of importing it |
 | `NDEBUG` | Anywhere | Disables `CRUST_ASSERT`, see [Platform](platform.md#assertions) |
 

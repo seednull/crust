@@ -8,17 +8,17 @@ It is written in C99, has no third-party dependencies and never allocates behind
 
 ## Features
 
-| Area | What's inside | Docs |
-|---|---|---|
-| Platform | Compiler, toolchain, architecture and SIMD backend detection, portability macros, assertions | [platform.md](docs/platform.md) |
-| Types and scalars | `i8`–`i64`, `u8`–`u64`, `isize`/`usize`, `f32`/`f64` (identical to the `<stdint.h>` types), limits, min/max/clamp/abs, alignment helpers, `lzcnt`/`tzcnt`/`popcnt`, rounding and trigonometry | [types.md](docs/types.md) |
-| Atomics and locks | 32-bit, 64-bit and `usize` atomics with explicit memory orders, `Crust_SpinLock`, `Crust_RwLock` | [concurrency.md](docs/concurrency.md) |
-| SIMD | `Crust_Simd128` on SSE4.2, NEON and WebAssembly SIMD with a bit-exact scalar fallback: integer and float arithmetic, comparisons, masks, conversions, swizzles | [simd.md](docs/simd.md) |
-| Math | `Crust_Vec2`, `Crust_Vec3`, `Crust_Vec4`, `Crust_Quat` (with `slerp`/`nlerp`), `Crust_Transform` | [math.md](docs/math.md) |
-| Memory | `Crust_Allocator` interface, system and arena allocators, typed allocation macros | [memory.md](docs/memory.md) |
-| Buffers | `Crust_RingBuffer`, `Crust_BipBuffer`, `Crust_Stack` and the lock-free single-producer/single-consumer `Crust_SpscRingBuffer`, `Crust_SpscBipBuffer` | [buffers.md](docs/buffers.md) |
-| Containers | `Crust_HashIndexMap` (open addressing, user-defined key operations), `Crust_GenerationalHandlePool` | [containers.md](docs/containers.md) |
-| Offset heap | `Crust_Heap`: a TLSF-style allocator that hands out offsets instead of pointers, meant for sub-allocating GPU memory | [heap.md](docs/heap.md) |
+| Area | What's inside | Headers | Docs |
+|---|---|---|---|
+| Platform | Compiler, toolchain, architecture and SIMD backend detection, portability macros, assertions | `core.h` | [platform.md](docs/platform.md) |
+| Types and scalars | `i8`–`i64`, `u8`–`u64`, `isize`/`usize`, `f32`/`f64` (identical to the `<stdint.h>` types), limits, min/max/clamp/abs, alignment helpers, `lzcnt`/`tzcnt`/`popcnt`, rounding and trigonometry | `core.h`, `scalar.h` | [types.md](docs/types.md) |
+| Atomics and locks | 32-bit, 64-bit and `usize` atomics with explicit memory orders, `Crust_SpinLock`, `Crust_RwLock` | `atomic.h`, `lock.h` | [concurrency.md](docs/concurrency.md) |
+| SIMD | `Crust_Simd128` on SSE4.2, NEON and WebAssembly SIMD with a bit-exact scalar fallback: integer and float arithmetic, comparisons, masks, conversions, swizzles | `simd.h` | [simd.md](docs/simd.md) |
+| Math | `Crust_Vec2`, `Crust_Vec3`, `Crust_Vec4`, `Crust_Quat` (with `slerp`/`nlerp`), `Crust_Transform` | `vec.h`, `quat.h`, `transform.h` | [math.md](docs/math.md) |
+| Memory | `Crust_Allocator` interface, system and arena allocators, typed allocation macros | `allocator.h`, `arena.h`, `memory.h` | [memory.md](docs/memory.md) |
+| Buffers | `Crust_RingBuffer`, `Crust_BipBuffer`, `Crust_Stack` and the lock-free single-producer/single-consumer `Crust_SpscRingBuffer`, `Crust_SpscBipBuffer` | `ring.h`, `bip.h`, `stack.h` | [buffers.md](docs/buffers.md) |
+| Containers | `Crust_HashIndexMap` (open addressing, user-defined key operations), `Crust_GenerationalHandlePool` | `hash.h`, `pool.h` | [containers.md](docs/containers.md) |
+| Offset heap | `Crust_Heap`: a TLSF-style allocator that hands out offsets instead of pointers, meant for sub-allocating GPU memory | `heap.h` | [heap.md](docs/heap.md) |
 
 ## Supported targets
 
@@ -42,10 +42,11 @@ add_subdirectory(crust)
 target_link_libraries(app PRIVATE crust::crust)
 ```
 
-and include the single header:
+and include the whole library, or only the modules you need from `include/crust`:
 
 ```c
 #include <crust.h>
+#include <crust/simd.h>
 ```
 
 | Option | Default | Description |

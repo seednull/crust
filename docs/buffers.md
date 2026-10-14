@@ -2,13 +2,13 @@
 
 Byte buffers over memory you provide. None of them allocates: `*Attach` wraps your memory and `*Reset` empties the buffer.
 
-| Type | What it is | Threads |
-|---|---|---|
-| `Crust_RingBuffer` | Byte FIFO; copies data in and out | One |
-| `Crust_BipBuffer` | Byte FIFO that hands out contiguous regions to write and read in place | One |
-| `Crust_Stack` | Byte LIFO | One |
-| `Crust_SpscRingBuffer` | Lock-free ring buffer | One producer and one consumer |
-| `Crust_SpscBipBuffer` | Lock-free bip buffer | One producer and one consumer |
+| Type | Header | What it is | Threads |
+|---|---|---|---|
+| `Crust_RingBuffer` | `<crust/ring.h>` | Byte FIFO; copies data in and out | One |
+| `Crust_BipBuffer` | `<crust/bip.h>` | Byte FIFO that hands out contiguous regions to write and read in place | One |
+| `Crust_Stack` | `<crust/stack.h>` | Byte LIFO | One |
+| `Crust_SpscRingBuffer` | `<crust/ring.h>` | Lock-free ring buffer | One producer and one consumer |
+| `Crust_SpscBipBuffer` | `<crust/bip.h>` | Lock-free bip buffer | One producer and one consumer |
 
 All of them store raw bytes. They don't remember message boundaries: if you push values of different sizes, record the sizes yourself, for example with a small header in front of each message.
 

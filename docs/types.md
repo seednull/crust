@@ -1,5 +1,10 @@
 # Types and scalar functions
 
+| Header | Contents |
+|---|---|
+| `<crust/core.h>` | Base types, limits and constants, min/max/clamp/abs, powers of two and alignment |
+| `<crust/scalar.h>` | Bit operations, floating-point functions, trigonometry |
+
 ## Base types
 
 | Crust | Same type as | Notes |
@@ -112,12 +117,3 @@ On MSVC x86 (32-bit), floating-point values returned by value travel through the
 ### Trigonometry
 
 `crustCosF32`, `crustAcosF32`, `crustSinF32`, `crustAsinF32`, `crustTanF32`, `crustAtan2F32(y, x)` and their `F64` versions are exported functions in `src/libc` that forward to the C math library. They are not inline.
-
-## Memory functions
-
-| Function | Meaning |
-|---|---|
-| `crustMemcpy(dst, src, size)` | `memcpy` |
-| `crustMemset(dst, value, size)` | `memset` |
-
-Both are exported functions in `src/libc`. The rest of Crust uses them instead of calling the C library directly, see [running without the C standard library](building.md#running-without-the-c-standard-library).

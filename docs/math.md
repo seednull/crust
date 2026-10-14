@@ -2,13 +2,13 @@
 
 Crust's math types are plain structs of `f32`, passed and returned by value:
 
-| Type | Fields | Size |
-|---|---|---|
-| `Crust_Vec2` | `x, y` | 8 bytes |
-| `Crust_Vec3` | `x, y, z` | 12 bytes, no padding |
-| `Crust_Vec4` | `x, y, z, w` | 16 bytes, 4-byte aligned |
-| `Crust_Quat` | `x, y, z, w` | 16 bytes; `w` is the scalar part |
-| `Crust_Transform` | `position` (`Crust_Vec3`), `rotation` (`Crust_Quat`), `scale` (`Crust_Vec3`) | 40 bytes |
+| Type | Header | Fields | Size |
+|---|---|---|---|
+| `Crust_Vec2` | `<crust/vec.h>` | `x, y` | 8 bytes |
+| `Crust_Vec3` | `<crust/vec.h>` | `x, y, z` | 12 bytes, no padding |
+| `Crust_Vec4` | `<crust/vec.h>` | `x, y, z, w` | 16 bytes, 4-byte aligned |
+| `Crust_Quat` | `<crust/quat.h>` | `x, y, z, w` | 16 bytes; `w` is the scalar part |
+| `Crust_Transform` | `<crust/transform.h>` | `position` (`Crust_Vec3`), `rotation` (`Crust_Quat`), `scale` (`Crust_Vec3`) | 40 bytes |
 
 They have no hidden alignment or padding, so they can be laid out in GPU buffers or files as is, and initialized with C99 aggregate syntax:
 

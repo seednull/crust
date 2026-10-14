@@ -9,7 +9,7 @@ Crust_Simd128 clamped = crustSimd128Select(positive, v, crustSimd128AllZeros());
 u32 any_negative = crustSimd128BitmaskU32(crustSimd128LessF32(v, crustSimd128AllZeros())) != 0;
 ```
 
-Every function is `static CRUST_INLINE` in `crust.h` and works on values, so there is nothing to link and nothing to initialize.
+Header: `<crust/simd.h>`. Every function is `static CRUST_INLINE` and works on values, so there is nothing to link and nothing to initialize.
 
 - [Enabling SIMD](#enabling-simd)
 - [The type](#the-type)

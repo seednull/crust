@@ -1,5 +1,7 @@
 # Offset heap
 
+Header: `<crust/heap.h>`.
+
 `Crust_Heap` is a TLSF-style (two-level segregated fit) allocator for an abstract range `[0, size)`. It hands out **offsets** and never touches the memory it manages, which may not even be addressable by the CPU.
 
 Typical uses:
