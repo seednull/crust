@@ -484,6 +484,9 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 	u32 prev_index = node->prev_neighbour;
 	u32 next_index = node->next_neighbour;
 
+	CRUST_ASSERT(prev_index == CRUST_U32_MAX || crustHeapNodePoolIsUsed(pool, prev_index) != 0);
+	CRUST_ASSERT(next_index == CRUST_U32_MAX || crustHeapNodePoolIsUsed(pool, next_index) != 0);
+
 	crustHeapRemoveNodeFromBin(heap, allocation.index);
 
 	node->offset = allocation.offset;
@@ -494,23 +497,6 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 	if (remainder_begin_size > 0)
 	{
 		Crust_HeapNode *prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
-
-		// try merge with previous free node
-		if (prev_node != CRUST_NULL && crustHeapNodePoolIsUsed(pool, prev_index) == 0)
-		{
-			CRUST_ASSERT(prev_node->next_neighbour == allocation.index);
-
-			remainder_begin_offset = prev_node->offset;
-			remainder_begin_size += prev_node->size;
-
-			u32 prev_prev_index = prev_node->prev_neighbour;
-
-			crustHeapRemoveNodeFromBin(heap, prev_index);
-			crustHeapNodePoolRelease(pool, prev_index);
-
-			prev_index = prev_prev_index;
-			prev_node = (prev_index != CRUST_U32_MAX) ? &pool->nodes[prev_index] : CRUST_NULL;
-		}
 
 		u32 new_index = crustHeapNodePoolAcquire(pool);
 		crustHeapAddNodeToBin(heap, new_index, remainder_begin_size, remainder_begin_offset);
@@ -529,22 +515,6 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 	if (remainder_end_size > 0)
 	{
 		Crust_HeapNode *next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
-
-		// try merge with next free node
-		if (next_node != CRUST_NULL && crustHeapNodePoolIsUsed(pool, next_index) == 0)
-		{
-			CRUST_ASSERT(next_node->prev_neighbour == allocation.index);
-
-			remainder_end_size += next_node->size;
-
-			u32 next_next_index = next_node->next_neighbour;
-
-			crustHeapRemoveNodeFromBin(heap, next_index);
-			crustHeapNodePoolRelease(pool, next_index);
-
-			next_index = next_next_index;
-			next_node = (next_index != CRUST_U32_MAX) ? &pool->nodes[next_index] : CRUST_NULL;
-		}
 
 		u32 new_index = crustHeapNodePoolAcquire(pool);
 		crustHeapAddNodeToBin(heap, new_index, remainder_end_size, remainder_end_offset);
