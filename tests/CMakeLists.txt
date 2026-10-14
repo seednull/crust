@@ -47,16 +47,13 @@ crust_add_test(atomic)
 crust_add_test(bip)
 crust_add_test(hash)
 crust_add_test(heap)
+crust_add_test(lock)
 crust_add_test(math)
 crust_add_test(pool)
 crust_add_test(ring)
 crust_add_test(simd)
 crust_add_test(stack)
 crust_add_test(types)
-
-if (CRUST_TESTS_THREADED)
-	crust_add_test(lock)
-endif()
 
 # ==================================================================================================
 # Headers

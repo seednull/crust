@@ -155,7 +155,7 @@ ctest --test-dir build/msvc2026-x64 -C Debug --output-on-failure
 - The `crust_test_headers` target compiles every public header on its own, so a header that misses an include fails the build.
 - Test the SIMD backend by configuring with `-DCRUST_USE_SIMD=ON`. Without it the tests exercise the scalar backend.
 - With tests enabled, executables and shared libraries go to `bin/` in the build directory, so the tests find `crust.dll` in shared builds on Windows.
-- The Emscripten presets run the tests under Node.js. The multithreaded `lock` test is skipped there.
+- The Emscripten presets run the tests under Node.js. Builds without threads, such as Emscripten, compile the multithreaded test cases of the atomic, lock, ring and bip buffer tests out.
 
 ## Continuous integration
 
