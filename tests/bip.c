@@ -78,6 +78,49 @@ static int testPartialCommit(void)
 	return 0;
 }
 
+static int testCancel(void)
+{
+	static u8 memory[CAPACITY];
+	Crust_BipBuffer bip = crustBipBufferAttach(memory, CAPACITY);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageWrite(&bip, 40) == memory);
+	crustBipBufferCommitWrite(&bip, 0);
+
+	CRUST_TEST_CHECK(crustBipBufferStageRead(&bip, 1) == CRUST_NULL);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageWrite(&bip, 60) == memory);
+	crustBipBufferCommitWrite(&bip, 60);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageWrite(&bip, 30) == memory + 60);
+	crustBipBufferCommitWrite(&bip, 30);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageRead(&bip, 60) == memory);
+	crustBipBufferCommitRead(&bip, 0);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageRead(&bip, 60) == memory);
+	crustBipBufferCommitRead(&bip, 60);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageWrite(&bip, 50) == memory);
+	crustBipBufferCommitWrite(&bip, 0);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageRead(&bip, 30) == memory + 60);
+	crustBipBufferCommitRead(&bip, 30);
+
+	CRUST_TEST_CHECK(crustBipBufferStageRead(&bip, 1) == CRUST_NULL);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageWrite(&bip, 50) == memory);
+	crustBipBufferCommitWrite(&bip, 50);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageRead(&bip, 50) == memory);
+	crustBipBufferCommitRead(&bip, 0);
+
+	CRUST_TEST_REQUIRE(crustBipBufferStageRead(&bip, 50) == memory);
+	crustBipBufferCommitRead(&bip, 50);
+
+	CRUST_TEST_CHECK(crustBipBufferStageRead(&bip, 1) == CRUST_NULL);
+	return 0;
+}
+
 static int testFuzz(void)
 {
 	static u8 memory[FUZZ_CAPACITY];
@@ -108,6 +151,13 @@ static int testFuzz(void)
 
 			CRUST_TEST_REQUIRE(data - memory == spsc_data - spsc_memory);
 
+			if (crustTestRandom() % 4 == 0)
+			{
+				crustBipBufferCommitWrite(&bip, 0);
+				crustSpscBipBufferCommitWrite(&spsc_bip, 0);
+				continue;
+			}
+
 			memcpy(data, &write_seq, sizeof(write_seq));
 			memset(data + sizeof(write_seq), (u8)write_seq, size - sizeof(write_seq));
 			memcpy(spsc_data, data, size);
@@ -137,6 +187,13 @@ static int testFuzz(void)
 				CRUST_TEST_REQUIRE(data[i] == (u8)read_seq);
 
 			CRUST_TEST_REQUIRE(memcmp(data, spsc_data, size) == 0);
+
+			if (crustTestRandom() % 4 == 0)
+			{
+				crustBipBufferCommitRead(&bip, 0);
+				crustSpscBipBufferCommitRead(&spsc_bip, 0);
+				continue;
+			}
 
 			crustBipBufferCommitRead(&bip, size);
 			crustSpscBipBufferCommitRead(&spsc_bip, size);
@@ -224,6 +281,7 @@ int main(void)
 	CRUST_TEST_RUN(testWrapAround);
 	CRUST_TEST_RUN(testFullBufferRejectsWrite);
 	CRUST_TEST_RUN(testPartialCommit);
+	CRUST_TEST_RUN(testCancel);
 	CRUST_TEST_RUN(testFuzz);
 
 #if defined(CRUST_TEST_THREADS)

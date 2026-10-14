@@ -79,16 +79,16 @@ if (src != CRUST_NULL)
 | Function | Behavior |
 |---|---|
 | `crustBipBufferStageWrite(bip, size)` | Returns `size` contiguous writable bytes, or `CRUST_NULL` if no such region is free |
-| `crustBipBufferCommitWrite(bip, size)` | Publishes the first `size` bytes of the staged region, `0 < size ≤ staged` |
+| `crustBipBufferCommitWrite(bip, size)` | Publishes the first `size` bytes of the staged region, `0 ≤ size ≤ staged`. `0` cancels the staged write |
 | `crustBipBufferStageRead(bip, size)` | Returns at least `size` contiguous readable bytes, or `CRUST_NULL` |
-| `crustBipBufferCommitRead(bip, size)` | Consumes `size` bytes, `0 < size ≤ staged` |
+| `crustBipBufferCommitRead(bip, size)` | Consumes `size` bytes, `0 ≤ size ≤ staged`. `0` cancels the staged read |
 
 Rules:
 
-- **One staged write and one staged read at a time.** Every successful `Stage` must be followed by a `Commit` of at least one byte before the next `Stage` of the same kind. Staging twice is asserted, and there is no way to cancel a staged region.
+- **One staged write and one staged read at a time.** Every successful `Stage` must be followed by a `Commit` before the next `Stage` of the same kind; staging twice is asserted. To cancel a staged region, commit `0` bytes.
 - **Commit at most what you staged.** To read a message whose size is in its header, stage and commit the header first, then stage the payload, see the [example below](#crust_spscbipbuffer).
 - **Reads never span the end of the storage.** When a write doesn't fit at the end, the buffer starts a new region at the beginning, and the gap left at the end is skipped. So read in the same units you wrote, for example one message at a time. A read that would need to combine the tail of one region with the start of the next returns `CRUST_NULL`.
-- **Sizes are greater than zero** for every stage and commit (asserted).
+- **Staged sizes are greater than zero** (asserted). Commits may be `0`.
 - **Large writes wait for the reader.** A write of up to `capacity` bytes succeeds once the reader has consumed the data in its way; until then `StageWrite` returns `CRUST_NULL`. Keep messages well below the capacity so that the writer and the reader can work at the same time.
 
 ## Single-producer single-consumer variants

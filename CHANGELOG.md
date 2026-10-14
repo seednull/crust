@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Committing `0` bytes cancels a staged bip buffer read or write.
+
 ### Changed
 
 - Ring buffer reads and writes no longer divide by the capacity, which makes them about 45% faster.

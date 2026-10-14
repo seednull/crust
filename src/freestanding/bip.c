@@ -88,7 +88,6 @@ CRUST_APIENTRY void crustBipBufferCommitRead(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->read_staged != 0);
 	CRUST_ASSERT(bip->read_staged >= size);
-	CRUST_ASSERT(size > 0);
 
 	usize r = bip->reader;
 	usize begin = bip->begin[r];
@@ -158,7 +157,6 @@ CRUST_APIENTRY void crustBipBufferCommitWrite(Crust_BipBuffer *bip, usize size)
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->write_staged != 0);
 	CRUST_ASSERT(bip->write_staged >= size);
-	CRUST_ASSERT(size > 0);
 
 	usize w = bip->writer;
 	usize end = bip->end[w];
@@ -255,7 +253,6 @@ CRUST_APIENTRY void crustSpscBipBufferCommitRead(Crust_SpscBipBuffer *bip, usize
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->read_staged != 0);
 	CRUST_ASSERT(bip->read_staged >= size);
-	CRUST_ASSERT(size > 0);
 
 	usize r = crustAtomicLoadUSize(&bip->reader, CRUST_MEMORY_ORDER_RELAXED);
 	usize begin = crustAtomicLoadUSize(&bip->begin[r], CRUST_MEMORY_ORDER_RELAXED);
@@ -325,7 +322,6 @@ CRUST_APIENTRY void crustSpscBipBufferCommitWrite(Crust_SpscBipBuffer *bip, usiz
 	CRUST_ASSERT(bip->memory != CRUST_NULL);
 	CRUST_ASSERT(bip->write_staged != 0);
 	CRUST_ASSERT(bip->write_staged >= size);
-	CRUST_ASSERT(size > 0);
 
 	usize w = crustAtomicLoadUSize(&bip->writer, CRUST_MEMORY_ORDER_RELAXED);
 	usize end = crustAtomicLoadUSize(&bip->end[w], CRUST_MEMORY_ORDER_RELAXED);
