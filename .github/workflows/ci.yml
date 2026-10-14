@@ -47,6 +47,61 @@ jobs:
           cmake --build build --config Release --parallel
           ctest --test-dir build -C Release --output-on-failure
 
+  clang-cl:
+    name: Clang-cl ${{ matrix.arch }} SIMD=${{ matrix.simd }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, Win32]
+        simd: [OFF, ON]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure
+        run: cmake -S . -B build -A ${{ matrix.arch }} -T ClangCL -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }}
+
+      - name: Debug
+        run: |
+          cmake --build build --config Debug --parallel
+          ctest --test-dir build -C Debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake --build build --config Release --parallel
+          ctest --test-dir build -C Release --output-on-failure
+
+  mingw:
+    name: MinGW x64 GCC SIMD=${{ matrix.simd }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        simd: [OFF, ON]
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: false
+          pacboy: gcc:p cmake:p ninja:p
+
+      - name: Debug
+        run: |
+          cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
+
   unix:
     name: ${{ matrix.name }} SIMD=${{ matrix.simd }}
     runs-on: ${{ matrix.runner }}
@@ -168,3 +223,31 @@ jobs:
           cmake -S tests/package -B build-package -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$RUNNER_TEMP/crust" -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
           cmake --build build-package --parallel
           ./build-package/crust_package
+
+  presets:
+    name: Preset ${{ matrix.preset }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: msvc2022-x64
+            build: build-msvc2022-x64-release
+            runner: windows-latest
+          - preset: linux-gcc-release
+            build: build-linux-gcc-release
+            runner: ubuntu-24.04
+          - preset: linux-clang-release
+            build: build-linux-clang-release
+            runner: ubuntu-24.04
+          - preset: osx-clang-release
+            build: build-osx-release
+            runner: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: |
+          cmake --preset ${{ matrix.preset }} ${{ env.CRUST_OPTIONS }}
+          cmake --build --preset ${{ matrix.build }}
+          ctest --test-dir build/${{ matrix.preset }} -C Release --output-on-failure

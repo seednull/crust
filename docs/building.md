@@ -160,11 +160,13 @@ ctest --test-dir build/msvc2026-x64 -C Debug --output-on-failure
 
 ## Continuous integration
 
-GitHub Actions builds and tests every push to `main` and every pull request, see `.github/workflows/ci.yml`. Every job treats compiler warnings as errors, and the GCC, Clang and Emscripten jobs compile in strict C99 (`-std=c99`, no extensions).
+GitHub Actions builds and tests every push to `main` and every pull request, see `.github/workflows/ci.yml`. Every job treats compiler warnings as errors, and the GCC, Clang, MinGW and Emscripten jobs compile in strict C99 (`-std=c99`, no extensions).
 
 | Job | Runner | Configurations |
 |---|---|---|
 | MSVC | Windows x64, Windows ARM64 | x64, Win32 and ARM64; SIMD off and on; Debug and Release |
+| Clang-cl | Windows x64 | The `ClangCL` toolset of Visual Studio; x64 and Win32; SIMD off and on; Debug and Release |
+| MinGW | Windows x64 | MSYS2 UCRT64 GCC; SIMD off and on; Debug and Release |
 | Linux GCC, Linux Clang | Ubuntu x64 | SIMD off and on; Debug and Release |
 | Linux ARM64 GCC | Ubuntu ARM64 | NEON and scalar; Debug and Release |
 | macOS ARM64 Clang | macOS on Apple silicon | NEON and scalar; Debug and Release |
@@ -172,3 +174,4 @@ GitHub Actions builds and tests every push to `main` and every pull request, see
 | Sanitizers | Ubuntu x64, Clang | AddressSanitizer and UndefinedBehaviorSanitizer, SIMD off and on |
 | Shared library | Windows (MSVC), Ubuntu (GCC) | `BUILD_SHARED_LIBS=ON` |
 | Installed package | Ubuntu x64 | Installs Crust and builds `tests/package`, a minimal project that uses it through `find_package` |
+| Presets | Windows, Ubuntu, macOS | Configures and builds with `msvc2022-x64`, `linux-gcc-release`, `linux-clang-release` and `osx-clang-release`, then runs the tests |
