@@ -1,0 +1,170 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CRUST_OPTIONS: -DCRUST_BUILD_TESTS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+  CRUST_C99: -DCMAKE_C_STANDARD=99 -DCMAKE_C_STANDARD_REQUIRED=ON -DCMAKE_C_EXTENSIONS=OFF
+  EMSCRIPTEN_VERSION: 4.0.5
+
+jobs:
+  msvc:
+    name: MSVC ${{ matrix.arch }} SIMD=${{ matrix.simd }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, Win32, ARM64]
+        simd: [OFF, ON]
+        include:
+          - arch: x64
+            runner: windows-latest
+          - arch: Win32
+            runner: windows-latest
+          - arch: ARM64
+            runner: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -A ${{ matrix.arch }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }}
+
+      - name: Debug
+        run: |
+          cmake --build build --config Debug --parallel
+          ctest --test-dir build -C Debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake --build build --config Release --parallel
+          ctest --test-dir build -C Release --output-on-failure
+
+  unix:
+    name: ${{ matrix.name }} SIMD=${{ matrix.simd }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [Linux GCC, Linux Clang, Linux ARM64 GCC, macOS ARM64 Clang]
+        simd: [OFF, ON]
+        include:
+          - name: Linux GCC
+            runner: ubuntu-24.04
+            compiler: gcc
+          - name: Linux Clang
+            runner: ubuntu-24.04
+            compiler: clang
+          - name: Linux ARM64 GCC
+            runner: ubuntu-24.04-arm
+            compiler: gcc
+          - name: macOS ARM64 Clang
+            runner: macos-latest
+            compiler: clang
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug
+        run: |
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
+
+  emscripten:
+    name: Emscripten SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        simd: [OFF, ON]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install $EMSCRIPTEN_VERSION
+          "$RUNNER_TEMP/emsdk/emsdk" activate $EMSCRIPTEN_VERSION
+
+      - name: Debug
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          emcmake cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          emcmake cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
+
+  sanitizers:
+    name: Sanitizers SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        simd: [OFF, ON]
+    env:
+      SANITIZE: -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCRUST_USE_SIMD=${{ matrix.simd }} "-DCMAKE_C_FLAGS=$SANITIZE" "-DCMAKE_EXE_LINKER_FLAGS=$SANITIZE" ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build --parallel
+          ctest --test-dir build --output-on-failure
+
+  shared:
+    name: Shared library ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: MSVC
+            runner: windows-latest
+          - name: Linux GCC
+            runner: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON ${{ env.CRUST_OPTIONS }}
+          cmake --build build --config Debug --parallel
+          ctest --test-dir build -C Debug --output-on-failure
+
+  package:
+    name: Installed package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCRUST_USE_SIMD=ON
+          cmake --build build --parallel
+          cmake --install build --prefix "$RUNNER_TEMP/crust"
+
+      - name: Consumer
+        run: |
+          cmake -S tests/package -B build-package -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$RUNNER_TEMP/crust" -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+          cmake --build build-package --parallel
+          ./build-package/crust_package

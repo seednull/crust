@@ -152,5 +152,22 @@ ctest --test-dir build/msvc2026-x64 -C Debug --output-on-failure
 ```
 
 - Every test is a separate executable that uses the small framework in `tests/framework`.
+- The `crust_test_headers` target compiles every public header on its own, so a header that misses an include fails the build.
 - Test the SIMD backend by configuring with `-DCRUST_USE_SIMD=ON`. Without it the tests exercise the scalar backend.
+- With tests enabled, executables and shared libraries go to `bin/` in the build directory, so the tests find `crust.dll` in shared builds on Windows.
 - The Emscripten presets run the tests under Node.js. The multithreaded `lock` test is skipped there.
+
+## Continuous integration
+
+GitHub Actions builds and tests every push to `main` and every pull request, see `.github/workflows/ci.yml`. Every job treats compiler warnings as errors, and the GCC, Clang and Emscripten jobs compile in strict C99 (`-std=c99`, no extensions).
+
+| Job | Runner | Configurations |
+|---|---|---|
+| MSVC | Windows x64, Windows ARM64 | x64, Win32 and ARM64; SIMD off and on; Debug and Release |
+| Linux GCC, Linux Clang | Ubuntu x64 | SIMD off and on; Debug and Release |
+| Linux ARM64 GCC | Ubuntu ARM64 | NEON and scalar; Debug and Release |
+| macOS ARM64 Clang | macOS on Apple silicon | NEON and scalar; Debug and Release |
+| Emscripten | Ubuntu x64 | WebAssembly SIMD and scalar, tests under Node.js |
+| Sanitizers | Ubuntu x64, Clang | AddressSanitizer and UndefinedBehaviorSanitizer, SIMD off and on |
+| Shared library | Windows (MSVC), Ubuntu (GCC) | `BUILD_SHARED_LIBS=ON` |
+| Installed package | Ubuntu x64 | Installs Crust and builds `tests/package`, a minimal project that uses it through `find_package` |

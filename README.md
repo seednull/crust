@@ -1,6 +1,8 @@
 # Crust
 
-Crust is a small C foundation library: platform detection, fixed-width types, atomics, SIMD, game math and a set of allocator-aware data structures, behind a single header.
+[![CI](https://github.com/seednull/crust/actions/workflows/ci.yml/badge.svg)](https://github.com/seednull/crust/actions/workflows/ci.yml)
+
+Crust is a small C foundation library: platform detection, fixed-width types, atomics, SIMD, game math and a set of allocator-aware data structures, behind a single header or one header per module.
 
 It is written in C99, has no third-party dependencies and never allocates behind your back: containers either work on memory you hand them, or take an explicit `Crust_Allocator` on every call that allocates.
 
