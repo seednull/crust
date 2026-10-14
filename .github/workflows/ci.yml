@@ -32,7 +32,7 @@ jobs:
           - arch: ARM64
             runner: windows-11-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configure
         run: cmake -S . -B build -A ${{ matrix.arch }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }}
@@ -69,7 +69,7 @@ jobs:
             runner: macos-latest
             compiler: clang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Debug
         run: |
@@ -91,7 +91,7 @@ jobs:
       matrix:
         simd: [OFF, ON]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Emscripten
         run: |
@@ -123,7 +123,7 @@ jobs:
     env:
       SANITIZE: -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Debug
         run: |
@@ -143,7 +143,7 @@ jobs:
           - name: Linux GCC
             runner: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Debug
         run: |
@@ -155,7 +155,7 @@ jobs:
     name: Installed package
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install
         run: |
