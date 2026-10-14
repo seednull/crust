@@ -290,6 +290,32 @@ static int testVecKnownValues(void)
 	CRUST_TEST_CHECK(approxVec3(crustVec3MulV((Crust_Vec3){ 1, 2, 3 }, (Crust_Vec3){ 2, 3, 4 }), (Crust_Vec3){ 2, 6, 12 }, 0.0f));
 	CRUST_TEST_CHECK(approxVec3(crustVec3DivV((Crust_Vec3){ 2, 6, 12 }, (Crust_Vec3){ 2, 3, 4 }), (Crust_Vec3){ 1, 2, 3 }, 0.0f));
 
+	CRUST_TEST_CHECK(approxVec2(crustVec2Lerp((Crust_Vec2){ 0, 0 }, (Crust_Vec2){ 10, 20 }, 0.25f), (Crust_Vec2){ 2.5f, 5.0f }, 1e-6f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2Mad((Crust_Vec2){ 1, 2 }, 2.0f, (Crust_Vec2){ 1, 1 }), (Crust_Vec2){ 3, 5 }, 0.0f));
+
+	CRUST_TEST_CHECK(approxVec2(crustVec2AddS((Crust_Vec2){ 1, 2 }, 1.0f), (Crust_Vec2){ 2, 3 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2SubS((Crust_Vec2){ 1, 2 }, 1.0f), (Crust_Vec2){ 0, 1 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2MulS((Crust_Vec2){ 1, 2 }, 2.0f), (Crust_Vec2){ 2, 4 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2DivS((Crust_Vec2){ 2, 4 }, 2.0f), (Crust_Vec2){ 1, 2 }, 0.0f));
+
+	CRUST_TEST_CHECK(approxVec2(crustVec2AddV((Crust_Vec2){ 1, 2 }, (Crust_Vec2){ 3, 2 }), (Crust_Vec2){ 4, 4 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2SubV((Crust_Vec2){ 1, 2 }, (Crust_Vec2){ 1, 1 }), (Crust_Vec2){ 0, 1 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2MulV((Crust_Vec2){ 1, 2 }, (Crust_Vec2){ 2, 3 }), (Crust_Vec2){ 2, 6 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec2(crustVec2DivV((Crust_Vec2){ 2, 6 }, (Crust_Vec2){ 2, 3 }), (Crust_Vec2){ 1, 2 }, 0.0f));
+
+	CRUST_TEST_CHECK(approxVec4(crustVec4Lerp((Crust_Vec4){ 0, 0, 0, 0 }, (Crust_Vec4){ 10, 20, 30, 40 }, 0.25f), (Crust_Vec4){ 2.5f, 5.0f, 7.5f, 10.0f }, 1e-6f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4Mad((Crust_Vec4){ 1, 2, 3, 4 }, 2.0f, (Crust_Vec4){ 1, 1, 1, 1 }), (Crust_Vec4){ 3, 5, 7, 9 }, 0.0f));
+
+	CRUST_TEST_CHECK(approxVec4(crustVec4AddS((Crust_Vec4){ 1, 2, 3, 4 }, 1.0f), (Crust_Vec4){ 2, 3, 4, 5 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4SubS((Crust_Vec4){ 1, 2, 3, 4 }, 1.0f), (Crust_Vec4){ 0, 1, 2, 3 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4MulS((Crust_Vec4){ 1, 2, 3, 4 }, 2.0f), (Crust_Vec4){ 2, 4, 6, 8 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4DivS((Crust_Vec4){ 2, 4, 8, 16 }, 2.0f), (Crust_Vec4){ 1, 2, 4, 8 }, 0.0f));
+
+	CRUST_TEST_CHECK(approxVec4(crustVec4AddV((Crust_Vec4){ 1, 2, 3, 4 }, (Crust_Vec4){ 4, 3, 2, 1 }), (Crust_Vec4){ 5, 5, 5, 5 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4SubV((Crust_Vec4){ 1, 2, 3, 4 }, (Crust_Vec4){ 1, 1, 1, 1 }), (Crust_Vec4){ 0, 1, 2, 3 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4MulV((Crust_Vec4){ 1, 2, 3, 4 }, (Crust_Vec4){ 2, 3, 4, 5 }), (Crust_Vec4){ 2, 6, 12, 20 }, 0.0f));
+	CRUST_TEST_CHECK(approxVec4(crustVec4DivV((Crust_Vec4){ 2, 6, 12, 20 }, (Crust_Vec4){ 2, 3, 4, 5 }), (Crust_Vec4){ 1, 2, 3, 4 }, 0.0f));
+
 	return 0;
 }
 
@@ -298,9 +324,11 @@ static int testVecProperties(void)
 	for (u32 i = 0; i < ITERATIONS; ++i)
 	{
 		Crust_Vec2 a2 = randomVec2();
+		Crust_Vec2 b2 = randomVec2();
 		Crust_Vec3 a3 = randomVec3();
 		Crust_Vec3 b3 = randomVec3();
 		Crust_Vec4 a4 = randomVec4();
+		Crust_Vec4 b4 = randomVec4();
 		f32 s = randomRange(0.5f, 2.0f);
 
 		CRUST_TEST_REQUIRE(approxF32(crustVec2Dot(a2, a2), crustVec2LengthSquared(a2), 1e-6f * crustVec2LengthSquared(a2)));
@@ -329,6 +357,18 @@ static int testVecProperties(void)
 		CRUST_TEST_REQUIRE(approxVec3(crustVec3Mad(a3, s, b3), crustVec3AddV(crustVec3MulS(a3, s), b3), 1e-5f));
 		CRUST_TEST_REQUIRE(approxVec3(crustVec3DivS(a3, s), crustVec3MulS(a3, 1.0f / s), 1e-5f));
 		CRUST_TEST_REQUIRE(approxVec3(crustVec3SubV(crustVec3AddV(a3, b3), b3), a3, 1e-5f));
+
+		CRUST_TEST_REQUIRE(approxVec2(crustVec2Lerp(a2, b2, 0.0f), a2, 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec2(crustVec2Lerp(a2, b2, 1.0f), b2, 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec2(crustVec2Mad(a2, s, b2), crustVec2AddV(crustVec2MulS(a2, s), b2), 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec2(crustVec2DivS(a2, s), crustVec2MulS(a2, 1.0f / s), 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec2(crustVec2SubV(crustVec2AddV(a2, b2), b2), a2, 1e-5f));
+
+		CRUST_TEST_REQUIRE(approxVec4(crustVec4Lerp(a4, b4, 0.0f), a4, 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec4(crustVec4Lerp(a4, b4, 1.0f), b4, 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec4(crustVec4Mad(a4, s, b4), crustVec4AddV(crustVec4MulS(a4, s), b4), 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec4(crustVec4DivS(a4, s), crustVec4MulS(a4, 1.0f / s), 1e-5f));
+		CRUST_TEST_REQUIRE(approxVec4(crustVec4SubV(crustVec4AddV(a4, b4), b4), a4, 1e-5f));
 	}
 
 	return 0;
@@ -343,6 +383,9 @@ static int testQuatKnownValues(void)
 	CRUST_TEST_CHECK(approxVec3(crustQuatRotate(crustQuatConjugate(z90), (Crust_Vec3){ 0, 1, 0 }), (Crust_Vec3){ 1, 0, 0 }, 1e-6f));
 
 	CRUST_TEST_CHECK(approxRotation(crustQuatMul(z90, z90), (Crust_Quat){ 0, 0, 1, 0 }, 1e-6f));
+
+	Crust_Quat mad = crustQuatMad((Crust_Quat){ 1, 2, 3, 4 }, 2.0f, (Crust_Quat){ 1, 1, 1, -1 });
+	CRUST_TEST_CHECK(mad.x == 3.0f && mad.y == 5.0f && mad.z == 7.0f && mad.w == 7.0f);
 
 	Crust_Quat z45 = { 0.0f, 0.0f, SIN_22_5, COS_22_5 };
 	CRUST_TEST_CHECK(approxRotation(crustQuatSlerp(identity, z90, 0.5f), z45, 1e-6f));
