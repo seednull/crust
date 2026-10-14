@@ -115,6 +115,7 @@ static CRUST_INLINE u32 crustAtomicDecrementU32(volatile u32 *p, Crust_MemoryOrd
 
 static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
 {
+	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	switch (order)
 	{
 		case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedExchange64_nf((volatile long long *)p, (long long)v);
@@ -134,6 +135,7 @@ static CRUST_INLINE u64 crustAtomicSwapU64(volatile u64 *p, u64 v, Crust_MemoryO
 
 static CRUST_INLINE u64 crustAtomicCompareAndSwapU64(volatile u64 *p, u64 desired, u64 expected, Crust_MemoryOrder success_order, Crust_MemoryOrder failure_order)
 {
+	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	CRUST_ASSERT(crustIsValidFailureOrder(success_order, failure_order));
 	CRUST_UNUSED(failure_order);
 
@@ -156,6 +158,7 @@ static CRUST_INLINE u64 crustAtomicCompareAndSwapU64(volatile u64 *p, u64 desire
 
 static CRUST_INLINE u64 crustAtomicLoadU64(volatile u64 *p, Crust_MemoryOrder order)
 {
+	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
 
@@ -170,6 +173,7 @@ static CRUST_INLINE u64 crustAtomicLoadU64(volatile u64 *p, Crust_MemoryOrder or
 
 static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_MemoryOrder order)
 {
+	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQUIRE);
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_CONSUME);
@@ -191,6 +195,7 @@ static CRUST_INLINE void crustAtomicStoreU64(volatile u64 *p, u64 v, Crust_Memor
 
 static CRUST_INLINE u64 crustAtomicIncrementU64(volatile u64 *p, Crust_MemoryOrder order)
 {
+	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	switch (order)
 	{
 		case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedIncrement64_nf((volatile long long *)p);
@@ -210,6 +215,7 @@ static CRUST_INLINE u64 crustAtomicIncrementU64(volatile u64 *p, Crust_MemoryOrd
 
 static CRUST_INLINE u64 crustAtomicDecrementU64(volatile u64 *p, Crust_MemoryOrder order)
 {
+	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	switch (order)
 	{
 		case CRUST_MEMORY_ORDER_RELAXED: return (u64)_InterlockedDecrement64_nf((volatile long long *)p);

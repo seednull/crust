@@ -70,7 +70,7 @@ for (;;)
 ### Nuances
 
 - **`volatile` alone is not atomic.** Crust marks shared fields `volatile`, but a plain read or write of such a field has no ordering guarantees. Always go through `crustAtomic*`.
-- **Alignment.** Atomic variables must be naturally aligned. On 32-bit x86 with GCC and Clang, a `u64` inside a struct is only 4-byte aligned; declare 64-bit atomics as `CRUST_ALIGNAS(8) volatile u64 counter;` there.
+- **Alignment.** Atomic variables must be naturally aligned (asserted for 64-bit ones). On 32-bit x86 a `u64` in a struct or on the stack can be only 4-byte aligned; declare 64-bit atomics as `CRUST_ALIGNAS(8) volatile u64 counter;`.
 - **MSVC x86 and x64** ignore the order argument for read-modify-write operations: the `lock`-prefixed instructions are always full barriers. On 32-bit x86, 64-bit swap, increment and decrement are `cmpxchg8b` loops.
 - **MSVC ARM64** maps orders to the `_nf`, `_acq` and `_rel` interlocked variants and to `ldar`/`stlr`.
 - **GCC and Clang** use the `__atomic` builtins.

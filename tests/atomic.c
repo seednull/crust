@@ -69,7 +69,7 @@ static int testU64(void)
 	for (u32 i = 0; i < NUM_ORDERS; ++i)
 	{
 		Crust_MemoryOrder order = orders[i];
-		volatile u64 value = 0xFFFFFFFFull;
+		CRUST_ALIGNAS(8) volatile u64 value = 0xFFFFFFFFull;
 
 		CRUST_TEST_CHECK(crustAtomicIncrementU64(&value, order) == 0x100000000ull);
 		CRUST_TEST_CHECK(crustAtomicDecrementU64(&value, order) == 0xFFFFFFFFull);
