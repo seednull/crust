@@ -59,9 +59,7 @@ For floats the definitions are taken literally, which fixes NaN and signed-zero 
 - `crustMinF32(a, b)` returns `b` when either argument is NaN or when they compare equal, so `crustMinF32(+0.0f, -0.0f)` is `-0.0f`.
 - `crustMaxF32(a, b)` returns `a` in those cases.
 
-The SIMD `Min`/`Max` functions follow the same definitions bit for bit.
-
-> **MSVC on ARM64.** With `/O2`, MSVC auto-vectorizes a loop that applies `crustMinF32`, `crustMaxF32` or their `F64` versions to an array, or the same `(a < b) ? a : b` written by hand, into the `fmin`/`fmax` instructions. These propagate NaN and order `-0.0` below `+0.0`, so inside such a loop the results for NaN and for zeros of different sign differ from the definitions above. A single call compiles correctly, and Crust's own code is not affected. If a loop of yours relies on these semantics, use the SIMD `Min`/`Max` or put `#pragma loop(no_vector)` before it.
+The SIMD `Min`/`Max` functions follow the same definitions bit for bit. For a caveat with MSVC on ARM64 see [Platform notes](platform.md#platform-notes).
 
 ## Powers of two and alignment
 
@@ -88,7 +86,7 @@ u8 *aligned = (u8 *)crustAlignUpUSize((usize)ptr, 64);
 | `crustTzcntU32(v)` | Number of trailing zero bits | `v != 0` |
 | `crustPopcntU32(v)` | Number of set bits | none |
 
-Zero is excluded for `Lzcnt` and `Tzcnt` because the underlying `bsr`/`bsf` and `__builtin_clz`/`__builtin_ctz` leave the result undefined for it; check before calling. On MSVC x86 and x64, `crustPopcntU32` executes the `POPCNT` instruction.
+Zero is excluded for `Lzcnt` and `Tzcnt` because the hardware leaves the result undefined for it.
 
 ## Floating-point functions
 
@@ -104,17 +102,7 @@ Inline, available for `F32` and `F64`:
 | `crustRoundEvenF32(v)` | Rounds to nearest, **ties to even**: `0.5 → 0`, `1.5 → 2`, `2.5 → 2` |
 | `crustTruncateF32(v)` | Rounds toward zero |
 
-`crustRoundEven` is not C's `round`, which rounds ties away from zero. It matches C23 `roundeven`, the default IEEE rounding and the SIMD rounding instructions.
-
-How they are implemented:
-
-| Compiler | Implementation |
-|---|---|
-| GCC, Clang | `__builtin_fabsf`, `__builtin_sqrtf`, `__builtin_floorf`, `__builtin_ceilf`, `__builtin_rintf`, `__builtin_truncf`. These usually become single instructions, but can become libm calls when the target has no matching instruction (x86 without SSE4.1, 32-bit ARM). `rint` follows the current rounding mode, so `crustRoundEven*` assumes the default round-to-nearest mode |
-| MSVC x86/x64 | SSE intrinsics: `sqrtss`, and `roundss`/`roundsd` from SSE4.1 for the rounding functions |
-| MSVC ARM64 | NEON intrinsics: `vrndm`, `vrndp`, `vrndn`, `vrnd` |
-
-On MSVC x86 (32-bit), floating-point values returned by value travel through the x87 stack. That doesn't change results of these functions, but it can turn a signaling NaN into a quiet one.
+`crustRoundEven` is not C's `round`, which rounds ties away from zero. It matches C23 `roundeven` and the SIMD rounding instructions, and assumes the default round-to-nearest mode.
 
 ### Trigonometry
 
