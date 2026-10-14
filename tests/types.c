@@ -47,9 +47,29 @@ static int testSizes(void)
 	return 0;
 }
 
+static int testConstants(void)
+{
+	f32 pi32 = CRUST_F32_PI;
+	f32 tau32 = CRUST_F32_TAU;
+	f64 pi64 = CRUST_F64_PI;
+	f64 tau64 = CRUST_F64_TAU;
+	f64 pi = CRUST_PI;
+	f64 tau = CRUST_TAU;
+
+	CRUST_TEST_CHECK(pi32 == (f32)pi64);
+	CRUST_TEST_CHECK(tau32 == (f32)tau64);
+	CRUST_TEST_CHECK(tau32 == 2.0f * pi32);
+	CRUST_TEST_CHECK(tau64 == 2.0 * pi64);
+	CRUST_TEST_CHECK(pi == pi64);
+	CRUST_TEST_CHECK(tau == tau64);
+
+	return 0;
+}
+
 int main(void)
 {
 	CRUST_TEST_RUN(testSizes);
+	CRUST_TEST_RUN(testConstants);
 
 	return crustTestResult();
 }

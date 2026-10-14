@@ -4,6 +4,7 @@
 
 ### Added
 
+- `CRUST_F32_PI`, `CRUST_F64_PI`, `CRUST_F32_TAU` and `CRUST_F64_TAU`.
 - Committing `0` bytes cancels a staged bip buffer read or write.
 
 ### Changed
@@ -12,6 +13,7 @@
 - 64-bit atomics assert that their address is 8-byte aligned.
 - Shared libraries on Linux and macOS export only the API.
 - `CRUST_TOOLCHAIN_APPLE` is set for every compiler that targets Apple platforms, not only Apple Clang.
+
 ## 1.2.1 - 2026-10-15
 
 ### Changed

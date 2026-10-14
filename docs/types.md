@@ -33,7 +33,7 @@ Things that follow from it:
 | `CRUST_F32_MAX`, `CRUST_F64_MAX` | Largest finite value |
 | `CRUST_F32_MIN`, `CRUST_F64_MIN` | **Most negative** finite value, `-CRUST_F32_MAX`. Not the C `FLT_MIN` |
 | `CRUST_F32_POSITIVE_MIN`, `CRUST_F64_POSITIVE_MIN` | Smallest positive normal value, the C `FLT_MIN`/`DBL_MIN` |
-| `CRUST_PI`, `CRUST_TAU` | π and 2π as `double` literals |
+| `CRUST_F32_PI`, `CRUST_F64_PI`, `CRUST_F32_TAU`, `CRUST_F64_TAU` | π and 2π. `CRUST_PI` and `CRUST_TAU` are the `f64` ones |
 
 `CRUST_USIZE_MAX` and `CRUST_U32_MAX` double as "not found" or "invalid" markers across the API.
 
