@@ -4,6 +4,22 @@ static CRUST_INLINE f32 crustAbsF32(f32 v)
 	return __builtin_fabsf(v);
 }
 
+#if CRUST_TOOLCHAIN_MSVC && CRUST_ARCH_X86
+static CRUST_INLINE f32 crustSqrtF32(f32 v)
+{
+	return (f32)__builtin_sqrt((f64)v);
+}
+
+static CRUST_INLINE f32 crustFloorF32(f32 v)
+{
+	return (f32)__builtin_floor((f64)v);
+}
+
+static CRUST_INLINE f32 crustCeilF32(f32 v)
+{
+	return (f32)__builtin_ceil((f64)v);
+}
+#else
 static CRUST_INLINE f32 crustSqrtF32(f32 v)
 {
 	return __builtin_sqrtf(v);
@@ -18,6 +34,7 @@ static CRUST_INLINE f32 crustCeilF32(f32 v)
 {
 	return __builtin_ceilf(v);
 }
+#endif
 
 static CRUST_INLINE f32 crustRoundEvenF32(f32 v)
 {

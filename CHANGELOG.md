@@ -14,6 +14,7 @@
 ### Fixed
 
 - With MSVC on ARM64, `atomic.h` and `scalar.h` didn't compile as C++: some of the intrinsics they use are declared only in `intrin.h`, which Crust doesn't include. Crust now declares them itself, with the signatures from `intrin.h`.
+- With Clang and the MSVC toolchain on 32-bit x86, such as clang-cl for Win32, code calling `crustSqrtF32`, `crustFloorF32` or `crustCeilF32` could fail to link: the 32-bit UCRT doesn't export `sqrtf`, `floorf` and `ceilf`. These functions now go through the `f64` versions there, with identical results.
 
 ## 1.2.0 - 2026-10-14
 
