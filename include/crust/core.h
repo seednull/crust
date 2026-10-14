@@ -47,7 +47,7 @@
 #elif defined(_MSC_VER)
 	#undef  CRUST_TOOLCHAIN_MSVC
 	#define CRUST_TOOLCHAIN_MSVC 1
-#elif defined(__apple_build_version__)
+#elif defined(__APPLE__)
 	#undef  CRUST_TOOLCHAIN_APPLE
 	#define CRUST_TOOLCHAIN_APPLE 1
 #endif

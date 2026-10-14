@@ -44,7 +44,7 @@ The toolchain describes the target environment rather than the compiler. At most
 | `CRUST_TOOLCHAIN_ANDROID` | `__ANDROID__` |
 | `CRUST_TOOLCHAIN_MINGW` | `__MINGW32__` or `__MINGW64__` |
 | `CRUST_TOOLCHAIN_MSVC` | `_MSC_VER`, which includes `clang-cl` |
-| `CRUST_TOOLCHAIN_APPLE` | `__apple_build_version__`, that is Apple Clang. Upstream Clang on macOS does not set it |
+| `CRUST_TOOLCHAIN_APPLE` | `__APPLE__` |
 
 A plain GCC or Clang build for Linux or another Unix leaves all toolchain macros at `0`.
 
