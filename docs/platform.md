@@ -91,6 +91,8 @@ Other macros:
 
 `CRUST_ASSERT(x)` checks API contracts: valid pointers, sizes, alignments, indices, handles and preconditions such as `crustLzcntU32(0)`.
 
+Running out of a resource is not a contract violation, because it depends on the load at run time and a debug run can't rule it out. Out of memory, heap nodes, handle pool slots, hash buckets or arena space is reported through the function's result, and stays well-defined in release builds.
+
 ```c
 #if defined(NDEBUG)
 	#define CRUST_ASSERT(x) ((void)0)

@@ -63,7 +63,7 @@ static void crustHashIndexMapFreeStorage(Crust_Allocator allocator, Crust_HashIn
 
 	usize masks_capacity = crustAlignUpUSize(hash_map->capacity, 32) / 32;
 
-	crustAllocatorFree(allocator, hash_map->keys, hash_map->key_stride * hash_map->capacity, hash_map->key_alignment);
+	crustAllocatorFree(allocator, hash_map->keys, crustAllocatorSizeMul(hash_map->key_stride, hash_map->capacity), hash_map->key_alignment);
 	crustFreeArray(allocator, hash_map->hashes, usize, hash_map->capacity);
 	crustFreeArray(allocator, hash_map->indices, usize, hash_map->capacity);
 	crustFreeArray(allocator, hash_map->masks, u32, masks_capacity);
@@ -165,7 +165,7 @@ CRUST_APIENTRY Crust_HashIndexMap crustHashIndexMapInit(void *context, const Cru
 	return result;
 }
 
-CRUST_APIENTRY void crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity)
+CRUST_APIENTRY u8 crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 	CRUST_ASSERT(hash_map->capacity == 0);
@@ -174,15 +174,23 @@ CRUST_APIENTRY void crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_Hash
 
 	usize masks_capacity = crustAlignUpUSize(capacity, 32) / 32;
 
-	hash_map->keys = (u8 *)crustAllocatorAlloc(allocator, hash_map->key_stride * capacity, hash_map->key_alignment);
+	hash_map->keys = (u8 *)crustAllocatorAlloc(allocator, crustAllocatorSizeMul(hash_map->key_stride, capacity), hash_map->key_alignment);
 	hash_map->hashes = crustAllocArray(allocator, usize, capacity);
 	hash_map->indices = crustAllocArray(allocator, usize, capacity);
 	hash_map->masks = crustAllocArray(allocator, u32, masks_capacity);
 	hash_map->capacity = capacity;
 	hash_map->count = 0;
 
+	if (hash_map->keys == CRUST_NULL || hash_map->hashes == CRUST_NULL || hash_map->indices == CRUST_NULL || hash_map->masks == CRUST_NULL)
+	{
+		crustHashIndexMapFreeStorage(allocator, hash_map);
+		return 0;
+	}
+
 	for (usize i = 0; i < masks_capacity; ++i)
 		hash_map->masks[i] = 0;
+
+	return 1;
 }
 
 CRUST_APIENTRY void crustHashIndexMapFree(Crust_Allocator allocator, Crust_HashIndexMap *hash_map)
@@ -201,14 +209,15 @@ CRUST_APIENTRY void crustHashIndexMapFree(Crust_Allocator allocator, Crust_HashI
 	crustHashIndexMapFreeStorage(allocator, hash_map);
 }
 
-CRUST_APIENTRY void crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize new_capacity)
+CRUST_APIENTRY u8 crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize new_capacity)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
 
 	CRUST_ASSERT(new_capacity > hash_map->capacity);
 
 	Crust_HashIndexMap new_hash_map = crustHashIndexMapInit(hash_map->context, hash_map->vtbl, hash_map->key_size, hash_map->key_alignment);
-	crustHashIndexMapAlloc(allocator, &new_hash_map, new_capacity);
+	if (crustHashIndexMapAlloc(allocator, &new_hash_map, new_capacity) == 0)
+		return 0;
 	
 	for (usize i = 0; i < hash_map->capacity; ++i)
 	{
@@ -234,6 +243,8 @@ CRUST_APIENTRY void crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashI
 
 	crustHashIndexMapFreeStorage(allocator, hash_map);
 	*hash_map = new_hash_map;
+
+	return 1;
 }
 
 CRUST_APIENTRY usize crustHashIndexMapFind(const Crust_HashIndexMap *hash_map, const void *key, usize key_size)

@@ -85,6 +85,10 @@ static CRUST_INLINE void crustAllocatorFree(Crust_Allocator allocator, void *ptr
 static CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
 {
 	CRUST_ASSERT(a == 0 || b <= CRUST_USIZE_MAX / a);
+
+	if (a != 0 && b > CRUST_USIZE_MAX / a)
+		return CRUST_USIZE_MAX;
+
 	return a * b;
 }
 

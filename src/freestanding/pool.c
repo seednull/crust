@@ -38,7 +38,26 @@ static u8 crustGenerationalHandlePoolCheckMask(const Crust_GenerationalHandlePoo
 }
 
 //
-CRUST_APIENTRY void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
+static void crustGenerationalHandlePoolFreeStorage(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+
+	usize masks_capacity = crustAlignUpUSize(pool->capacity, 32) / 32;
+
+	crustFreeArray(allocator, pool->generations, usize, pool->capacity);
+	crustFreeArray(allocator, pool->prevs, usize, pool->capacity);
+	crustFreeArray(allocator, pool->nexts, usize, pool->capacity);
+	crustFreeArray(allocator, pool->masks, u32, masks_capacity);
+
+	pool->generations = CRUST_NULL;
+	pool->prevs = CRUST_NULL;
+	pool->nexts = CRUST_NULL;
+	pool->masks = CRUST_NULL;
+
+	pool->capacity = 0;
+}
+
+static u8 crustGenerationalHandlePoolAllocStorage(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
@@ -50,6 +69,30 @@ CRUST_APIENTRY void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, 
 	pool->nexts = crustAllocArray(allocator, usize, capacity);
 	pool->masks = crustAllocArray(allocator, u32, masks_capacity);
 	pool->capacity = capacity;
+
+	if (pool->generations != CRUST_NULL && pool->prevs != CRUST_NULL && pool->nexts != CRUST_NULL && pool->masks != CRUST_NULL)
+		return 1;
+
+	crustGenerationalHandlePoolFreeStorage(allocator, pool);
+	return 0;
+}
+
+//
+CRUST_APIENTRY u8 crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(capacity > 0);
+
+	pool->free_head = CRUST_USIZE_MAX;
+	pool->free_tail = CRUST_USIZE_MAX;
+
+	pool->used_head = CRUST_USIZE_MAX;
+	pool->used_tail = CRUST_USIZE_MAX;
+
+	if (crustGenerationalHandlePoolAllocStorage(allocator, pool, capacity) == 0)
+		return 0;
+
+	usize masks_capacity = crustAlignUpUSize(capacity, 32) / 32;
 
 	for (usize i = 0; i < capacity; ++i)
 	{
@@ -67,27 +110,14 @@ CRUST_APIENTRY void crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, 
 	pool->free_head = 0;
 	pool->free_tail = capacity - 1;
 
-	pool->used_head = CRUST_USIZE_MAX;
-	pool->used_tail = CRUST_USIZE_MAX;
+	return 1;
 }
 
 CRUST_APIENTRY void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 
-	usize masks_capacity = crustAlignUpUSize(pool->capacity, 32) / 32;
-
-	crustFreeArray(allocator, pool->generations, usize, pool->capacity);
-	crustFreeArray(allocator, pool->prevs, usize, pool->capacity);
-	crustFreeArray(allocator, pool->nexts, usize, pool->capacity);
-	crustFreeArray(allocator, pool->masks, u32, masks_capacity);
-
-	pool->generations = CRUST_NULL;
-	pool->prevs = CRUST_NULL;
-	pool->nexts = CRUST_NULL;
-	pool->masks = CRUST_NULL;
-
-	pool->capacity = 0;
+	crustGenerationalHandlePoolFreeStorage(allocator, pool);
 
 	pool->free_head = CRUST_USIZE_MAX;
 	pool->free_tail = CRUST_USIZE_MAX;
@@ -96,42 +126,54 @@ CRUST_APIENTRY void crustGenerationalHandlePoolFree(Crust_Allocator allocator, C
 	pool->used_tail = CRUST_USIZE_MAX;
 }
 
-CRUST_APIENTRY void crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize new_capacity)
+CRUST_APIENTRY u8 crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize new_capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity < new_capacity);
 
+	Crust_GenerationalHandlePool new_pool;
+	if (crustGenerationalHandlePoolAllocStorage(allocator, &new_pool, new_capacity) == 0)
+		return 0;
+
 	usize masks_capacity = crustAlignUpUSize(pool->capacity, 32) / 32;
 	usize new_masks_capacity = crustAlignUpUSize(new_capacity, 32) / 32;
 
-	pool->generations = crustReallocArray(allocator, pool->generations, usize, pool->capacity, new_capacity);
-	pool->prevs = crustReallocArray(allocator, pool->prevs, usize, pool->capacity, new_capacity);
-	pool->nexts = crustReallocArray(allocator, pool->nexts, usize, pool->capacity, new_capacity);
-
-	if (masks_capacity != new_masks_capacity)
-		pool->masks = crustReallocArray(allocator, pool->masks, u32, masks_capacity, new_masks_capacity);
-
-	for (usize i = masks_capacity; i < new_masks_capacity; ++i)
-		pool->masks[i] = 0;
+	for (usize i = 0; i < pool->capacity; ++i)
+	{
+		new_pool.nexts[i] = pool->nexts[i];
+		new_pool.prevs[i] = pool->prevs[i];
+		new_pool.generations[i] = pool->generations[i];
+	}
 
 	for (usize i = pool->capacity; i < new_capacity; ++i)
 	{
 		usize next = (i + 1 < new_capacity) ? i + 1 : CRUST_USIZE_MAX;
 		usize prev = (i > pool->capacity) ? i - 1 : pool->free_tail;
 
-		pool->nexts[i] = next;
-		pool->prevs[i] = prev;
-		pool->generations[i] = 0;
+		new_pool.nexts[i] = next;
+		new_pool.prevs[i] = prev;
+		new_pool.generations[i] = 0;
 	}
 
+	for (usize i = 0; i < masks_capacity; ++i)
+		new_pool.masks[i] = pool->masks[i];
+
+	for (usize i = masks_capacity; i < new_masks_capacity; ++i)
+		new_pool.masks[i] = 0;
+
 	if (pool->free_tail != CRUST_USIZE_MAX)
-		pool->nexts[pool->free_tail] = pool->capacity;
+		new_pool.nexts[pool->free_tail] = pool->capacity;
 
-	if (pool->free_head == CRUST_USIZE_MAX)
-		pool->free_head = pool->capacity;
+	new_pool.free_head = (pool->free_head != CRUST_USIZE_MAX) ? pool->free_head : pool->capacity;
+	new_pool.free_tail = new_capacity - 1;
 
-	pool->free_tail = new_capacity - 1;
-	pool->capacity = new_capacity;
+	new_pool.used_head = pool->used_head;
+	new_pool.used_tail = pool->used_tail;
+
+	crustGenerationalHandlePoolFreeStorage(allocator, pool);
+	*pool = new_pool;
+
+	return 1;
 }
 
 CRUST_APIENTRY u32 crustGenerationalHandlePoolCheck(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
@@ -156,8 +198,16 @@ CRUST_APIENTRY Crust_GenerationalHandle crustGenerationalHandlePoolAdd(Crust_Gen
 	CRUST_ASSERT(pool->prevs != CRUST_NULL);
 	CRUST_ASSERT(pool->nexts != CRUST_NULL);
 	CRUST_ASSERT(pool->generations != CRUST_NULL);
-	CRUST_ASSERT(pool->free_head != CRUST_USIZE_MAX);
 	CRUST_ASSERT(max_generation > 0);
+
+	if (pool->free_head == CRUST_USIZE_MAX)
+	{
+		Crust_GenerationalHandle result;
+		result.index = 0;
+		result.generation = 0;
+
+		return result;
+	}
 
 	usize index = pool->free_head;
 	usize next = pool->nexts[index];

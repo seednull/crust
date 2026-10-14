@@ -87,6 +87,28 @@ static int testAllocator(void)
 	return 0;
 }
 
+static int testSizeMul(void)
+{
+	static CRUST_ALIGNAS(64) u8 memory[CAPACITY];
+	Crust_Arena arena = crustArenaAttach(memory, CAPACITY);
+	Crust_Allocator allocator = crustArenaAllocatorInit(&arena);
+
+	CRUST_TEST_CHECK(crustAllocatorSizeMul(0, CRUST_USIZE_MAX) == 0);
+	CRUST_TEST_CHECK(crustAllocatorSizeMul(CRUST_USIZE_MAX, 1) == CRUST_USIZE_MAX);
+	CRUST_TEST_CHECK(crustAllocatorSizeMul(12, 10) == 120);
+
+	CRUST_TEST_CHECK(crustAllocatorAlloc(allocator, CRUST_USIZE_MAX, 8) == CRUST_NULL);
+	CRUST_TEST_CHECK(arena.size == 0);
+
+#if defined(NDEBUG)
+	CRUST_TEST_CHECK(crustAllocatorSizeMul(2, CRUST_USIZE_MAX / 2 + 1) == CRUST_USIZE_MAX);
+	CRUST_TEST_CHECK(crustAllocArray(allocator, u64, CRUST_USIZE_MAX / 4) == CRUST_NULL);
+	CRUST_TEST_CHECK(arena.size == 0);
+#endif
+
+	return 0;
+}
+
 static int testFuzz(void)
 {
 	static CRUST_ALIGNAS(64) u8 memory[FUZZ_CAPACITY];
@@ -132,6 +154,7 @@ int main(void)
 	CRUST_TEST_RUN(testAlloc);
 	CRUST_TEST_RUN(testReset);
 	CRUST_TEST_RUN(testAllocator);
+	CRUST_TEST_RUN(testSizeMul);
 	CRUST_TEST_RUN(testFuzz);
 
 	return crustTestResult();

@@ -6,10 +6,12 @@ static u32 crustHeapNodePoolAcquire(Crust_HeapNodePool *pool)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->nodes != CRUST_NULL);
+	CRUST_ASSERT(pool->count < pool->capacity);
 	CRUST_ASSERT(pool->capacity > pool->free_head);
 
 	u32 index = pool->free_head;
 	pool->free_head = pool->nodes[index].next_bin;
+	pool->count++;
 
 	return index;
 }
@@ -19,9 +21,24 @@ static void crustHeapNodePoolRelease(Crust_HeapNodePool *pool, u32 index)
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(pool->nodes != CRUST_NULL);
 	CRUST_ASSERT(pool->capacity > index);
+	CRUST_ASSERT(pool->count > 0);
 
 	pool->nodes[index].next_bin = pool->free_head;
 	pool->free_head = index;
+	pool->count--;
+}
+
+static void crustHeapNodePoolPushFree(Crust_HeapNodePool *pool, u32 begin, u32 end)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(pool->nodes != CRUST_NULL);
+	CRUST_ASSERT(begin < end);
+
+	for (u32 i = begin; i < end - 1; ++i)
+		pool->nodes[i].next_bin = i + 1;
+
+	pool->nodes[end - 1].next_bin = pool->free_head;
+	pool->free_head = begin;
 }
 
 static void crustHeapNodePoolMarkUsed(Crust_HeapNodePool *pool, u32 index)
@@ -46,19 +63,23 @@ static u8 crustHeapNodePoolIsUsed(const Crust_HeapNodePool *pool, u32 index)
 }
 
 //
-CRUST_APIENTRY void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity)
+CRUST_APIENTRY u8 crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
 	pool->nodes = crustAllocArray(allocator, Crust_HeapNode, capacity);
-	pool->free_head = 0;
+	pool->free_head = CRUST_U32_MAX;
+	pool->count = 0;
+	pool->capacity = 0;
+
+	if (pool->nodes == CRUST_NULL)
+		return 0;
+
+	crustHeapNodePoolPushFree(pool, 0, capacity);
 	pool->capacity = capacity;
 
-	for (u32 i = 0; i < capacity - 1; ++i)
-		pool->nodes[i].next_bin = i + 1;
-
-	pool->nodes[capacity - 1].next_bin = CRUST_U32_MAX;
+	return 1;
 }
 
 CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool)
@@ -70,7 +91,25 @@ CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapN
 	pool->nodes = CRUST_NULL;
 
 	pool->free_head = CRUST_U32_MAX;
+	pool->count = 0;
 	pool->capacity = 0;
+}
+
+CRUST_APIENTRY u8 crustHeapNodePoolGrow(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 new_capacity)
+{
+	CRUST_ASSERT(pool != CRUST_NULL);
+	CRUST_ASSERT(new_capacity > pool->capacity);
+
+	Crust_HeapNode *nodes = crustReallocArray(allocator, pool->nodes, Crust_HeapNode, pool->capacity, new_capacity);
+	if (nodes == CRUST_NULL)
+		return 0;
+
+	pool->nodes = nodes;
+
+	crustHeapNodePoolPushFree(pool, pool->capacity, new_capacity);
+	pool->capacity = new_capacity;
+
+	return 1;
 }
 
 //
@@ -120,6 +159,24 @@ static u8 crustHeapToBinIndexRoundUp(u32 size)
 		mantissa++;
 
 	return (u8)((exponent << CRUST_HEAP_PARAMETERS_MANTISSA_BITS) + mantissa);
+}
+
+static u32 crustHeapCountRemainders(const Crust_HeapNode *node, u32 offset, u32 size)
+{
+	CRUST_ASSERT(node != CRUST_NULL);
+	CRUST_ASSERT(offset >= node->offset);
+	CRUST_ASSERT(node->size >= size);
+	CRUST_ASSERT(offset - node->offset <= node->size - size);
+
+	u32 count = 0;
+
+	if (offset > node->offset)
+		count++;
+
+	if (offset - node->offset < node->size - size)
+		count++;
+
+	return count;
 }
 
 static u8 crustHeapFindBin(u32 bin_mask, u8 index)
@@ -321,14 +378,18 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAlloc(const Crust_Heap *heap, 
 	CRUST_ASSERT(bin_index != 0);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) >= size);
 
-	result.index = heap->heads[bin_index];
-	CRUST_ASSERT(result.index != CRUST_U32_MAX);
+	u32 index = heap->heads[bin_index];
+	CRUST_ASSERT(index != CRUST_U32_MAX);
 
-	const Crust_HeapNode *node = &pool->nodes[result.index];
+	const Crust_HeapNode *node = &pool->nodes[index];
 	CRUST_ASSERT(node != CRUST_NULL);
 	CRUST_ASSERT(node->size >= size);
 
+	if (pool->capacity - pool->count < crustHeapCountRemainders(node, node->offset, size))
+		return result;
+
 	result.offset = node->offset;
+	result.index = index;
 
 	return result;
 }
@@ -355,38 +416,40 @@ CRUST_APIENTRY Crust_HeapAllocation crustHeapStageAllocAligned(const Crust_Heap 
 	CRUST_ASSERT(bin_index != 0);
 	CRUST_ASSERT(crustHeapToBinSize(bin_index) >= size);
 
-	result.index = heap->heads[bin_index];
-	CRUST_ASSERT(result.index != CRUST_U32_MAX);
+	u32 index = heap->heads[bin_index];
+	CRUST_ASSERT(index != CRUST_U32_MAX);
 
-	const Crust_HeapNode *node = &pool->nodes[result.index];
+	const Crust_HeapNode *node = &pool->nodes[index];
 	CRUST_ASSERT(node != CRUST_NULL);
 	CRUST_ASSERT(node->size >= size);
 
-	result.offset = crustAlignUpU32(node->offset, alignment);
+	u32 offset = crustAlignUpU32(node->offset, alignment);
 
-	u32 remainder = result.offset - node->offset;
-	if (remainder + size > node->size)
+	if (offset - node->offset > node->size - size)
 	{
-		u32 max_size = size + alignment - 1;
-		bin_index = crustHeapFindBinForSize(heap, max_size);
-		if (bin_index == CRUST_U8_MAX)
-		{
-			result.offset = CRUST_U32_MAX;
-			result.index = CRUST_U32_MAX;
-
+		if (alignment - 1 > heap->size - size)
 			return result;
-		}
+
+		bin_index = crustHeapFindBinForSize(heap, size + alignment - 1);
+		if (bin_index == CRUST_U8_MAX)
+			return result;
 
 		CRUST_ASSERT(bin_index != 0);
-		result.index = heap->heads[bin_index];
 
-		CRUST_ASSERT(result.index != CRUST_U32_MAX);
+		index = heap->heads[bin_index];
+		CRUST_ASSERT(index != CRUST_U32_MAX);
 
-		node = &pool->nodes[result.index];
+		node = &pool->nodes[index];
 		CRUST_ASSERT(node != CRUST_NULL);
 
-		result.offset = crustAlignUpU32(node->offset, alignment);
+		offset = crustAlignUpU32(node->offset, alignment);
 	}
+
+	if (pool->capacity - pool->count < crustHeapCountRemainders(node, offset, size))
+		return result;
+
+	result.offset = offset;
+	result.index = index;
 
 	return result;
 }
@@ -409,6 +472,7 @@ CRUST_APIENTRY void crustHeapCommitAlloc(Crust_Heap *heap, Crust_HeapAllocation 
 	CRUST_ASSERT(node != CRUST_NULL);
 	CRUST_ASSERT(crustHeapNodePoolIsUsed(pool, allocation.index) == 0);
 	CRUST_ASSERT(allocation.offset >= node->offset);
+	CRUST_ASSERT(pool->capacity - pool->count >= crustHeapCountRemainders(node, allocation.offset, size));
 
 	u32 remainder_begin_size = allocation.offset - node->offset;
 	u32 remainder_begin_offset = node->offset;

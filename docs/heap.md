@@ -30,15 +30,30 @@ Crust_Heap heap_b = crustHeapInit(&pool, 64 * 1024 * 1024);
 crustHeapNodePoolFree(allocator, &pool);
 ```
 
-Every block, used or free, takes one node. Free blocks are always merged with free neighbors, so a heap with `n` live allocations has at most `2n + 1` blocks. Size the pool for
+Every block, used or free, takes one node: `pool.count` is the number of nodes in use, `pool.capacity` the total. Free blocks are always merged with free neighbors, so a heap with `n` live allocations has at most `2n + 1` blocks. A pool sized for
 
 ```
 capacity ≥ 2 × (live allocations across all heaps) + (number of heaps)
 ```
 
-**Running out of nodes is a contract violation:** it is asserted in debug builds and corrupts memory in release builds. There is no way to grow a pool.
+never runs out.
 
-A heap holds at least one node for as long as it exists, and there is no function to give it back. Discard heaps by freeing the whole pool they share.
+**Running out of nodes fails the allocation.** An allocation takes at most two nodes: one for the free space left after the block and, with `AllocAligned`, one for the padding before it. When the pool doesn't have them, `Stage` and `Alloc` fail exactly as when no block is large enough. To never run out, or to be sure that a failure means the heap is full, grow the pool before allocating:
+
+```c
+if (pool.capacity - pool.count < 2)
+	crustHeapNodePoolGrow(allocator, &pool, pool.capacity * 2);
+```
+
+| Function | Behavior |
+|---|---|
+| `crustHeapNodePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` nodes. Returns `0` if the allocator fails, leaving the pool empty |
+| `crustHeapNodePoolGrow(allocator, pool, new_capacity)` | Adds nodes. Heaps and allocations stay valid, but `pool.nodes` may move. Returns `0` if the allocator fails, leaving the pool untouched |
+| `crustHeapNodePoolFree(allocator, pool)` | Frees the nodes of every heap that uses the pool |
+
+- **`crustHeapInit` takes one node** and asserts that the pool has it: check `pool.count < pool.capacity` before creating a heap.
+- **A heap holds at least one node for as long as it exists**, and there is no function to give it back. Discard heaps by freeing the whole pool they share.
+- **Heaps point to the pool**, so keep the `Crust_HeapNodePool` itself at a fixed address.
 
 ## Allocating
 
@@ -96,4 +111,4 @@ else if (b.index != CRUST_U32_MAX)
 	crustHeapCommitAlloc(&heap_b, b, size);
 ```
 
-Commit with the same size you staged, and don't modify the heap between staging and committing: the staged node may be gone otherwise.
+Commit with the same size you staged, and don't modify the heap, or another heap that shares its pool, between staging and committing: the staged node may be gone otherwise, or the nodes the commit needs may have been taken. Growing the pool in between is fine.

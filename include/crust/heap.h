@@ -21,11 +21,13 @@ typedef struct Crust_HeapNodePool_t
 {
 	Crust_HeapNode *nodes;
 	u32 free_head;
+	u32 count;
 	u32 capacity;
 } Crust_HeapNodePool;
 
-CRUST_APIENTRY void crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity);
+CRUST_APIENTRY u8 crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity);
 CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool);
+CRUST_APIENTRY u8 crustHeapNodePoolGrow(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 new_capacity);
 
 //
 typedef struct Crust_HeapAllocation_t

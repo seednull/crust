@@ -28,6 +28,11 @@ static u32 countFreeNodes(const Crust_HeapNodePool *pool)
 	return count;
 }
 
+static u8 checkNodeCount(const Crust_HeapNodePool *pool)
+{
+	return pool->count + countFreeNodes(pool) == pool->capacity;
+}
+
 static int testInterleavedReallocSameBinBiggerSize(void)
 {
 	Crust_Allocator allocator = crustSystemAllocatorInit();
@@ -222,19 +227,23 @@ static int testSharedNodePool(void)
 			CRUST_TEST_CHECK(allocations[i].index != allocations[j].index);
 
 	CRUST_TEST_CHECK(countFreeNodes(&pool) == pool.capacity - 6);
+	CRUST_TEST_CHECK(pool.count == 6);
 
 	crustHeapFree(&heaps[0], allocations[0]);
 	crustHeapFree(&heaps[0], allocations[2]);
 	CRUST_TEST_CHECK(countFreeNodes(&pool) == pool.capacity - 4);
+	CRUST_TEST_CHECK(pool.count == 4);
 
 	Crust_HeapAllocation allocation = crustHeapAlloc(&heaps[1], 500);
 	CRUST_TEST_CHECK(allocation.offset == 600);
 	CRUST_TEST_CHECK(countFreeNodes(&pool) == pool.capacity - 5);
+	CRUST_TEST_CHECK(pool.count == 5);
 
 	crustHeapFree(&heaps[1], allocations[1]);
 	crustHeapFree(&heaps[1], allocations[3]);
 	crustHeapFree(&heaps[1], allocation);
 	CRUST_TEST_CHECK(countFreeNodes(&pool) == pool.capacity - 2);
+	CRUST_TEST_CHECK(pool.count == 2);
 
 	for (u32 i = 0; i < 2; ++i)
 	{
@@ -247,12 +256,148 @@ static int testSharedNodePool(void)
 	return 0;
 }
 
-static int testFuzz(void)
+static int testAlignedAllocPaddingExceedsHeap(void)
 {
 	Crust_Allocator allocator = crustSystemAllocatorInit();
 
 	Crust_HeapNodePool pool;
-	crustHeapNodePoolAlloc(allocator, &pool, FUZZ_NUM_NODES);
+	CRUST_TEST_REQUIRE(crustHeapNodePoolAlloc(allocator, &pool, UNIT_NUM_NODES));
+
+	Crust_Heap heap = crustHeapInit(&pool, 1024);
+
+	Crust_HeapAllocation first = crustHeapAlloc(&heap, 8);
+	CRUST_TEST_REQUIRE(first.index != CRUST_U32_MAX);
+
+	Crust_HeapAllocation aligned = crustHeapAllocAligned(&heap, 1000, 256);
+	CRUST_TEST_CHECK(aligned.index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(aligned.offset == CRUST_U32_MAX);
+
+	aligned = crustHeapAllocAligned(&heap, 512, 256);
+	CRUST_TEST_REQUIRE(aligned.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(aligned.offset == 256);
+
+	crustHeapFree(&heap, first);
+	crustHeapFree(&heap, aligned);
+	CRUST_TEST_CHECK(pool.count == 1);
+
+	crustHeapNodePoolFree(allocator, &pool);
+	return 0;
+}
+
+static int testNodePoolExhaustion(void)
+{
+	Crust_Allocator allocator = crustSystemAllocatorInit();
+
+	Crust_HeapNodePool pool;
+	CRUST_TEST_REQUIRE(crustHeapNodePoolAlloc(allocator, &pool, 3));
+
+	Crust_Heap heap = crustHeapInit(&pool, 1050);
+	CRUST_TEST_CHECK(pool.count == 1);
+
+	Crust_HeapAllocation a = crustHeapAlloc(&heap, 10);
+	CRUST_TEST_REQUIRE(a.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(pool.count == 2);
+
+	Crust_HeapAllocation b = crustHeapStageAllocAligned(&heap, 16, 256);
+	CRUST_TEST_CHECK(b.index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(b.offset == CRUST_U32_MAX);
+
+	b = crustHeapAllocAligned(&heap, 16, 256);
+	CRUST_TEST_CHECK(b.index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(pool.count == 2);
+
+	b = crustHeapAllocAligned(&heap, 16, 2);
+	CRUST_TEST_REQUIRE(b.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(b.offset == 10);
+	CRUST_TEST_CHECK(pool.count == 3);
+
+	Crust_HeapAllocation c = crustHeapStageAlloc(&heap, 5);
+	CRUST_TEST_CHECK(c.index == CRUST_U32_MAX);
+
+	c = crustHeapAlloc(&heap, 5);
+	CRUST_TEST_CHECK(c.index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(pool.count == 3);
+
+	c = crustHeapAlloc(&heap, 1024);
+	CRUST_TEST_REQUIRE(c.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(c.offset == 26);
+	CRUST_TEST_CHECK(pool.count == 3);
+	CRUST_TEST_CHECK(checkNodeCount(&pool));
+
+	crustHeapFree(&heap, b);
+	crustHeapFree(&heap, a);
+	crustHeapFree(&heap, c);
+	CRUST_TEST_CHECK(pool.count == 1);
+	CRUST_TEST_CHECK(checkNodeCount(&pool));
+
+	Crust_HeapAllocation whole = crustHeapAlloc(&heap, 1024);
+	CRUST_TEST_CHECK(whole.offset == 0);
+
+	crustHeapNodePoolFree(allocator, &pool);
+	return 0;
+}
+
+static int testNodePoolAllocationFailure(void)
+{
+	CrustTest_Allocator test_allocator;
+	Crust_Allocator allocator = crustTestAllocatorInit(&test_allocator, 0);
+
+	Crust_HeapNodePool pool;
+	CRUST_TEST_CHECK(crustHeapNodePoolAlloc(allocator, &pool, 2) == 0);
+	CRUST_TEST_CHECK(pool.nodes == CRUST_NULL);
+	CRUST_TEST_CHECK(pool.count == 0);
+	CRUST_TEST_CHECK(pool.capacity == 0);
+
+	crustHeapNodePoolFree(allocator, &pool);
+	CRUST_TEST_CHECK(test_allocator.blocks == 0);
+
+	test_allocator.budget = 1;
+	CRUST_TEST_REQUIRE(crustHeapNodePoolAlloc(allocator, &pool, 2));
+
+	Crust_Heap heap = crustHeapInit(&pool, 1024);
+
+	Crust_HeapAllocation a = crustHeapAlloc(&heap, 100);
+	CRUST_TEST_REQUIRE(a.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(crustHeapAlloc(&heap, 100).index == CRUST_U32_MAX);
+
+	Crust_HeapNode *nodes = pool.nodes;
+	CRUST_TEST_CHECK(crustHeapNodePoolGrow(allocator, &pool, 8) == 0);
+	CRUST_TEST_CHECK(pool.nodes == nodes);
+	CRUST_TEST_CHECK(pool.count == 2);
+	CRUST_TEST_CHECK(pool.capacity == 2);
+
+	test_allocator.budget = CRUST_USIZE_MAX;
+	CRUST_TEST_REQUIRE(crustHeapNodePoolGrow(allocator, &pool, 8));
+	CRUST_TEST_CHECK(pool.count == 2);
+	CRUST_TEST_CHECK(pool.capacity == 8);
+	CRUST_TEST_CHECK(checkNodeCount(&pool));
+
+	Crust_HeapAllocation b = crustHeapAlloc(&heap, 100);
+	CRUST_TEST_REQUIRE(b.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(b.offset == 100);
+	CRUST_TEST_CHECK(pool.count == 3);
+
+	crustHeapFree(&heap, a);
+	crustHeapFree(&heap, b);
+	CRUST_TEST_CHECK(pool.count == 1);
+	CRUST_TEST_CHECK(checkNodeCount(&pool));
+
+	Crust_HeapAllocation whole = crustHeapAlloc(&heap, 1024);
+	CRUST_TEST_CHECK(whole.offset == 0);
+
+	crustHeapNodePoolFree(allocator, &pool);
+	CRUST_TEST_CHECK(test_allocator.blocks == 0);
+	CRUST_TEST_CHECK(test_allocator.bytes == 0);
+
+	return 0;
+}
+
+static int fuzz(u32 initial_nodes, u8 grow)
+{
+	Crust_Allocator allocator = crustSystemAllocatorInit();
+
+	Crust_HeapNodePool pool;
+	CRUST_TEST_REQUIRE(crustHeapNodePoolAlloc(allocator, &pool, initial_nodes));
 
 	Crust_Heap heaps[FUZZ_NUM_HEAPS];
 	for (u32 h = 0; h < FUZZ_NUM_HEAPS; ++h)
@@ -262,12 +407,21 @@ static int testFuzz(void)
 	static u8 node_used[FUZZ_NUM_NODES];
 	u32 num_live[FUZZ_NUM_HEAPS] = { 0 };
 
+	for (u32 i = 0; i < FUZZ_NUM_NODES; ++i)
+		node_used[i] = 0;
+
 	for (u32 step = 0; step < FUZZ_STEPS; ++step)
 	{
 		u32 h = crustTestRandom() % FUZZ_NUM_HEAPS;
 
+		if (step % 1024 == 0)
+			CRUST_TEST_REQUIRE(checkNodeCount(&pool));
+
 		if ((crustTestRandom() & 1) && num_live[h] < FUZZ_MAX_LIVE)
 		{
+			if (grow && pool.capacity - pool.count < 2)
+				CRUST_TEST_REQUIRE(crustHeapNodePoolGrow(allocator, &pool, crustMinU32(pool.capacity * 2, FUZZ_NUM_NODES)));
+
 			u32 size = 1 + crustTestRandom() % 1500;
 			u32 alignment = 1u << (crustTestRandom() % 8);
 			u8 aligned = (crustTestRandom() & 1) != 0;
@@ -281,7 +435,7 @@ static int testFuzz(void)
 			if (allocation.index == CRUST_U32_MAX)
 				continue;
 
-			CRUST_TEST_REQUIRE(allocation.index < FUZZ_NUM_NODES);
+			CRUST_TEST_REQUIRE(allocation.index < pool.capacity);
 			CRUST_TEST_REQUIRE(node_used[allocation.index] == 0);
 			node_used[allocation.index] = 1;
 
@@ -317,6 +471,7 @@ static int testFuzz(void)
 			crustHeapFree(&heaps[h], live[h][--num_live[h]].allocation);
 
 	CRUST_TEST_CHECK(countFreeNodes(&pool) == pool.capacity - FUZZ_NUM_HEAPS);
+	CRUST_TEST_CHECK(pool.count == FUZZ_NUM_HEAPS);
 
 	for (u32 h = 0; h < FUZZ_NUM_HEAPS; ++h)
 	{
@@ -329,6 +484,21 @@ static int testFuzz(void)
 	return 0;
 }
 
+static int testFuzz(void)
+{
+	return fuzz(FUZZ_NUM_NODES, 0);
+}
+
+static int testFuzzSmallNodePool(void)
+{
+	return fuzz(FUZZ_NUM_HEAPS + 12, 0);
+}
+
+static int testFuzzGrowingNodePool(void)
+{
+	return fuzz(FUZZ_NUM_HEAPS + 1, 1);
+}
+
 int main(void)
 {
 	CRUST_TEST_RUN(testInterleavedReallocSameBinBiggerSize);
@@ -337,7 +507,12 @@ int main(void)
 	CRUST_TEST_RUN(testNonFitAlignedAlloc);
 	CRUST_TEST_RUN(testStageCommit);
 	CRUST_TEST_RUN(testSharedNodePool);
+	CRUST_TEST_RUN(testAlignedAllocPaddingExceedsHeap);
+	CRUST_TEST_RUN(testNodePoolExhaustion);
+	CRUST_TEST_RUN(testNodePoolAllocationFailure);
 	CRUST_TEST_RUN(testFuzz);
+	CRUST_TEST_RUN(testFuzzSmallNodePool);
+	CRUST_TEST_RUN(testFuzzGrowingNodePool);
 
 	return crustTestResult();
 }

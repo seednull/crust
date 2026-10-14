@@ -120,9 +120,56 @@ static int testFuzz(void)
 	return 0;
 }
 
+static int testAllocationFailure(void)
+{
+	static const Crust_HashIndexMapVtbl vtbl = { hashKey, equalKeys, copyKey, moveKey, destroyKey };
+
+	CrustTest_Allocator test_allocator;
+	Crust_Allocator allocator = crustTestAllocatorInit(&test_allocator, 3);
+
+	Crust_HashIndexMap map = crustHashIndexMapInit(CRUST_NULL, &vtbl, sizeof(u32), sizeof(u32));
+	CRUST_TEST_CHECK(crustHashIndexMapAlloc(allocator, &map, INITIAL_CAPACITY) == 0);
+	CRUST_TEST_CHECK(map.capacity == 0);
+	CRUST_TEST_CHECK(map.keys == CRUST_NULL);
+	CRUST_TEST_CHECK(map.masks == CRUST_NULL);
+	CRUST_TEST_CHECK(test_allocator.blocks == 0);
+
+	test_allocator.budget = 4 + 3;
+	CRUST_TEST_REQUIRE(crustHashIndexMapAlloc(allocator, &map, INITIAL_CAPACITY));
+
+	for (u32 key = 0; key < 8; ++key)
+		CRUST_TEST_REQUIRE(crustHashIndexMapAdd(&map, &key, sizeof(key), key + 100) == key + 100);
+
+	u8 *keys = map.keys;
+	CRUST_TEST_CHECK(crustHashIndexMapGrow(allocator, &map, INITIAL_CAPACITY * 2) == 0);
+	CRUST_TEST_CHECK(map.keys == keys);
+	CRUST_TEST_CHECK(map.capacity == INITIAL_CAPACITY);
+	CRUST_TEST_CHECK(map.count == 8);
+	CRUST_TEST_CHECK(test_allocator.blocks == 4);
+
+	for (u32 key = 0; key < 8; ++key)
+		CRUST_TEST_CHECK(crustHashIndexMapFind(&map, &key, sizeof(key)) == key + 100);
+
+	test_allocator.budget = CRUST_USIZE_MAX;
+	CRUST_TEST_REQUIRE(crustHashIndexMapGrow(allocator, &map, INITIAL_CAPACITY * 2));
+	CRUST_TEST_CHECK(map.capacity == INITIAL_CAPACITY * 2);
+	CRUST_TEST_CHECK(map.count == 8);
+
+	for (u32 key = 0; key < 8; ++key)
+		CRUST_TEST_CHECK(crustHashIndexMapFind(&map, &key, sizeof(key)) == key + 100);
+
+	crustHashIndexMapFree(allocator, &map);
+	CRUST_TEST_CHECK(test_allocator.blocks == 0);
+	CRUST_TEST_CHECK(test_allocator.bytes == 0);
+	CRUST_TEST_CHECK(live_keys == 0);
+
+	return 0;
+}
+
 int main(void)
 {
 	CRUST_TEST_RUN(testFuzz);
+	CRUST_TEST_RUN(testAllocationFailure);
 
 	return crustTestResult();
 }

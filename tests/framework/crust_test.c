@@ -94,6 +94,75 @@ f64 crustTestRandomF64(void)
 }
 
 //
+static void *crustTestAllocatorAlloc(void *context, usize size, usize alignment)
+{
+	CrustTest_Allocator *allocator = (CrustTest_Allocator *)context;
+
+	if (allocator->budget == 0)
+		return CRUST_NULL;
+
+	void *ptr = crustAllocatorAlloc(allocator->parent, size, alignment);
+	if (ptr == CRUST_NULL)
+		return CRUST_NULL;
+
+	allocator->budget--;
+	allocator->blocks++;
+	allocator->bytes += size;
+
+	return ptr;
+}
+
+static void *crustTestAllocatorRealloc(void *context, void *ptr, usize old_size, usize new_size, usize alignment)
+{
+	CrustTest_Allocator *allocator = (CrustTest_Allocator *)context;
+
+	if (allocator->budget == 0)
+		return CRUST_NULL;
+
+	void *new_ptr = crustAllocatorRealloc(allocator->parent, ptr, old_size, new_size, alignment);
+	if (new_ptr == CRUST_NULL)
+		return CRUST_NULL;
+
+	allocator->budget--;
+	allocator->bytes = allocator->bytes - old_size + new_size;
+
+	return new_ptr;
+}
+
+static void crustTestAllocatorFree(void *context, void *ptr, usize size, usize alignment)
+{
+	CrustTest_Allocator *allocator = (CrustTest_Allocator *)context;
+
+	crustAllocatorFree(allocator->parent, ptr, size, alignment);
+
+	allocator->blocks--;
+	allocator->bytes -= size;
+}
+
+static const Crust_AllocatorVtbl crust_test_allocator_vtbl =
+{
+	crustTestAllocatorAlloc,
+	crustTestAllocatorRealloc,
+	crustTestAllocatorFree,
+};
+
+Crust_Allocator crustTestAllocatorInit(CrustTest_Allocator *allocator, usize budget)
+{
+	CRUST_ASSERT(allocator != CRUST_NULL);
+
+	allocator->parent = crustSystemAllocatorInit();
+	allocator->budget = budget;
+	allocator->blocks = 0;
+	allocator->bytes = 0;
+
+	Crust_Allocator result;
+	result.context = allocator;
+	result.vtbl = &crust_test_allocator_vtbl;
+
+	return result;
+}
+
+//
 #if defined(CRUST_TEST_THREADS)
 CrustTest_Thread crustTestThreadCreate(PFN_crustTestThreadFunction function, void *arg)
 {

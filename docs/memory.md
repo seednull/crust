@@ -45,7 +45,7 @@ Use the wrappers rather than the vtable:
 | `crustAllocatorRealloc(allocator, ptr, old_size, new_size, alignment)` | With `ptr == CRUST_NULL` it allocates; with `new_size == 0` it frees and returns `CRUST_NULL`; otherwise resizes. On failure it returns `CRUST_NULL` and **the old block stays valid** |
 | `crustAllocatorFree(allocator, ptr, size, alignment)` | Frees; `CRUST_NULL` is ignored |
 
-Typed macros compute the size and alignment from the type and check the multiplication for overflow (asserted):
+Typed macros compute the size and alignment from the type. The multiplication goes through `crustAllocatorSizeMul(a, b)`, which asserts that it doesn't overflow and, in release builds, returns `CRUST_USIZE_MAX` when it does. No allocator can satisfy that size, so an overflowing count fails like any other allocation instead of returning a block that is too small:
 
 ```c
 Particle *p = crustAlloc(allocator, Particle);
@@ -68,7 +68,10 @@ ps = grown;
 count = new_count;
 ```
 
-**Containers assume success.** `crustHashIndexMapAlloc`, `crustGenerationalHandlePoolAlloc`, the `Grow` functions and `crustHeapNodePoolAlloc` don't check for allocation failure. Give them an allocator that can satisfy the request, for example an arena sized for the worst case.
+**Containers report allocation failure.** `crustHashIndexMapAlloc`, `crustGenerationalHandlePoolAlloc`, `crustHeapNodePoolAlloc` and their `Grow` functions return `1` on success and `0` when the allocator fails:
+
+- a failed `Alloc` frees whatever it already got and leaves the container empty, so `Free` on it does nothing;
+- a failed `Grow` leaves the container exactly as it was, with every element and handle intact.
 
 ## System allocator
 
@@ -193,3 +196,5 @@ What the wrappers already guarantee to an implementation:
 - `alloc` gets `size > 0` and a power-of-two `alignment`;
 - `realloc` gets a non-null `ptr`, `old_size > 0` and `new_size > 0`, because the wrapper turns the other cases into `alloc` and `free`;
 - `free` gets a non-null `ptr`.
+
+In return, `alloc` and `realloc` must return `CRUST_NULL` for any request they can't satisfy, including a size of `CRUST_USIZE_MAX`: that is the size the typed macros pass when the size computation overflows. Watch for overflow when adding headers or alignment padding to the requested size.

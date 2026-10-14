@@ -107,8 +107,8 @@ crustHashIndexMapFree(allocator, &map);
 | Function | Behavior |
 |---|---|
 | `crustHashIndexMapInit(context, vtbl, key_size, key_alignment)` | Sets up an empty map without allocating |
-| `crustHashIndexMapAlloc(allocator, map, capacity)` | Allocates `capacity` buckets. The map must be empty and unallocated |
-| `crustHashIndexMapGrow(allocator, map, new_capacity)` | Rehashes into a larger table, moving keys with `move`. `new_capacity` must be larger |
+| `crustHashIndexMapAlloc(allocator, map, capacity)` | Allocates `capacity` buckets. The map must be empty and unallocated. Returns `0` if the allocator fails, leaving the map unallocated |
+| `crustHashIndexMapGrow(allocator, map, new_capacity)` | Rehashes into a larger table, moving keys with `move`. `new_capacity` must be larger. Returns `0` if the allocator fails, leaving the map untouched |
 | `crustHashIndexMapFree(allocator, map)` | Destroys every key and frees the storage |
 | `crustHashIndexMapAdd(map, key, key_size, index)` | Inserts `key → index` and returns `index`. Returns `CRUST_USIZE_MAX` when every bucket is taken |
 | `crustHashIndexMapFind(map, key, key_size)` | Returns the stored index or `CRUST_USIZE_MAX` |
@@ -189,16 +189,26 @@ crustGenerationalHandlePoolFree(allocator, &pool);
 
 | Function | Behavior |
 |---|---|
-| `crustGenerationalHandlePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` free slots |
-| `crustGenerationalHandlePoolGrow(allocator, pool, new_capacity)` | Adds slots. Existing handles stay valid |
+| `crustGenerationalHandlePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` free slots. Returns `0` if the allocator fails, leaving the pool empty |
+| `crustGenerationalHandlePoolGrow(allocator, pool, new_capacity)` | Adds slots. Existing handles stay valid. Returns `0` if the allocator fails, leaving the pool untouched |
 | `crustGenerationalHandlePoolFree(allocator, pool)` | Frees the pool |
-| `crustGenerationalHandlePoolAdd(pool, max_generation)` | Takes a free slot and returns its new handle |
+| `crustGenerationalHandlePoolAdd(pool, max_generation)` | Takes a free slot and returns its new handle, or a zeroed handle when the pool is full |
 | `crustGenerationalHandlePoolRemove(pool, handle)` | Frees the slot. The handle must be valid (asserted) |
 | `crustGenerationalHandlePoolCheck(pool, handle)` | `1` if the handle refers to a live slot with the same generation |
 
 ### Rules
 
-- **Check for space before `Add`.** `Add` asserts that a free slot exists; the pool is full when `pool.free_head == CRUST_USIZE_MAX`. Grow it then.
+- **`Add` fails on a full pool.** It returns a zeroed handle, which never passes `Check`; test `handle.generation != 0`. The pool is full when `pool.free_head == CRUST_USIZE_MAX`, so you can grow it before adding:
+
+  ```c
+  if (pool.free_head == CRUST_USIZE_MAX)
+  	crustGenerationalHandlePoolGrow(allocator, &pool, pool.capacity * 2);
+
+  Crust_GenerationalHandle handle = crustGenerationalHandlePoolAdd(&pool, CRUST_USIZE_MAX);
+  if (handle.generation == 0)
+  	return;
+  ```
+
 - **Generations wrap.** A slot's generation goes 1, 2, …, `max_generation − 1`, then back to 1. A stale handle is detected as long as its slot hasn't been reused `max_generation − 1` times since. Pass a large value, such as `CRUST_USIZE_MAX`, or the largest value your packed handle format can hold. With `max_generation` of 1 or 2 every generation is 1 and stale handles are never detected.
 - **Generation 0 is never valid.** A zeroed `Crust_GenerationalHandle` works as a null handle for `Check`, provided the pool has at least one slot.
 - **`Check` asserts that the index is in range.** Handles from another, larger pool are a contract violation, not just a failed check.
