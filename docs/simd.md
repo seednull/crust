@@ -33,17 +33,14 @@ or, without CMake, define `CRUST_USE_SIMD=1` and pass the flags yourself:
 
 | Architecture | Backend | Flags for GCC and Clang | Requirement |
 |---|---|---|---|
-| x86, x64 | SSE (`CRUST_SIMD_SSE`) | `-msse4.2 -mpopcnt` | x86-64-v2 CPU: SSE4.2 and POPCNT |
+| x86, x64 | SSE (`CRUST_SIMD_SSE`) | `-msse4.2 -mpopcnt` | x86-64-v2 CPU: SSE4.2 and POPCNT. GCC 7 or Clang 9 |
 | ARM64 | NEON (`CRUST_SIMD_NEON`) | none | none |
-| WebAssembly | WASM (`CRUST_SIMD_WASM`) | `-msimd128` | A runtime with WebAssembly SIMD |
+| WebAssembly | WASM (`CRUST_SIMD_WASM`) | `-msimd128` | A runtime with WebAssembly SIMD, as in every current browser and Node.js |
 | Anything else | Scalar (`CRUST_SIMD_SCALAR`) | none | none |
 
 - **Missing flags are an error.** With `CRUST_USE_SIMD=1`, the header stops with `#error "CRUST_USE_SIMD requires SSE4.2 and POPCNT on x86: compile with -msse4.2 -mpopcnt"` (or the WebAssembly equivalent) instead of silently falling back.
 - **MSVC needs no flags** and checks nothing: the program must run on an x86-64-v2 CPU. There is no runtime CPU detection.
-- **32-bit ARM** uses the scalar backend even with `CRUST_USE_SIMD=1`.
 - **Keep the setting consistent.** `Crust_Simd128` is a different C type with and without SIMD. Every translation unit that passes these values to another must use the same `CRUST_USE_SIMD`. The CMake target propagates the define to everything that links it.
-
-The active backend is visible through the `CRUST_SIMD_*` macros, which are always defined to `0` or `1`.
 
 ## The type
 
@@ -221,7 +218,7 @@ Narrowing takes two vectors so that no lanes are wasted: two vectors of eight `i
 
 ### Results are identical on every backend
 
-Every function is specified to produce the same bits on SSE, NEON, WASM and the scalar backend, including NaN propagation by `Min`/`Max`, signed zeros, saturation and wrap-around. The tests check whichever backend is built against scalar reference implementations, bit for bit. The exceptions are the inputs that break a precondition: out-of-range shift counts, `ConvertI32FromF32` of out-of-range values, misaligned `Aligned` pointers, out-of-range lanes. These are asserted in debug builds. In release builds their results differ between backends, and an out-of-range lane index is undefined behavior.
+Every function is specified to produce the same bits on SSE, NEON, WASM and the scalar backend, including NaN propagation by `Min`/`Max`, signed zeros, saturation and wrap-around. The tests check whichever backend is built against scalar reference implementations, bit for bit. The exceptions are the inputs that break a precondition: out-of-range shift counts, `ConvertI32FromF32` of out-of-range values, misaligned `Aligned` pointers, out-of-range lanes. These are asserted in debug builds. In release builds their results differ between backends, and an out-of-range lane index is undefined behavior. On 32-bit x86, GCC needs SSE math for this, see [Platform notes](platform.md#platform-notes).
 
 ### Masks
 
@@ -238,7 +235,6 @@ Comparisons produce lanes that are all ones or all zeros. `Select`, `And` and th
 - **`Min` and `Max`** are defined as `(a < b) ? a : b` and `(a < b) ? b : a`, exactly like `crustMinF32` and `crustMaxF32`. So `Min` returns `b` when either input is NaN or when they compare equal, which makes `Min(+0, −0)` return `−0`. This is not IEEE `minNum`, and it is not what `vminq_f32` or `wasm_f32x4_min` do; Crust picks the instructions that match its own definition.
 - **No fusing.** `crustSimd128AddF32(crustSimd128MulF32(a, b), c)` is always a multiply followed by an add, never an FMA.
 - **Default floating-point environment.** Crust does not change rounding modes or flush denormals. The SSE backend uses explicit rounding immediates, so `RoundEven` rounds to nearest even regardless of `MXCSR`. Denormal handling follows the current FTZ/DAZ settings, which Crust leaves alone.
-- **32-bit x86 with GCC needs SSE math.** GCC computes floating point on the x87 unit in extended precision unless you pass `-msse2 -mfpmath=sse`. With x87 math the scalar backend and your own scalar code round twice and can differ from the SSE backend in the last bit, for example in `MulF64` and `DivF64`. Build with SSE math to get the same bits as on every other target.
 
 ## Performance notes
 
@@ -255,9 +251,6 @@ Comparisons produce lanes that are all ones or all zeros. `Select`, `And` and th
   | `LessU64` | sign flip + signed compare | native | sign flip + signed compare |
   | `Min`/`Max` for 64-bit lanes | compare + select | compare + select | compare + select |
   | `ConvertI32FromF32Saturate` | 3–4 extra instructions | native | native |
-
-- **x86-32 with MSVC.** Scalars returned by value go through the x87 stack. `GetLaneF32` returns the same bits for every finite value, but it can turn a signaling NaN into a quiet one.
-- **System headers.** The SIMD backends include only the compiler's intrinsic headers, never the C library, see [Platform](platform.md#system-headers). With SSE, `_mm_malloc` is not declared through `crust.h`.
 
 ## Examples
 
@@ -290,25 +283,6 @@ usize findByte(const u8 *data, usize size, u8 value)
 }
 ```
 
-### Brightening pixels with saturation
-
-```c
-void brighten(u8 *pixels, usize size, u8 amount)
-{
-	Crust_Simd128 delta = crustSimd128SplatU8(amount);
-	usize i = 0;
-
-	for (; i + 16 <= size; i += 16)
-	{
-		Crust_Simd128 p = crustSimd128LoadU8(pixels + i);
-		crustSimd128StoreU8(pixels + i, crustSimd128AddSaturateU8(p, delta));
-	}
-
-	for (; i < size; ++i)
-		pixels[i] = (u8)crustMinU32(pixels[i] + amount, CRUST_U8_MAX);
-}
-```
-
 ### Dot product
 
 Reducing four lanes takes two swizzles and two additions. The sum ends up in every lane, in the order `(m0 + m1) + (m2 + m3)` on every backend:
@@ -336,59 +310,5 @@ Crust_Simd128 transform(const Crust_Simd128 columns[4], Crust_Simd128 v)
 	r = crustSimd128AddF32(r, crustSimd128MulF32(columns[2], crustSimd128Swizzle32ZZZZ(v)));
 
 	return crustSimd128AddF32(r, crustSimd128MulF32(columns[3], crustSimd128Swizzle32WWWW(v)));
-}
-```
-
-### Transposing a 4×4 matrix
-
-```c
-void transpose(Crust_Simd128 rows[4])
-{
-	Crust_Simd128 t0 = crustSimd128ZipLowU32(rows[0], rows[1]);  // r0.x r1.x r0.y r1.y
-	Crust_Simd128 t1 = crustSimd128ZipLowU32(rows[2], rows[3]);  // r2.x r3.x r2.y r3.y
-	Crust_Simd128 t2 = crustSimd128ZipHighU32(rows[0], rows[1]); // r0.z r1.z r0.w r1.w
-	Crust_Simd128 t3 = crustSimd128ZipHighU32(rows[2], rows[3]); // r2.z r3.z r2.w r3.w
-
-	rows[0] = crustSimd128ZipLowU64(t0, t1);  // r0.x r1.x r2.x r3.x
-	rows[1] = crustSimd128ZipHighU64(t0, t1); // r0.y r1.y r2.y r3.y
-	rows[2] = crustSimd128ZipLowU64(t2, t3);  // r0.z r1.z r2.z r3.z
-	rows[3] = crustSimd128ZipHighU64(t2, t3); // r0.w r1.w r2.w r3.w
-}
-```
-
-### Cross product
-
-`a × b = a.yzx · b.zxy − a.zxy · b.yzx` needs only one swizzle pattern when the result is rotated at the end:
-
-```c
-Crust_Simd128 cross(Crust_Simd128 a, Crust_Simd128 b)
-{
-	Crust_Simd128 c = crustSimd128SubF32(
-		crustSimd128MulF32(a, crustSimd128Swizzle32YZXW(b)),
-		crustSimd128MulF32(crustSimd128Swizzle32YZXW(a), b));
-
-	return crustSimd128Swizzle32YZXW(c);
-}
-```
-
-The `w` lane of the result is `a.w·b.w − a.w·b.w`, which is zero for finite inputs.
-
-### Clamping negative values to zero, branch-free
-
-```c
-void clampNegative(f32 *values, usize count)
-{
-	Crust_Simd128 zero = crustSimd128AllZeros();
-	usize i = 0;
-
-	for (; i + 4 <= count; i += 4)
-	{
-		Crust_Simd128 v = crustSimd128LoadF32(values + i);
-		Crust_Simd128 negative = crustSimd128LessF32(v, zero);
-		crustSimd128StoreF32(values + i, crustSimd128Select(negative, zero, v));
-	}
-
-	for (; i < count; ++i)
-		values[i] = (values[i] < 0.0f) ? 0.0f : values[i];
 }
 ```

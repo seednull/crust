@@ -118,9 +118,6 @@ Crust headers include only compiler intrinsic headers, never a C library header 
 | Target | Note |
 |---|---|
 | MSVC, x86 and x64 | `crustFloor*`, `crustCeil*`, `crustRoundEven*` and `crustTruncate*` use SSE4.1 and `crustPopcntU32` uses `POPCNT`, unconditionally. Any CPU from about 2011 on has both |
-| x86 with `CRUST_USE_SIMD` | An x86-64-v2 CPU (SSE4.2 and POPCNT), not checked at run time. GCC 7 or Clang 9 at least |
 | 32-bit x86 with GCC | Compile with `-msse2 -mfpmath=sse`. GCC's default x87 math rounds twice, so results can differ from the other targets in the last bit. Crust doesn't add these flags itself, because they change the arithmetic of all your code |
 | 32-bit x86 with MSVC | Floats returned by value pass through the x87 stack, which can turn a signaling NaN into a quiet one |
 | ARM64 with MSVC | With `/O2`, a loop that applies `crustMinF32` or `crustMaxF32` to an array can be vectorized into `fmin`/`fmax`, which treat NaN and signed zeros differently. Use the SIMD `Min`/`Max` or put `#pragma loop(no_vector)` before the loop |
-| WebAssembly with `CRUST_USE_SIMD` | `-msimd128` and a runtime with WebAssembly SIMD, which every current browser and Node.js has |
-| Other architectures | `CRUST_USE_SIMD` falls back to the scalar backend |

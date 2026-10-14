@@ -64,12 +64,10 @@ Compile every file in `src/freestanding` and `src/libc` with `include` on the in
 
 | Define | Where | Effect |
 |---|---|---|
-| `CRUST_USE_SIMD=1` | Everywhere a Crust header is included | Enables the SIMD backend. Add `-msse4.2 -mpopcnt` (x86) or `-msimd128` (WebAssembly) for GCC and Clang |
+| `CRUST_USE_SIMD=1` | Everywhere a Crust header is included, with the same value | Enables the SIMD backend, see [SIMD](simd.md#enabling-simd) for the compiler flags |
 | `CRUST_SHARED_LIBRARY` | Everywhere a Crust header is included | Marks the API as imported from a shared library |
 | `CRUST_IMPLEMENTATION` | Only when compiling Crust itself | Together with `CRUST_SHARED_LIBRARY`, exports the API instead of importing it |
 | `NDEBUG` | Anywhere | Disables `CRUST_ASSERT`, see [Platform](platform.md#assertions) |
-
-Keep `CRUST_USE_SIMD` identical in every translation unit that exchanges `Crust_Simd128` values: the type is a different C type with and without SIMD.
 
 ### Running without the C standard library
 
