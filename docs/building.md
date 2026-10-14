@@ -38,7 +38,7 @@ cmake --build --preset build-msvc2026-x64-release
 | `msvc2022-x64`, `msvc2026-x64` | Visual Studio 2022 / 2026 | Multi-config: pick `Debug` or `Release` at build time |
 | `emscripten-ninja`, `emscripten-ninja-debug` | Ninja | Needs the Emscripten SDK; Release and Debug |
 | `osx-clang-release`, `osx-clang-debug` | Unix Makefiles | Uses `/usr/bin/clang` and builds for the host architecture, arm64 or x64 |
-| `linux-gcc-release`, `linux-gcc-debug`, `linux-clang-release`, `linux-clang-debug` | Unix Makefiles | Uses `gcc` or `clang` from `PATH` |
+| `linux-gcc-release`, `linux-gcc-debug`, `linux-clang-release`, `linux-clang-debug` | Unix Makefiles | Uses `gcc`/`g++` or `clang`/`clang++` from `PATH` |
 
 Every configure preset writes into `build/<preset>`. The build presets (`build-msvc2026-x64-debug`, `build-emscripten-release`, `build-osx-release`, `build-linux-gcc-release`, ...) also run the `install` target, which copies the library into `build/`:
 
@@ -155,9 +155,11 @@ ctest --test-dir build/msvc2026-x64 -C Debug --output-on-failure
 
 - Every test is a separate executable that uses the small framework in `tests/framework`.
 - The `crust_test_headers` target compiles every public header on its own, so a header that misses an include fails the build.
+- When CMake finds a C++ compiler, the `cxx` test in `tests/cxx` includes `crust.h` as C++11 and calls into every module, which checks that the headers compile as C++ and that the `extern "C"` linkage is right.
 - Test the SIMD backend by configuring with `-DCRUST_USE_SIMD=ON`. Without it the tests exercise the scalar backend.
 - With tests enabled, executables and shared libraries go to `bin/` in the build directory, so the tests find `crust.dll` in shared builds on Windows.
-- The Emscripten presets run the tests under Node.js. Builds without threads, such as Emscripten, compile the multithreaded test cases of the atomic, lock, ring and bip buffer tests out.
+- The Emscripten presets run the tests under Node.js. Builds without threads, Emscripten and WASI, compile the multithreaded test cases of the atomic, lock, ring and bip buffer tests out.
+- When cross-compiling, set `CMAKE_CROSSCOMPILING_EMULATOR` to run the tests, for example `qemu-arm` or `wasmtime`.
 
 ## Continuous integration
 
@@ -171,9 +173,13 @@ GitHub Actions builds and tests every push to `main` and every pull request, see
 | Linux GCC, Linux Clang | Ubuntu x64 | SIMD off and on; Debug and Release |
 | Linux ARM64 GCC | Ubuntu ARM64 | NEON and scalar; Debug and Release |
 | Linux x86 GCC | Ubuntu x64, `-m32` | x87 math with the scalar backend; SSE math (`-msse2 -mfpmath=sse`) with SIMD off and on; Debug and Release |
+| Linux ARM32 GCC | Ubuntu x64, cross-compiled | `arm-linux-gnueabihf`, tests under `qemu-arm`; scalar backend with SIMD off and on; Debug and Release |
+| Android | Ubuntu x64, NDK | Build only: `arm64-v8a` with SIMD off and on, `armeabi-v7a`, `x86_64` with SSE; Debug and Release |
+| WASI | Ubuntu x64, WASI SDK | Tests under Wasmtime; WebAssembly SIMD and scalar; Debug and Release |
+| Emscripten wasm64 | Ubuntu x64 | Build only, with `-sMEMORY64=1`; WebAssembly SIMD and scalar; Debug and Release |
 | macOS ARM64 Clang | macOS on Apple silicon | NEON and scalar; Debug and Release |
 | Emscripten | Ubuntu x64 | WebAssembly SIMD and scalar, tests under Node.js |
-| Sanitizers | Ubuntu x64, Clang | AddressSanitizer and UndefinedBehaviorSanitizer, SIMD off and on |
+| Sanitizers | Ubuntu x64, Clang | AddressSanitizer with UndefinedBehaviorSanitizer, and ThreadSanitizer; SIMD off and on |
 | Shared library | Windows (MSVC), Ubuntu (GCC) | `BUILD_SHARED_LIBS=ON` |
 | Installed package | Ubuntu x64 | Installs Crust and builds `tests/package`, a minimal project that uses it through `find_package` |
 | Presets | Windows, Ubuntu, macOS | Configures and builds with `msvc2022-x64`, `linux-gcc-release`, `linux-clang-release` and `osx-clang-release`, then runs the tests |

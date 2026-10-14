@@ -14,6 +14,8 @@ env:
   CRUST_OPTIONS: -DCRUST_BUILD_TESTS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
   CRUST_C99: -DCMAKE_C_STANDARD=99 -DCMAKE_C_STANDARD_REQUIRED=ON -DCMAKE_C_EXTENSIONS=OFF
   EMSCRIPTEN_VERSION: 4.0.5
+  WASI_SDK_VERSION: 34
+  WASMTIME_VERSION: 49.0.2
 
 jobs:
   msvc:
@@ -114,27 +116,31 @@ jobs:
           - name: Linux GCC
             runner: ubuntu-24.04
             compiler: gcc
+            cxx: g++
           - name: Linux Clang
             runner: ubuntu-24.04
             compiler: clang
+            cxx: clang++
           - name: Linux ARM64 GCC
             runner: ubuntu-24.04-arm
             compiler: gcc
+            cxx: g++
           - name: macOS ARM64 Clang
             runner: macos-latest
             compiler: clang
+            cxx: clang++
     steps:
       - uses: actions/checkout@v7
 
       - name: Debug
         run: |
-          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build/debug --parallel
           ctest --test-dir build/debug --output-on-failure
 
       - name: Release
         run: |
-          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build/release --parallel
           ctest --test-dir build/release --output-on-failure
 
@@ -160,17 +166,17 @@ jobs:
       - name: Install multilib
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-multilib
+          sudo apt-get install -y gcc-multilib g++-multilib
 
       - name: Debug
         run: |
-          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_FLAGS=${{ matrix.flags }}" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_FLAGS=${{ matrix.flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.flags }}" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build/debug --parallel
           ctest --test-dir build/debug --output-on-failure
 
       - name: Release
         run: |
-          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS=${{ matrix.flags }}" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS=${{ matrix.flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.flags }}" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build/release --parallel
           ctest --test-dir build/release --output-on-failure
 
@@ -204,23 +210,136 @@ jobs:
           cmake --build build/release --parallel
           ctest --test-dir build/release --output-on-failure
 
-  sanitizers:
-    name: Sanitizers SIMD=${{ matrix.simd }}
+  wasm64:
+    name: Emscripten wasm64 SIMD=${{ matrix.simd }} (build only)
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         simd: [OFF, ON]
-    env:
-      SANITIZE: -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install $EMSCRIPTEN_VERSION
+          "$RUNNER_TEMP/emsdk/emsdk" activate $EMSCRIPTEN_VERSION
+
+      - name: Build
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          for config in Debug Release; do
+            emcmake cmake -S . -B build/$config -DCMAKE_BUILD_TYPE=$config -DCMAKE_C_FLAGS=-sMEMORY64=1 -DCMAKE_CXX_FLAGS=-sMEMORY64=1 -DCMAKE_EXE_LINKER_FLAGS=-sMEMORY64=1 -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+            cmake --build build/$config --parallel
+          done
+
+  sanitizers:
+    name: ${{ matrix.sanitizer }} SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [ASan+UBSan, TSan]
+        simd: [OFF, ON]
+        include:
+          - sanitizer: ASan+UBSan
+            flags: -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
+          - sanitizer: TSan
+            flags: -fsanitize=thread -fno-omit-frame-pointer -O1
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Allow TSan memory mappings
+        if: matrix.sanitizer == 'TSan'
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
       - name: Debug
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCRUST_USE_SIMD=${{ matrix.simd }} "-DCMAKE_C_FLAGS=$SANITIZE" "-DCMAKE_EXE_LINKER_FLAGS=$SANITIZE" ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCRUST_USE_SIMD=${{ matrix.simd }} "-DCMAKE_C_FLAGS=${{ matrix.flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.flags }}" ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build --parallel
           ctest --test-dir build --output-on-failure
+
+  arm32:
+    name: Linux ARM32 GCC (QEMU) SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        simd: [OFF, ON]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf qemu-user
+
+      - name: Debug
+        run: |
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ "-DCMAKE_CROSSCOMPILING_EMULATOR=qemu-arm;-L;/usr/arm-linux-gnueabihf" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ "-DCMAKE_CROSSCOMPILING_EMULATOR=qemu-arm;-L;/usr/arm-linux-gnueabihf" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
+
+  android:
+    name: Android ${{ matrix.abi }} SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64-v8a
+            simd: OFF
+          - abi: arm64-v8a
+            simd: ON
+          - abi: armeabi-v7a
+            simd: OFF
+          - abi: x86_64
+            simd: ON
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: |
+          for config in Debug Release; do
+            cmake -S . -B build/$config -DCMAKE_BUILD_TYPE=$config "-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake" -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=android-24 -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+            cmake --build build/$config --parallel
+          done
+
+  wasi:
+    name: WASI SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        simd: [OFF, ON]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" SDK and Wasmtime
+        run: |
+          curl -sSfL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_SDK_VERSION/wasi-sdk-$WASI_SDK_VERSION.0-x86_64-linux.tar.gz" | tar -xz -C "$RUNNER_TEMP"
+          curl -sSfL "https://github.com/bytecodealliance/wasmtime/releases/download/v$WASMTIME_VERSION/wasmtime-v$WASMTIME_VERSION-x86_64-linux.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
+          echo "WASI_SDK=$RUNNER_TEMP/wasi-sdk-$WASI_SDK_VERSION.0-x86_64-linux" >> "$GITHUB_ENV"
+          echo "WASMTIME=$RUNNER_TEMP/wasmtime-v$WASMTIME_VERSION-x86_64-linux/wasmtime" >> "$GITHUB_ENV"
+
+      - name: Debug
+        run: |
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
 
   shared:
     name: Shared library ${{ matrix.name }}
