@@ -140,6 +140,7 @@ The inline functions in the header use compiler builtins. On GCC and Clang some 
 |---|---|
 | MSVC, x86 and x64 | `crustFloor*`, `crustCeil*`, `crustRoundEven*` and `crustTruncate*` use SSE4.1 instructions and `crustPopcntU32` uses `POPCNT`, unconditionally. Any CPU from roughly 2011 on has both |
 | x86 with `CRUST_USE_SIMD` | An x86-64-v2 CPU (SSE4.2 and POPCNT). There is no runtime check. GCC 7 or Clang 9 is the minimum for the SSE backend |
+| 32-bit x86 with GCC | Compile with `-msse2 -mfpmath=sse`. By default GCC computes floating point on the x87 unit in extended precision, so `f32` and `f64` results can differ from IEEE single and double precision in the last bit, and from the SSE backend, see [Floating point](simd.md#floating-point). Crust doesn't add these flags itself, because they change the arithmetic of all your code. MSVC uses SSE2 by default |
 | ARM64 with `CRUST_USE_SIMD` | Nothing: NEON is part of the baseline |
 | WebAssembly with `CRUST_USE_SIMD` | `-msimd128` and a runtime with WebAssembly SIMD, which every current browser and Node.js has |
 | Other architectures (32-bit ARM, ...) | `CRUST_USE_SIMD` silently falls back to the scalar backend |
@@ -169,6 +170,7 @@ GitHub Actions builds and tests every push to `main` and every pull request, see
 | MinGW | Windows x64 | MSYS2 UCRT64 GCC; SIMD off and on; Debug and Release |
 | Linux GCC, Linux Clang | Ubuntu x64 | SIMD off and on; Debug and Release |
 | Linux ARM64 GCC | Ubuntu ARM64 | NEON and scalar; Debug and Release |
+| Linux x86 GCC | Ubuntu x64, `-m32` | x87 math with the scalar backend; SSE math (`-msse2 -mfpmath=sse`) with SIMD off and on; Debug and Release |
 | macOS ARM64 Clang | macOS on Apple silicon | NEON and scalar; Debug and Release |
 | Emscripten | Ubuntu x64 | WebAssembly SIMD and scalar, tests under Node.js |
 | Sanitizers | Ubuntu x64, Clang | AddressSanitizer and UndefinedBehaviorSanitizer, SIMD off and on |

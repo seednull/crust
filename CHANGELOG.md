@@ -6,6 +6,8 @@
 
 - The macOS presets `osx-clang-x64-debug` and `osx-clang-x64-release` are renamed to `osx-clang-debug` and `osx-clang-release`. They build for the host architecture, which is arm64 on Apple silicon.
 
+- Documented that 32-bit x86 builds with GCC need `-msse2 -mfpmath=sse` for floating-point results to match the other targets bit for bit. GCC's default x87 math rounds twice.
+
 ### Added
 
 - Linux presets: `linux-gcc-debug`, `linux-gcc-release`, `linux-clang-debug` and `linux-clang-release`, with matching `build-linux-*` build presets.

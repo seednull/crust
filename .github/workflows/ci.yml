@@ -138,6 +138,42 @@ jobs:
           cmake --build build/release --parallel
           ctest --test-dir build/release --output-on-failure
 
+  linux-x86:
+    name: Linux x86 GCC ${{ matrix.math }} SIMD=${{ matrix.simd }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - math: x87
+            simd: OFF
+            flags: -m32
+          - math: SSE
+            simd: OFF
+            flags: -m32 -msse2 -mfpmath=sse
+          - math: SSE
+            simd: ON
+            flags: -m32 -msse2 -mfpmath=sse
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install multilib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib
+
+      - name: Debug
+        run: |
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_FLAGS=${{ matrix.flags }}" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS=${{ matrix.flags }}" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
+
   emscripten:
     name: Emscripten SIMD=${{ matrix.simd }}
     runs-on: ubuntu-24.04

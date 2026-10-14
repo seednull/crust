@@ -238,6 +238,7 @@ Comparisons produce lanes that are all ones or all zeros. `Select`, `And` and th
 - **`Min` and `Max`** are defined as `(a < b) ? a : b` and `(a < b) ? b : a`, exactly like `crustMinF32` and `crustMaxF32`. So `Min` returns `b` when either input is NaN or when they compare equal, which makes `Min(+0, −0)` return `−0`. This is not IEEE `minNum`, and it is not what `vminq_f32` or `wasm_f32x4_min` do; Crust picks the instructions that match its own definition.
 - **No fusing.** `crustSimd128AddF32(crustSimd128MulF32(a, b), c)` is always a multiply followed by an add, never an FMA.
 - **Default floating-point environment.** Crust does not change rounding modes or flush denormals. The SSE backend uses explicit rounding immediates, so `RoundEven` rounds to nearest even regardless of `MXCSR`. Denormal handling follows the current FTZ/DAZ settings, which Crust leaves alone.
+- **32-bit x86 with GCC needs SSE math.** GCC computes floating point on the x87 unit in extended precision unless you pass `-msse2 -mfpmath=sse`. With x87 math the scalar backend and your own scalar code round twice and can differ from the SSE backend in the last bit, for example in `MulF64` and `DivF64`. Build with SSE math to get the same bits as on every other target.
 
 ## Performance notes
 
