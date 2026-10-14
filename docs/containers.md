@@ -1,9 +1,6 @@
 # Containers
 
-| Header | Contents |
-|---|---|
-| `<crust/hash.h>` | `Crust_HashIndexMap` |
-| `<crust/pool.h>` | `Crust_GenerationalHandlePool` |
+Headers: `<crust/hash.h>` and `<crust/pool.h>`.
 
 ## Crust_HashIndexMap
 
@@ -18,10 +15,8 @@ usize mesh_count = 0;
 Crust_HashIndexMap mesh_by_id; // u64 id -> index into meshes
 ```
 
-- **Open addressing with linear probing.** Collisions go to the next free bucket.
-- **Backward-shift deletion.** Removing a key moves the following keys back, so there are no tombstones and lookups don't slow down after many removals.
-- **Hashes are cached** per bucket and compared before calling `equal`.
-- **Any capacity.** Buckets are chosen as `hash % capacity`, so the capacity doesn't have to be a power of two. A good hash function matters more than the capacity.
+- **Open addressing with linear probing and backward-shift deletion:** there are no tombstones, so lookups don't slow down after many removals.
+- **Any capacity** works, not only powers of two. A good hash function matters more than the capacity.
 
 ### Key operations
 
@@ -128,30 +123,6 @@ Things to know:
 - **`key_size` is checked.** Every call passes the key size, which must equal the map's `key_size` (asserted). It is forwarded to the callbacks.
 - **Keys are stored aligned:** each bucket's key starts at a multiple of `key_alignment`.
 - **Not thread-safe.** Concurrent reads are fine as long as nothing writes.
-
-### Keeping indices in sync
-
-The map stores indices into your arrays, so moving an item means updating its entry. With swap-remove:
-
-```c
-void removeMesh(u64 id)
-{
-	usize index = crustHashIndexMapRemove(&mesh_by_id, &id, sizeof(id));
-	if (index == CRUST_USIZE_MAX)
-		return;
-
-	usize last = --mesh_count;
-
-	if (index != last)
-	{
-		meshes[index] = meshes[last];
-
-		u64 moved_id = meshes[index].id;
-		crustHashIndexMapRemove(&mesh_by_id, &moved_id, sizeof(moved_id));
-		crustHashIndexMapAdd(&mesh_by_id, &moved_id, sizeof(moved_id), index);
-	}
-}
-```
 
 ## Crust_GenerationalHandlePool
 
