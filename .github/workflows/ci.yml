@@ -322,7 +322,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" SDK and Wasmtime
+      - name: Install WASI SDK and Wasmtime
         run: |
           curl -sSfL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_SDK_VERSION/wasi-sdk-$WASI_SDK_VERSION.0-x86_64-linux.tar.gz" | tar -xz -C "$RUNNER_TEMP"
           curl -sSfL "https://github.com/bytecodealliance/wasmtime/releases/download/v$WASMTIME_VERSION/wasmtime-v$WASMTIME_VERSION-x86_64-linux.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
@@ -331,13 +331,13 @@ jobs:
 
       - name: Debug
         run: |
-          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk-p1.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build/debug --parallel
           ctest --test-dir build/debug --output-on-failure
 
       - name: Release
         run: |
-          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk-p1.cmake" "-DWASI_SDK_PREFIX=$WASI_SDK" "-DCMAKE_CROSSCOMPILING_EMULATOR=$WASMTIME" -DCRUST_USE_SIMD=${{ matrix.simd }} ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
           cmake --build build/release --parallel
           ctest --test-dir build/release --output-on-failure
 
