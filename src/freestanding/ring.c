@@ -1,4 +1,6 @@
-#include <crust.h>
+#include <crust/ring.h>
+#include <crust/atomic.h>
+#include <crust/memory.h>
 
 //
 CRUST_APIENTRY Crust_RingBuffer crustRingBufferAttach(void *memory, usize capacity)

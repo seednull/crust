@@ -1,4 +1,5 @@
-#include <crust.h>
+#include <crust/lock.h>
+#include <crust/atomic.h>
 
 //
 CRUST_APIENTRY Crust_SpinLock crustSpinLockInit(void)

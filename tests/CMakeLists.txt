@@ -53,3 +53,28 @@ crust_add_test(types)
 if (CRUST_TESTS_THREADED)
 	crust_add_test(lock)
 endif()
+
+# ==================================================================================================
+# Headers
+# ==================================================================================================
+file(GLOB CRUST_TEST_HEADERS RELATIVE ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/include/crust/*.h)
+list(APPEND CRUST_TEST_HEADERS crust.h)
+
+set(CRUST_TEST_HEADER_SOURCES)
+
+foreach(header ${CRUST_TEST_HEADERS})
+	string(MAKE_C_IDENTIFIER ${header} name)
+	set(source ${CMAKE_CURRENT_BINARY_DIR}/headers/${name}.c)
+
+	file(WRITE ${source} "#include <${header}>\n")
+	list(APPEND CRUST_TEST_HEADER_SOURCES ${source})
+endforeach()
+
+add_library(crust_test_headers OBJECT ${CRUST_TEST_HEADER_SOURCES})
+target_link_libraries(crust_test_headers PRIVATE crust)
+
+if (MSVC)
+	target_compile_options(crust_test_headers PRIVATE /W4)
+else()
+	target_compile_options(crust_test_headers PRIVATE -Wall -Wextra -Wpedantic)
+endif()

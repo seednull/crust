@@ -37,15 +37,38 @@ set(CRUST_HEADERS
 
 set(CRUST_PUBLIC_HEADERS
 	${CRUST_DIR_API}/crust.h
-	${CRUST_DIR_API}/platform/cpu_common.inl
-	${CRUST_DIR_API}/platform/cpu_gcc_clang.inl
-	${CRUST_DIR_API}/platform/cpu_msvc_arm64.inl
-	${CRUST_DIR_API}/platform/cpu_msvc_x86.inl
-	${CRUST_DIR_API}/platform/simd_common.inl
-	${CRUST_DIR_API}/platform/simd_neon.inl
-	${CRUST_DIR_API}/platform/simd_scalar.inl
-	${CRUST_DIR_API}/platform/simd_sse.inl
-	${CRUST_DIR_API}/platform/simd_wasm.inl
+	${CRUST_DIR_API}/crust/allocator.h
+	${CRUST_DIR_API}/crust/arena.h
+	${CRUST_DIR_API}/crust/atomic.h
+	${CRUST_DIR_API}/crust/bip.h
+	${CRUST_DIR_API}/crust/core.h
+	${CRUST_DIR_API}/crust/hash.h
+	${CRUST_DIR_API}/crust/heap.h
+	${CRUST_DIR_API}/crust/lock.h
+	${CRUST_DIR_API}/crust/memory.h
+	${CRUST_DIR_API}/crust/pool.h
+	${CRUST_DIR_API}/crust/quat.h
+	${CRUST_DIR_API}/crust/ring.h
+	${CRUST_DIR_API}/crust/scalar.h
+	${CRUST_DIR_API}/crust/simd.h
+	${CRUST_DIR_API}/crust/stack.h
+	${CRUST_DIR_API}/crust/transform.h
+	${CRUST_DIR_API}/crust/vec.h
+	${CRUST_DIR_API}/crust/platform/atomic_common.inl
+	${CRUST_DIR_API}/crust/platform/atomic_gcc_clang.inl
+	${CRUST_DIR_API}/crust/platform/atomic_msvc_arm64.inl
+	${CRUST_DIR_API}/crust/platform/atomic_msvc_x86.inl
+	${CRUST_DIR_API}/crust/platform/intrinsics_cpu.inl
+	${CRUST_DIR_API}/crust/platform/intrinsics_simd.inl
+	${CRUST_DIR_API}/crust/platform/scalar_common.inl
+	${CRUST_DIR_API}/crust/platform/scalar_gcc_clang.inl
+	${CRUST_DIR_API}/crust/platform/scalar_msvc_arm64.inl
+	${CRUST_DIR_API}/crust/platform/scalar_msvc_x86.inl
+	${CRUST_DIR_API}/crust/platform/simd_common.inl
+	${CRUST_DIR_API}/crust/platform/simd_neon.inl
+	${CRUST_DIR_API}/crust/platform/simd_scalar.inl
+	${CRUST_DIR_API}/crust/platform/simd_sse.inl
+	${CRUST_DIR_API}/crust/platform/simd_wasm.inl
 )
 
 # ==================================================================================================
@@ -70,7 +93,7 @@ endif()
 # ==================================================================================================
 target_include_directories(${CRUST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${CRUST_TARGET} PUBLIC "$<BUILD_INTERFACE:${CRUST_DIR_API}>")
-target_include_directories(${CRUST_TARGET} PUBLIC "$<INSTALL_INTERFACE:include/crust>")
+target_include_directories(${CRUST_TARGET} PUBLIC "$<INSTALL_INTERFACE:include>")
 
 # ==================================================================================================
 # Preprocessor
@@ -145,13 +168,15 @@ install(
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
-	PUBLIC_HEADER DESTINATION include/crust
+	PUBLIC_HEADER DESTINATION include
 )
 
 install(
-	DIRECTORY ${CRUST_DIR_API}/platform
-	DESTINATION include/crust
-	FILES_MATCHING PATTERN "*.inl"
+	DIRECTORY ${CRUST_DIR_API}/crust
+	DESTINATION include
+	FILES_MATCHING
+		PATTERN "*.h"
+		PATTERN "*.inl"
 )
 
 install(

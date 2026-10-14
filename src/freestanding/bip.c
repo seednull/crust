@@ -1,4 +1,5 @@
-#include <crust.h>
+#include <crust/bip.h>
+#include <crust/atomic.h>
 
 //
 CRUST_APIENTRY Crust_BipBuffer crustBipBufferAttach(void *memory, usize capacity)

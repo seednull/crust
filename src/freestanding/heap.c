@@ -1,4 +1,5 @@
-#include <crust.h>
+#include <crust/heap.h>
+#include <crust/scalar.h>
 
 //
 static u32 crustHeapNodePoolAcquire(Crust_HeapNodePool *pool)

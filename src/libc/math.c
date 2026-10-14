@@ -1,4 +1,4 @@
-#include <crust.h>
+#include <crust/scalar.h>
 #include <math.h>
 
 //

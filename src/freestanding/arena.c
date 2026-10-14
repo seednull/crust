@@ -1,4 +1,5 @@
-#include <crust.h>
+#include <crust/arena.h>
+#include <crust/memory.h>
 
 //
 CRUST_APIENTRY Crust_Arena crustArenaAttach(void *memory, usize capacity)

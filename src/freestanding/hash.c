@@ -1,4 +1,4 @@
-#include <crust.h>
+#include <crust/hash.h>
 
 //
 typedef struct Crust_HashIndexMapProbe_t

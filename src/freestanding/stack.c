@@ -1,4 +1,5 @@
-#include <crust.h>
+#include <crust/stack.h>
+#include <crust/memory.h>
 
 //
 CRUST_APIENTRY Crust_Stack crustStackAttach(void *memory, usize capacity)

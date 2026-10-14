@@ -2,7 +2,8 @@
 	#define _POSIX_C_SOURCE 200112L
 #endif
 
-#include <crust.h>
+#include <crust/memory.h>
+#include <crust/allocator.h>
 #include <string.h>
 
 //
