@@ -1544,28 +1544,12 @@ static CRUST_INLINE Crust_Simd128 crustSimd128NegateF32(Crust_Simd128 v)
 
 static CRUST_INLINE Crust_Simd128 crustSimd128MinF32(Crust_Simd128 a, Crust_Simd128 b)
 {
-	f32 x[4];
-	f32 y[4];
-	crustSimd128StoreF32(x, a);
-	crustSimd128StoreF32(y, b);
-
-	for (u32 i = 0; i < 4; ++i)
-		x[i] = crustMinF32(x[i], y[i]);
-
-	return crustSimd128LoadF32(x);
+	return crustSimd128Select(crustSimd128LessF32(a, b), a, b);
 }
 
 static CRUST_INLINE Crust_Simd128 crustSimd128MaxF32(Crust_Simd128 a, Crust_Simd128 b)
 {
-	f32 x[4];
-	f32 y[4];
-	crustSimd128StoreF32(x, a);
-	crustSimd128StoreF32(y, b);
-
-	for (u32 i = 0; i < 4; ++i)
-		x[i] = crustMaxF32(x[i], y[i]);
-
-	return crustSimd128LoadF32(x);
+	return crustSimd128Select(crustSimd128LessF32(a, b), b, a);
 }
 
 static CRUST_INLINE Crust_Simd128 crustSimd128EqualF32(Crust_Simd128 a, Crust_Simd128 b)
@@ -1756,28 +1740,12 @@ static CRUST_INLINE Crust_Simd128 crustSimd128NegateF64(Crust_Simd128 v)
 
 static CRUST_INLINE Crust_Simd128 crustSimd128MinF64(Crust_Simd128 a, Crust_Simd128 b)
 {
-	f64 x[2];
-	f64 y[2];
-	crustSimd128StoreF64(x, a);
-	crustSimd128StoreF64(y, b);
-
-	for (u32 i = 0; i < 2; ++i)
-		x[i] = crustMinF64(x[i], y[i]);
-
-	return crustSimd128LoadF64(x);
+	return crustSimd128Select(crustSimd128LessF64(a, b), a, b);
 }
 
 static CRUST_INLINE Crust_Simd128 crustSimd128MaxF64(Crust_Simd128 a, Crust_Simd128 b)
 {
-	f64 x[2];
-	f64 y[2];
-	crustSimd128StoreF64(x, a);
-	crustSimd128StoreF64(y, b);
-
-	for (u32 i = 0; i < 2; ++i)
-		x[i] = crustMaxF64(x[i], y[i]);
-
-	return crustSimd128LoadF64(x);
+	return crustSimd128Select(crustSimd128LessF64(a, b), b, a);
 }
 
 static CRUST_INLINE Crust_Simd128 crustSimd128EqualF64(Crust_Simd128 a, Crust_Simd128 b)

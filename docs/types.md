@@ -61,6 +61,8 @@ For floats the definitions are taken literally, which fixes NaN and signed-zero 
 
 The SIMD `Min`/`Max` functions follow the same definitions bit for bit.
 
+> **MSVC on ARM64.** With `/O2`, MSVC auto-vectorizes a loop that applies `crustMinF32`, `crustMaxF32` or their `F64` versions to an array, or the same `(a < b) ? a : b` written by hand, into the `fmin`/`fmax` instructions. These propagate NaN and order `-0.0` below `+0.0`, so inside such a loop the results for NaN and for zeros of different sign differ from the definitions above. A single call compiles correctly, and Crust's own code is not affected. If a loop of yours relies on these semantics, use the SIMD `Min`/`Max` or put `#pragma loop(no_vector)` before it.
+
 ## Powers of two and alignment
 
 Available for `U8`, `U16`, `U32`, `U64` and `USize`:
