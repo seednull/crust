@@ -9,21 +9,21 @@ Crust is a small C foundation library: platform detection, fixed-width types, at
 
 It is written in C99, has no third-party dependencies and never allocates behind your back: containers either work on memory you hand them, or take an explicit `Crust_Allocator` on every call that allocates.
 
-> **Status:** `1.3.0`. Versions follow semantic versioning: the API changes incompatibly only with a new major version. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
+Versions follow semantic versioning: the API changes incompatibly only with a new major version. See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## Features
 
-| Area | What's inside | Headers | Docs |
-|---|---|---|---|
-| Platform | Compiler, toolchain, architecture and SIMD backend detection, portability macros, assertions | `core.h` | [platform.md](docs/platform.md) |
-| Types and scalars | `i8`–`i64`, `u8`–`u64`, `isize`/`usize`, `f32`/`f64` (identical to the `<stdint.h>` types), limits, min/max/clamp/abs, alignment helpers, `lzcnt`/`tzcnt`/`popcnt`, rounding and trigonometry | `core.h`, `scalar.h` | [types.md](docs/types.md) |
-| Atomics and locks | 32-bit, 64-bit and `usize` atomics with explicit memory orders, `Crust_SpinLock`, `Crust_RwLock` | `atomic.h`, `lock.h` | [concurrency.md](docs/concurrency.md) |
-| SIMD | `Crust_Simd128` on SSE4.2, NEON and WebAssembly SIMD with a bit-exact scalar fallback: integer and float arithmetic, comparisons, masks, conversions, swizzles | `simd.h` | [simd.md](docs/simd.md) |
-| Math | `Crust_Vec2`, `Crust_Vec3`, `Crust_Vec4`, `Crust_Quat` (with `slerp`/`nlerp`), `Crust_Transform` | `vec.h`, `quat.h`, `transform.h` | [math.md](docs/math.md) |
-| Memory | `Crust_Allocator` interface, system and arena allocators, typed allocation macros | `allocator.h`, `arena.h`, `memory.h` | [memory.md](docs/memory.md) |
-| Buffers | `Crust_RingBuffer`, `Crust_BipBuffer`, `Crust_Stack` and the lock-free single-producer/single-consumer `Crust_SpscRingBuffer`, `Crust_SpscBipBuffer` | `ring.h`, `bip.h`, `stack.h` | [buffers.md](docs/buffers.md) |
-| Containers | `Crust_HashIndexMap` (open addressing, user-defined key operations), `Crust_GenerationalHandlePool` | `hash.h`, `pool.h` | [containers.md](docs/containers.md) |
-| Offset heap | `Crust_Heap`: a TLSF-style allocator that hands out offsets instead of pointers, meant for sub-allocating GPU memory | `heap.h` | [heap.md](docs/heap.md) |
+| Area | What's inside | Headers |
+|---|---|---|
+| Platform | Compiler, toolchain, architecture and SIMD backend detection, portability macros, assertions | `core.h` |
+| Types and scalars | `i8`–`i64`, `u8`–`u64`, `isize`/`usize`, `f32`/`f64` (identical to the `<stdint.h>` types), limits, min/max/clamp/abs, alignment helpers, `lzcnt`/`tzcnt`/`popcnt`, rounding and trigonometry | `core.h`, `scalar.h` |
+| Atomics and locks | 32-bit, 64-bit and `usize` atomics with explicit memory orders, `Crust_SpinLock`, `Crust_RwLock` | `atomic.h`, `lock.h` |
+| SIMD | `Crust_Simd128` on SSE4.2, NEON and WebAssembly SIMD with a bit-exact scalar fallback: integer and float arithmetic, comparisons, masks, conversions, swizzles | `simd.h` |
+| Math | `Crust_Vec2`, `Crust_Vec3`, `Crust_Vec4`, `Crust_Quat` (with `slerp`/`nlerp`), `Crust_Transform` | `vec.h`, `quat.h`, `transform.h` |
+| Memory | `Crust_Allocator` interface, system and arena allocators, typed allocation macros | `allocator.h`, `arena.h`, `memory.h` |
+| Buffers | `Crust_RingBuffer`, `Crust_BipBuffer`, `Crust_Stack` and the lock-free single-producer/single-consumer `Crust_SpscRingBuffer`, `Crust_SpscBipBuffer` | `ring.h`, `bip.h`, `stack.h` |
+| Containers | `Crust_HashIndexMap` (open addressing, user-defined key operations), `Crust_GenerationalHandlePool` | `hash.h`, `pool.h` |
+| Offset heap | `Crust_Heap`: a TLSF-style allocator that hands out offsets instead of pointers, meant for sub-allocating GPU memory | `heap.h` |
 
 ## Supported targets
 
@@ -54,13 +54,7 @@ and include the whole library, or only the modules you need from `include/crust`
 #include <crust/simd.h>
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `BUILD_SHARED_LIBS` | `OFF` | Build Crust as a shared library |
-| `CRUST_BUILD_TESTS` | `OFF` | Build the tests |
-| `CRUST_USE_SIMD` | `OFF` | Use SSE, NEON or WebAssembly SIMD instead of the scalar fallback |
-
-Presets, installation, the CMake package, building without CMake and platform requirements are covered in [building.md](docs/building.md).
+Options, presets, installation and building without CMake are covered in [building.md](docs/building.md).
 
 ## A taste
 
@@ -82,14 +76,12 @@ for (usize i = 0; i < 1024; i += 4)
 crustArenaReset(&arena);
 ```
 
-More examples live in the documentation of each section.
-
 ## Conventions
 
 - **Naming:** types are `Crust_Name`, functions `crustName`, macros and constants `CRUST_NAME`, function pointer types `PFN_crustName`.
 - **Memory:** `*Attach` functions wrap memory owned by the caller; `*Alloc`/`*Free`/`*Grow` take the `Crust_Allocator` to use. Nothing is allocated implicitly.
 - **Contracts:** API misuse (out-of-range sizes, invalid handles, double frees, ...) is caught by `CRUST_ASSERT` in debug builds. Release builds don't check, so keep debug builds in your workflow.
-- **Invalid values:** functions that can fail return `CRUST_NULL`, `CRUST_USIZE_MAX` or `CRUST_U32_MAX`.
+- **Failures:** functions that can fail return `0`, `CRUST_NULL`, `CRUST_USIZE_MAX` or `CRUST_U32_MAX`.
 
 ## Documentation
 
@@ -103,14 +95,6 @@ More examples live in the documentation of each section.
 8. [Buffers](docs/buffers.md)
 9. [Containers](docs/containers.md)
 10. [Offset heap](docs/heap.md)
-
-## Tests
-
-```bash
-cmake --preset msvc2026-x64 -DCRUST_BUILD_TESTS=ON
-cmake --build --preset build-msvc2026-x64-debug
-ctest --test-dir build/msvc2026-x64 -C Debug --output-on-failure
-```
 
 ## License
 
