@@ -27,7 +27,7 @@ CRUST_APIENTRY void crustStackPush(Crust_Stack *stack, const void *data, usize s
 {
 	CRUST_ASSERT(stack != CRUST_NULL);
 	CRUST_ASSERT(stack->memory != CRUST_NULL);
-	CRUST_ASSERT(stack->head + size <= stack->capacity);
+	CRUST_ASSERT(size <= stack->capacity - stack->head);
 	CRUST_ASSERT(data != CRUST_NULL);
 
 	if (size == 0)

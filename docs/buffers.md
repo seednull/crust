@@ -33,7 +33,7 @@ if (ring.size >= sizeof(value))
 | `crustRingBufferRead(ring, data, size)` | Copies exactly `size` bytes out |
 | `crustRingBufferReset(ring)` | Discards everything |
 
-`ring.size` is the number of bytes stored. Reads and writes are all-or-nothing: **writing more than the free space or reading more than `ring.size` is a contract violation**, caught by assertions in debug builds. Check before calling.
+`ring.size` is the number of bytes stored. Reads and writes are all-or-nothing: **writing more than the free space or reading more than `ring.size` is a contract violation**, caught by assertions in debug builds. Check before calling: the free space is `ring.capacity - ring.size`.
 
 ## Crust_Stack
 
@@ -49,7 +49,7 @@ crustStackPeek(&stack, &top, sizeof(top)); // reads without removing
 crustStackPop(&stack, &top, sizeof(top));
 ```
 
-`stack.head` is the number of bytes stored. Push, peek and pop copy bytes with `crustMemcpy`, so the stored data needs no alignment. The stack doesn't record sizes: pop exactly what was pushed, in reverse order. Overflow and underflow are asserted.
+`stack.head` is the number of bytes stored. Push, peek and pop copy bytes with `crustMemcpy`, so the stored data needs no alignment. The stack doesn't record sizes: pop exactly what was pushed, in reverse order. Overflow and underflow are asserted: the free space is `stack.capacity - stack.head`.
 
 ## Crust_BipBuffer
 

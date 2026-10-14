@@ -39,7 +39,10 @@ CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usiz
 		return;
 
 	usize begin = ring->read;
-	usize end = (begin + size) % ring->capacity;
+	usize end = begin + size;
+
+	if (end >= ring->capacity)
+		end -= ring->capacity;
 
 	ring->read = end;
 	ring->size -= size;
@@ -56,21 +59,23 @@ CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usiz
 		crustMemcpy(data, ptr, base);
 		crustMemcpy((u8 *)data + base, ring->memory, remainder);
 	}
-
 }
 
 CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size)
 {
 	CRUST_ASSERT(ring != CRUST_NULL);
 	CRUST_ASSERT(ring->memory != CRUST_NULL);
-	CRUST_ASSERT(ring->size + size <= ring->capacity);
+	CRUST_ASSERT(size <= ring->capacity - ring->size);
 	CRUST_ASSERT(data != CRUST_NULL);
 
 	if (size == 0)
 		return;
 
 	usize begin = ring->write;
-	usize end = (begin + size) % ring->capacity;
+	usize end = begin + size;
+
+	if (end >= ring->capacity)
+		end -= ring->capacity;
 
 	ring->write = end;
 	ring->size += size;
