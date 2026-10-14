@@ -1,9 +1,6 @@
 # Atomics and locks
 
-| Header | Contents |
-|---|---|
-| `<crust/atomic.h>` | Memory orders, atomic operations, `crustCpuRelax` |
-| `<crust/lock.h>` | `Crust_SpinLock`, `Crust_RwLock` |
+Headers: `<crust/atomic.h>` for atomics and `crustCpuRelax`, `<crust/lock.h>` for the locks.
 
 ## Memory orders
 
@@ -71,9 +68,6 @@ for (;;)
 
 - **`volatile` alone is not atomic.** Crust marks shared fields `volatile`, but a plain read or write of such a field has no ordering guarantees. Always go through `crustAtomic*`.
 - **Alignment.** Atomic variables must be naturally aligned (asserted for 64-bit ones). On 32-bit x86 a `u64` in a struct or on the stack can be only 4-byte aligned; declare 64-bit atomics as `CRUST_ALIGNAS(8) volatile u64 counter;`.
-- **MSVC x86 and x64** ignore the order argument for read-modify-write operations: the `lock`-prefixed instructions are always full barriers. On 32-bit x86, 64-bit swap, increment and decrement are `cmpxchg8b` loops.
-- **MSVC ARM64** maps orders to the `_nf`, `_acq` and `_rel` interlocked variants and to `ldar`/`stlr`.
-- **GCC and Clang** use the `__atomic` builtins.
 - **USize** operations are the 32-bit or 64-bit ones, depending on the pointer width.
 
 ## crustCpuRelax
@@ -135,7 +129,3 @@ Nuances:
 - **Up to 2³⁰ − 1** readers can hold the lock at once.
 - **Busy-waiting**, like the spin lock: keep critical sections short.
 - **Zero means unlocked:** a zeroed `Crust_RwLock` is valid.
-
-## Lock-free queues
-
-For passing data between exactly one producer and one consumer without locks, see `Crust_SpscRingBuffer` and `Crust_SpscBipBuffer` in [Buffers](buffers.md#single-producer-single-consumer-variants).
