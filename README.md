@@ -9,7 +9,7 @@ Crust is a small C foundation library: platform detection, fixed-width types, at
 
 It is written in C99, has no third-party dependencies and never allocates behind your back: containers either work on memory you hand them, or take an explicit `Crust_Allocator` on every call that allocates.
 
-> **Status:** `1.2.1`. Versions follow semantic versioning: the API changes incompatibly only with a new major version. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
+> **Status:** `1.3.0`. Versions follow semantic versioning: the API changes incompatibly only with a new major version. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 ## Features
 
