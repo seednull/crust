@@ -65,20 +65,67 @@
             }
         },
         {
-            "name": "osx-clang-x64-debug",
+            "name": "osx-clang-debug",
             "inherits": "osx-clang-common",
             "hidden": false,
-            "displayName": "OSX Debug | x64",
+            "displayName": "macOS Clang | Debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "osx-clang-x64-release",
+            "name": "osx-clang-release",
             "inherits": "osx-clang-common",
             "hidden": false,
-            "displayName": "OSX Release | x64",
+            "displayName": "macOS Clang | Release",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "linux-common",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build"
+        },
+        {
+            "name": "linux-gcc-debug",
+            "inherits": "linux-common",
+            "hidden": false,
+            "displayName": "Linux GCC | Debug",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-gcc-release",
+            "inherits": "linux-common",
+            "hidden": false,
+            "displayName": "Linux GCC | Release",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "linux-clang-debug",
+            "inherits": "linux-common",
+            "hidden": false,
+            "displayName": "Linux Clang | Debug",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-clang-release",
+            "inherits": "linux-common",
+            "hidden": false,
+            "displayName": "Linux Clang | Release",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
                 "CMAKE_BUILD_TYPE": "Release"
             }
         }
@@ -127,13 +174,37 @@
         {
             "name": "build-osx-debug",
             "hidden": false,
-            "configurePreset": "osx-clang-x64-debug",
+            "configurePreset": "osx-clang-debug",
             "targets": ["all", "install"]
         },
         {
             "name": "build-osx-release",
             "hidden": false,
-            "configurePreset": "osx-clang-x64-release",
+            "configurePreset": "osx-clang-release",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-linux-gcc-debug",
+            "hidden": false,
+            "configurePreset": "linux-gcc-debug",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-linux-gcc-release",
+            "hidden": false,
+            "configurePreset": "linux-gcc-release",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-linux-clang-debug",
+            "hidden": false,
+            "configurePreset": "linux-clang-debug",
+            "targets": ["all", "install"]
+        },
+        {
+            "name": "build-linux-clang-release",
+            "hidden": false,
+            "configurePreset": "linux-clang-release",
             "targets": ["all", "install"]
         }
     ]

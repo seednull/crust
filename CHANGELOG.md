@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- The macOS presets `osx-clang-x64-debug` and `osx-clang-x64-release` are renamed to `osx-clang-debug` and `osx-clang-release`. They build for the host architecture, which is arm64 on Apple silicon.
+
+### Added
+
+- Linux presets: `linux-gcc-debug`, `linux-gcc-release`, `linux-clang-debug` and `linux-clang-release`, with matching `build-linux-*` build presets.
+
 ## 1.2.0 - 2026-10-14
 
 Running out of a resource is now reported through function results and stays well-defined in release builds, see [Assertions](docs/platform.md#assertions). Contract violations are still asserted.

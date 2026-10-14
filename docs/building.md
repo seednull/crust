@@ -37,9 +37,10 @@ cmake --build --preset build-msvc2026-x64-release
 |---|---|---|
 | `msvc2022-x64`, `msvc2026-x64` | Visual Studio 2022 / 2026 | Multi-config: pick `Debug` or `Release` at build time |
 | `emscripten-ninja`, `emscripten-ninja-debug` | Ninja | Needs the Emscripten SDK; Release and Debug |
-| `osx-clang-x64-release`, `osx-clang-x64-debug` | Unix Makefiles | Uses `/usr/bin/clang` and builds for the host architecture |
+| `osx-clang-release`, `osx-clang-debug` | Unix Makefiles | Uses `/usr/bin/clang` and builds for the host architecture, arm64 or x64 |
+| `linux-gcc-release`, `linux-gcc-debug`, `linux-clang-release`, `linux-clang-debug` | Unix Makefiles | Uses `gcc` or `clang` from `PATH` |
 
-Every configure preset writes into `build/<preset>`. The build presets (`build-msvc2026-x64-debug`, `build-emscripten-release`, `build-osx-release`, ...) also run the `install` target, which copies the library into `build/`:
+Every configure preset writes into `build/<preset>`. The build presets (`build-msvc2026-x64-debug`, `build-emscripten-release`, `build-osx-release`, `build-linux-gcc-release`, ...) also run the `install` target, which copies the library into `build/`:
 
 | Directory | Contents |
 |---|---|
