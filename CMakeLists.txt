@@ -30,6 +30,10 @@ option(CRUST_USE_SIMD "Use SSE, NEON or WebAssembly SIMD instead of the scalar S
 # ==================================================================================================
 # Sub-projects
 # ==================================================================================================
+if (CRUST_BUILD_TESTS AND NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+endif()
+
 add_subdirectory(src)
 
 if (CRUST_BUILD_TESTS)

@@ -20,6 +20,10 @@ function(crust_add_test name)
 	add_executable(${target} ${CMAKE_CURRENT_SOURCE_DIR}/${name}.c)
 	target_link_libraries(${target} PRIVATE crust_test_framework)
 
+	if (UNIX)
+		target_link_libraries(${target} PRIVATE m)
+	endif()
+
 	if (MSVC)
 		target_compile_options(${target} PRIVATE /W4)
 	else()
