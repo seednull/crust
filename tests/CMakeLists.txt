@@ -3,7 +3,7 @@
 # ==================================================================================================
 set(CRUST_TESTS_THREADED OFF)
 
-if (NOT EMSCRIPTEN)
+if (NOT EMSCRIPTEN AND NOT CMAKE_SYSTEM_NAME STREQUAL "WASI")
 	set(CRUST_TESTS_THREADED ON)
 
 	if (NOT WIN32)
@@ -54,6 +54,16 @@ crust_add_test(ring)
 crust_add_test(simd)
 crust_add_test(stack)
 crust_add_test(types)
+
+# ==================================================================================================
+# C++
+# ==================================================================================================
+include(CheckLanguage)
+check_language(CXX)
+
+if (CMAKE_CXX_COMPILER)
+	add_subdirectory(cxx)
+endif()
 
 # ==================================================================================================
 # Headers
