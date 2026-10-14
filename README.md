@@ -1,6 +1,9 @@
 # Crust
 
 [![CI](https://github.com/seednull/crust/actions/workflows/ci.yml/badge.svg)](https://github.com/seednull/crust/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/seednull/crust?sort=semver)](CHANGELOG.md)
+[![C99](https://img.shields.io/badge/C-99-blue)](docs/building.md)
+[![License](https://img.shields.io/github/license/seednull/crust)](LICENSE)
 
 Crust is a small C foundation library: platform detection, fixed-width types, atomics, SIMD, game math and a set of allocator-aware data structures, behind a single header or one header per module.
 
