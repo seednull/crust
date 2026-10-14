@@ -75,9 +75,7 @@ Exactly one of `CRUST_SIMD_SSE`, `CRUST_SIMD_NEON`, `CRUST_SIMD_WASM` and `CRUST
 | `CRUST_ALIGNAS(n)` | `__declspec(align(n))` | `__attribute__((aligned(n)))` |
 | `CRUST_DEBUG_BREAK()` | `__debugbreak()` | `__builtin_trap()` |
 
-- `CRUST_INLINE` is used as `static CRUST_INLINE` for every header function. MSVC does not inline anything at `/Od`, even `__forceinline`, so debug builds pay for every call.
-- `CRUST_ALIGNAS` goes in front of the declaration, which works for both compilers: `CRUST_ALIGNAS(16) u8 bytes[16];`.
-- `CRUST_ALIGNOF` works on types, which is what `crustAlloc` relies on.
+`CRUST_ALIGNAS` goes in front of the declaration, which works for both compilers: `CRUST_ALIGNAS(16) u8 bytes[16];`.
 
 Other macros:
 
@@ -101,7 +99,7 @@ Running out of something the caller can't cheaply predict, such as memory or hea
 #endif
 ```
 
-- **On failure** Crust stops in the debugger: `__debugbreak()` on MSVC, `__builtin_debugtrap()` on Clang, `__builtin_trap()` on GCC. Nothing is printed; the expression, file and line are arguments of `crustAssertFailure` and visible in the debugger.
+- **On failure** Crust stops in the debugger without printing anything; the expression, file and line are arguments of `crustAssertFailure`.
 - **With `NDEBUG`** the checks disappear completely and the expression is not evaluated. Violating a contract in a release build is undefined behavior: out-of-bounds access, corrupted containers, wrong results.
 - **Two configurations.** Assertions in header functions follow the `NDEBUG` setting of *your* translation unit, while assertions inside the compiled library follow the configuration Crust itself was built with.
 
@@ -109,18 +107,20 @@ Keep debug builds in your workflow: they are what catches misuse.
 
 ## C and C++
 
-Every Crust header compiles as C99 and as C++. The declarations are wrapped in `extern "C"`. The system intrinsic headers are included before that block, because in C++ some of them pull in declarations that cannot live inside `extern "C"`.
+Every Crust header compiles as C99 and as C++, with the declarations wrapped in `extern "C"`.
 
 ## System headers
 
-Crust headers include only compiler intrinsic headers and never a C library header such as `<stdlib.h>`, `<string.h>` or `<malloc.h>`. Most modules include no system header at all:
+Crust headers include only compiler intrinsic headers, never a C library header such as `<stdlib.h>` or `<string.h>`. Only `scalar.h`, `atomic.h` and `simd.h` include any, and the other modules include none. The SSE headers normally pull in `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC), which Crust skips: if you use `_mm_malloc` after including Crust, include that header yourself.
 
-| Header | GCC, Clang | MSVC |
-|---|---|---|
-| `core.h`, `lock.h`, `memory.h`, `allocator.h`, `arena.h`, `ring.h`, `bip.h`, `stack.h`, `hash.h`, `pool.h`, `heap.h` | nothing | nothing |
-| `scalar.h`, `atomic.h`, and through `scalar.h` also `vec.h`, `quat.h`, `transform.h` | nothing | `<intrin0.h>`, plus `<nmmintrin.h>` on x86 and x64 or `<arm_neon.h>` on ARM64 |
-| `simd.h` | the active backend: `<nmmintrin.h>` (SSE), `<arm_neon.h>` (NEON, includes `<stdint.h>`), `<wasm_simd128.h>` (includes `<stdint.h>` and `<stdbool.h>`) or nothing (scalar) | the same as `scalar.h`, plus the SSE or NEON header |
+## Platform notes
 
-- **`<stdint.h>` and `<stdbool.h>`** come from the intrinsic headers themselves. The C standard requires them even from freestanding implementations; they declare only types and macros.
-- **`<intrin0.h>`** is the lightweight subset of `<intrin.h>` that MSVC's own standard library uses. It declares the interlocked, bit-scan and barrier intrinsics without pulling in the CRT. Code that needs other intrinsics, such as `__cpuid` or `__rdtsc`, must include `<intrin.h>` itself. On ARM64 a few intrinsics that Crust uses, `_CountOneBits` and the `_nf`, `_acq` and `_rel` variants of `_InterlockedIncrement` and `_InterlockedDecrement`, are declared only in `<intrin.h>`, so Crust declares them itself with the same signatures. Including `<intrin.h>` as well is fine.
-- **`_mm_malloc` and `_mm_free`** normally arrive with the SSE headers through `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC), which include the C library. Crust skips those two headers while it includes the SSE headers. If you include `<xmmintrin.h>` or `<immintrin.h>` after a Crust header and use `_mm_malloc`, include `<mm_malloc.h>` (GCC, Clang) or `<malloc.h>` (MSVC) explicitly.
+| Target | Note |
+|---|---|
+| MSVC, x86 and x64 | `crustFloor*`, `crustCeil*`, `crustRoundEven*` and `crustTruncate*` use SSE4.1 and `crustPopcntU32` uses `POPCNT`, unconditionally. Any CPU from about 2011 on has both |
+| x86 with `CRUST_USE_SIMD` | An x86-64-v2 CPU (SSE4.2 and POPCNT), not checked at run time. GCC 7 or Clang 9 at least |
+| 32-bit x86 with GCC | Compile with `-msse2 -mfpmath=sse`. GCC's default x87 math rounds twice, so results can differ from the other targets in the last bit. Crust doesn't add these flags itself, because they change the arithmetic of all your code |
+| 32-bit x86 with MSVC | Floats returned by value pass through the x87 stack, which can turn a signaling NaN into a quiet one |
+| ARM64 with MSVC | With `/O2`, a loop that applies `crustMinF32` or `crustMaxF32` to an array can be vectorized into `fmin`/`fmax`, which treat NaN and signed zeros differently. Use the SIMD `Min`/`Max` or put `#pragma loop(no_vector)` before the loop |
+| WebAssembly with `CRUST_USE_SIMD` | `-msimd128` and a runtime with WebAssembly SIMD, which every current browser and Node.js has |
+| Other architectures | `CRUST_USE_SIMD` falls back to the scalar backend |
