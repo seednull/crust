@@ -57,6 +57,32 @@ static const u8 *crustHashIndexMapConstKey(const Crust_HashIndexMap *hash_map, u
 	return hash_map->keys + hash_map->key_stride * bucket;
 }
 
+static usize crustHashIndexMapHomeBucket(const Crust_HashIndexMap *hash_map, usize hash)
+{
+	CRUST_ASSERT(hash_map != CRUST_NULL);
+	CRUST_ASSERT(hash_map->capacity > 0);
+
+	return hash % hash_map->capacity;
+}
+
+static usize crustHashIndexMapNextBucket(const Crust_HashIndexMap *hash_map, usize bucket)
+{
+	CRUST_ASSERT(hash_map != CRUST_NULL);
+	CRUST_ASSERT(bucket < hash_map->capacity);
+
+	bucket++;
+	return (bucket == hash_map->capacity) ? 0 : bucket;
+}
+
+static usize crustHashIndexMapDistance(const Crust_HashIndexMap *hash_map, usize home, usize bucket)
+{
+	CRUST_ASSERT(hash_map != CRUST_NULL);
+	CRUST_ASSERT(home < hash_map->capacity);
+	CRUST_ASSERT(bucket < hash_map->capacity);
+
+	return (bucket >= home) ? bucket - home : hash_map->capacity - home + bucket;
+}
+
 static void crustHashIndexMapFreeStorage(Crust_Allocator allocator, Crust_HashIndexMap *hash_map)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);
@@ -85,7 +111,7 @@ static Crust_HashIndexMapProbe crustHashIndexMapProbeKey(const Crust_HashIndexMa
 	CRUST_ASSERT(key != CRUST_NULL);
 	CRUST_ASSERT(key_size == hash_map->key_size);
 
-	usize bucket = hash % hash_map->capacity;
+	usize bucket = crustHashIndexMapHomeBucket(hash_map, hash);
 
 	for (usize probe = 0; probe < hash_map->capacity; ++probe)
 	{
@@ -106,7 +132,7 @@ static Crust_HashIndexMapProbe crustHashIndexMapProbeKey(const Crust_HashIndexMa
 			}
 		}
 
-		bucket = (bucket + 1) % hash_map->capacity;
+		bucket = crustHashIndexMapNextBucket(hash_map, bucket);
 	}
 
 	Crust_HashIndexMapProbe result = { CRUST_USIZE_MAX, 0 };
@@ -119,14 +145,14 @@ static usize crustHashIndexMapFindFreeBucket(const Crust_HashIndexMap *hash_map,
 	CRUST_ASSERT(hash_map->capacity > 0);
 	CRUST_ASSERT(hash_map->count < hash_map->capacity);
 
-	usize bucket = hash % hash_map->capacity;
+	usize bucket = crustHashIndexMapHomeBucket(hash_map, hash);
 
 	for (usize probe = 0; probe < hash_map->capacity; ++probe)
 	{
 		if (crustHashIndexMapCheckMask(hash_map, bucket) == 0)
 			return bucket;
 
-		bucket = (bucket + 1) % hash_map->capacity;
+		bucket = crustHashIndexMapNextBucket(hash_map, bucket);
 	}
 
 	CRUST_ASSERT(0);
@@ -326,18 +352,17 @@ CRUST_APIENTRY usize crustHashIndexMapRemove(Crust_HashIndexMap *hash_map, const
 	hash_map->vtbl->destroy(hash_map->context, stored_key, hash_map->key_size);
 
 	usize hole = probe.bucket;
-	usize scan = (hole + 1) % hash_map->capacity;
+	usize scan = crustHashIndexMapNextBucket(hash_map, hole);
 
 	for (usize shift_probe = 0; shift_probe < hash_map->capacity - 1; ++shift_probe)
 	{
 		if (crustHashIndexMapCheckMask(hash_map, scan) == 0)
 			break;
 
-		usize scan_hash = hash_map->hashes[scan];
-		usize home = scan_hash % hash_map->capacity;
+		usize home = crustHashIndexMapHomeBucket(hash_map, hash_map->hashes[scan]);
 
-		usize scan_distance = (scan + hash_map->capacity - home) % hash_map->capacity;
-		usize hole_distance = (hole + hash_map->capacity - home) % hash_map->capacity;
+		usize scan_distance = crustHashIndexMapDistance(hash_map, home, scan);
+		usize hole_distance = crustHashIndexMapDistance(hash_map, home, hole);
 
 		if (hole_distance < scan_distance)
 		{
@@ -352,7 +377,7 @@ CRUST_APIENTRY usize crustHashIndexMapRemove(Crust_HashIndexMap *hash_map, const
 			hole = scan;
 		}
 
-		scan = (scan + 1) % hash_map->capacity;
+		scan = crustHashIndexMapNextBucket(hash_map, scan);
 	}
 
 	crustHashIndexMapRemoveMask(hash_map, hole);
