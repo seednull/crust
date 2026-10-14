@@ -77,7 +77,7 @@ static CRUST_INLINE Crust_Vec2 crustVec2MulV(Crust_Vec2 a, Crust_Vec2 b)
 
 static CRUST_INLINE Crust_Vec2 crustVec2DivS(Crust_Vec2 a, f32 s)
 {
-	float s_inv = 1.0f / s;
+	f32 s_inv = 1.0f / s;
 
 	Crust_Vec2 result;
 	result.x = a.x * s_inv;
@@ -208,7 +208,7 @@ static CRUST_INLINE Crust_Vec3 crustVec3MulV(Crust_Vec3 a, Crust_Vec3 b)
 
 static CRUST_INLINE Crust_Vec3 crustVec3DivS(Crust_Vec3 a, f32 s)
 {
-	float s_inv = 1.0f / s;
+	f32 s_inv = 1.0f / s;
 
 	Crust_Vec3 result;
 	result.x = a.x * s_inv;
@@ -360,7 +360,7 @@ static CRUST_INLINE Crust_Vec4 crustVec4MulV(Crust_Vec4 a, Crust_Vec4 b)
 
 static CRUST_INLINE Crust_Vec4 crustVec4DivS(Crust_Vec4 a, f32 s)
 {
-	float s_inv = 1.0f / s;
+	f32 s_inv = 1.0f / s;
 
 	Crust_Vec4 result;
 	result.x = a.x * s_inv;
