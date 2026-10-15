@@ -159,19 +159,7 @@
 	#define CRUST_NULL ((void *)0)
 #endif
 
-#if defined(CRUST_SHARED_LIBRARY)
-	#if CRUST_TOOLCHAIN_MSVC || CRUST_TOOLCHAIN_MINGW
-		#if defined(CRUST_IMPLEMENTATION)
-			#define CRUST_APIENTRY __declspec(dllexport)
-		#else
-			#define CRUST_APIENTRY __declspec(dllimport)
-		#endif
-	#else
-		#define CRUST_APIENTRY __attribute__((visibility("default")))
-	#endif
-#else
-	#define CRUST_APIENTRY
-#endif
+#define CRUST_APIENTRY
 
 // Types
 #if CRUST_COMPILER_MSVC

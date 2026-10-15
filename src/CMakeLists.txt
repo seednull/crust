@@ -74,7 +74,7 @@ set(CRUST_PUBLIC_HEADERS
 # ==================================================================================================
 # Target
 # ==================================================================================================
-add_library(${CRUST_TARGET} ${CRUST_SOURCES} ${CRUST_HEADERS} ${CRUST_PUBLIC_HEADERS})
+add_library(${CRUST_TARGET} STATIC ${CRUST_SOURCES} ${CRUST_HEADERS} ${CRUST_PUBLIC_HEADERS})
 add_library(crust::${CRUST_TARGET} ALIAS ${CRUST_TARGET})
 
 # ==================================================================================================
@@ -83,13 +83,10 @@ add_library(crust::${CRUST_TARGET} ALIAS ${CRUST_TARGET})
 set_target_properties(${CRUST_TARGET} PROPERTIES DEBUG_POSTFIX d)
 set_target_properties(${CRUST_TARGET} PROPERTIES PUBLIC_HEADER ${CRUST_DIR_API}/crust.h)
 set_target_properties(${CRUST_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(${CRUST_TARGET} PROPERTIES C_VISIBILITY_PRESET hidden)
 
 if (WIN32)
 	set_target_properties(${CRUST_TARGET} PROPERTIES PREFIX "")
-endif()
-
-if (BUILD_SHARED_LIBS)
-	set_target_properties(${CRUST_TARGET} PROPERTIES C_VISIBILITY_PRESET hidden)
 endif()
 
 # ==================================================================================================
@@ -102,12 +99,6 @@ target_include_directories(${CRUST_TARGET} PUBLIC "$<INSTALL_INTERFACE:include>"
 # ==================================================================================================
 # Preprocessor
 # ==================================================================================================
-target_compile_definitions(${CRUST_TARGET} PRIVATE CRUST_IMPLEMENTATION)
-
-if (BUILD_SHARED_LIBS)
-	target_compile_definitions(${CRUST_TARGET} PUBLIC CRUST_SHARED_LIBRARY)
-endif()
-
 if (CRUST_USE_SIMD)
 	target_compile_definitions(${CRUST_TARGET} PUBLIC CRUST_USE_SIMD=1)
 endif()
@@ -169,8 +160,6 @@ include(CMakePackageConfigHelpers)
 install(
 	TARGETS ${CRUST_TARGET}
 	EXPORT crustTargets
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 	PUBLIC_HEADER DESTINATION include
 )

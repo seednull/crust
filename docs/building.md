@@ -9,11 +9,12 @@
 
 | Option | Default | Description |
 |---|---|---|
-| `BUILD_SHARED_LIBS` | `OFF` | Build Crust as a shared library |
 | `CRUST_BUILD_TESTS` | `OFF` | Build the tests |
 | `CRUST_USE_SIMD` | `OFF` | Use SSE, NEON or WebAssembly SIMD for `Crust_Simd128` instead of the scalar fallback, see [SIMD](simd.md#enabling-simd) |
 
 `CRUST_USE_SIMD=ON` adds a public `CRUST_USE_SIMD=1` definition and, where the target needs them, the backend's compiler flags: `-msse4.2 -mpopcnt` on x86, `-msimd128` on WebAssembly.
+
+Crust is always a static library. It is compiled as position-independent code with hidden symbols, so it can go into your own shared libraries without exporting anything or clashing with another copy of Crust.
 
 ## Building
 
@@ -65,8 +66,6 @@ Compile every file in `src/freestanding` and `src/libc` with `include` on the in
 | Define | Where | Effect |
 |---|---|---|
 | `CRUST_USE_SIMD=1` | Everywhere a Crust header is included, with the same value | Enables the SIMD backend, see [SIMD](simd.md#enabling-simd) for the compiler flags |
-| `CRUST_SHARED_LIBRARY` | Everywhere a Crust header is included | Marks the API as imported from a shared library |
-| `CRUST_IMPLEMENTATION` | Only when compiling Crust itself | Together with `CRUST_SHARED_LIBRARY`, exports the API instead of importing it |
 | `NDEBUG` | Anywhere | Disables `CRUST_ASSERT`, see [Platform](platform.md#assertions) |
 
 ### Running without the C standard library
@@ -102,6 +101,5 @@ GitHub Actions builds and tests every push to `main` and every pull request, see
 | macOS ARM64 Clang | macOS on Apple silicon | NEON and scalar; Debug and Release |
 | Emscripten | Ubuntu x64 | WebAssembly SIMD and scalar, tests under Node.js |
 | Sanitizers | Ubuntu x64, Clang | AddressSanitizer with UndefinedBehaviorSanitizer, and ThreadSanitizer; SIMD off and on |
-| Shared library | Windows (MSVC), Ubuntu (GCC) | `BUILD_SHARED_LIBS=ON` |
 | Installed package | Ubuntu x64 | Installs Crust and builds `tests/package`, a minimal project that uses it through `find_package` |
 | Presets | Windows, Ubuntu, macOS | Configures and builds with `msvc2022-x64`, `linux-gcc-release`, `linux-clang-release` and `osx-clang-release`, then runs the tests |

@@ -83,7 +83,7 @@ Other macros:
 |---|---|
 | `CRUST_NULL` | `((void *)0)` in C, `0` in C++ |
 | `CRUST_UNUSED(x)` | Silences unused-variable warnings |
-| `CRUST_APIENTRY` | Marks exported functions: empty for static builds, `__declspec(dllexport/dllimport)` or `visibility("default")` for shared builds, see [Building](building.md#without-cmake) |
+| `CRUST_APIENTRY` | Marks the functions implemented in Crust's sources. Empty |
 
 ## Assertions
 

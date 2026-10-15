@@ -347,26 +347,6 @@ jobs:
           cmake --build build/release --parallel
           ctest --test-dir build/release --output-on-failure
 
-  shared:
-    name: Shared library ${{ matrix.name }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: MSVC
-            runner: windows-latest
-          - name: Linux GCC
-            runner: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Debug
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON ${{ env.CRUST_OPTIONS }}
-          cmake --build build --config Debug --parallel
-          ctest --test-dir build -C Debug --output-on-failure
-
   package:
     name: Installed package
     runs-on: ubuntu-24.04
