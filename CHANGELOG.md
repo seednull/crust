@@ -7,6 +7,7 @@
 - Crust is always built as a static library: `BUILD_SHARED_LIBS` no longer applies to it, and `CRUST_SHARED_LIBRARY` and `CRUST_IMPLEMENTATION` have no effect. It is compiled as position-independent code with hidden symbols, so it can be linked into shared libraries without exporting its symbols or clashing with another copy of Crust.
 - Documented that GCC needs ISO mode or `-ffp-contract=off` for floating-point results to match the other targets bit for bit: in its default GNU dialects it fuses multiplies and adds into FMA instructions, even across inlined SIMD calls. Also documented that a NaN created by arithmetic has a hardware-dependent sign and payload.
 - The Linux presets build in strict C99, like CI.
+- Documented that struct fields the docs don't mention are internal and can change in a minor release.
 
 ### Fixed
 
