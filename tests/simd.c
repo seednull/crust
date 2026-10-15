@@ -1643,6 +1643,30 @@ static int testCompareF64(void)
 	return 0;
 }
 
+static int testMulAddRoundsTwice(void)
+{
+	volatile f32 a32 = 1.0f + 1.0f / 4096.0f;
+	volatile f32 c32 = -(1.0f + 1.0f / 2048.0f);
+	volatile f64 a64 = 1.0 + 1.0 / 134217728.0;
+	volatile f64 c64 = -(1.0 + 1.0 / 67108864.0);
+
+	f32 result32[4];
+	Crust_Simd128 a = crustSimd128SplatF32(a32);
+	crustSimd128StoreF32(result32, crustSimd128AddF32(crustSimd128MulF32(a, a), crustSimd128SplatF32(c32)));
+
+	for (u32 lane = 0; lane < 4; ++lane)
+		CRUST_TEST_CHECK(sameF32(0.0f, result32[lane], 1));
+
+	f64 result64[2];
+	a = crustSimd128SplatF64(a64);
+	crustSimd128StoreF64(result64, crustSimd128AddF64(crustSimd128MulF64(a, a), crustSimd128SplatF64(c64)));
+
+	for (u32 lane = 0; lane < 2; ++lane)
+		CRUST_TEST_CHECK(sameF64(0.0, result64[lane], 1));
+
+	return 0;
+}
+
 static int testConvert(void)
 {
 	CRUST_TEST_CHECK(checkConvertF32FromI32());
@@ -1673,6 +1697,7 @@ int main(void)
 	CRUST_TEST_RUN(testCompareF32);
 	CRUST_TEST_RUN(testArithmeticF64);
 	CRUST_TEST_RUN(testCompareF64);
+	CRUST_TEST_RUN(testMulAddRoundsTwice);
 	CRUST_TEST_RUN(testConvert);
 
 	return crustTestResult();

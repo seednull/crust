@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Documented that GCC needs ISO mode or `-ffp-contract=off` for floating-point results to match the other targets bit for bit: in its default GNU dialects it fuses multiplies and adds into FMA instructions, even across inlined SIMD calls. Also documented that a NaN created by arithmetic has a hardware-dependent sign and payload.
+- The Linux presets build in strict C99, like CI.
+
 ### Fixed
 
 - `crustHeapStageAlloc`, `crustHeapStageAllocAligned`, `crustHeapAlloc` and `crustHeapAllocAligned` asserted in debug builds for sizes above `0xF0000000`, including padded aligned sizes, because their size class doesn't fit into 32 bits. They now fail, as in release builds.

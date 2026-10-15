@@ -87,7 +87,12 @@
             "hidden": true,
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build/${presetName}",
-            "installDir": "${sourceDir}/build"
+            "installDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_C_STANDARD": "99",
+                "CMAKE_C_STANDARD_REQUIRED": "ON",
+                "CMAKE_C_EXTENSIONS": "OFF"
+            }
         },
         {
             "name": "linux-gcc-debug",
