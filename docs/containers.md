@@ -116,7 +116,7 @@ Things to know:
 
   ```c
   if ((map.count + 1) * 4 > map.capacity * 3)
-  	crustHashIndexMapGrow(allocator, &map, map.capacity * 2);
+  	crustHashIndexMapGrow(allocator, &map, crustMaxUSize(map.capacity * 2, 64));
   ```
 
 - **`Add` doesn't overwrite.** Adding a key that is already present returns the index stored for it. In debug builds it also asserts that the new index is the same; to change an index, `Remove` and `Add` again.
@@ -176,7 +176,7 @@ crustGenerationalHandlePoolFree(allocator, &pool);
 
   ```c
   if (pool.free_head == CRUST_USIZE_MAX)
-  	crustGenerationalHandlePoolGrow(allocator, &pool, pool.capacity * 2);
+  	crustGenerationalHandlePoolGrow(allocator, &pool, crustMaxUSize(pool.capacity * 2, 64));
 
   Crust_GenerationalHandle handle = crustGenerationalHandlePoolAdd(&pool, CRUST_USIZE_MAX);
   if (handle.generation == 0)

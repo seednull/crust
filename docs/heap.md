@@ -42,7 +42,7 @@ never runs out.
 
 ```c
 if (pool.capacity - pool.count < 2)
-	crustHeapNodePoolGrow(allocator, &pool, pool.capacity * 2);
+	crustHeapNodePoolGrow(allocator, &pool, crustMaxU32(pool.capacity * 2, 64));
 ```
 
 | Function | Behavior |
