@@ -3,7 +3,7 @@
 ## Requirements
 
 - A C99 compiler: MSVC, GCC or Clang. The headers also compile as C++.
-- CMake 3.10 or newer. The presets in `CMakePresets.json` need CMake 3.28 or newer.
+- CMake 3.12 or newer. The presets in `CMakePresets.json` need CMake 3.28 or newer.
 
 ## Options
 

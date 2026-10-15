@@ -33,7 +33,7 @@ Versions follow semantic versioning: the API changes incompatibly only with a ne
 
 ## Quick start
 
-Build with CMake 3.10 or newer, or use one of the presets (CMake 3.28+):
+Build with CMake 3.12 or newer, or use one of the presets (CMake 3.28+):
 
 ```bash
 cmake -S . -B build -DCRUST_USE_SIMD=ON

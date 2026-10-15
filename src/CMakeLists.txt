@@ -105,6 +105,8 @@ endif()
 # ==================================================================================================
 # Compiler
 # ==================================================================================================
+target_compile_features(${CRUST_TARGET} PUBLIC c_std_99)
+
 if(MSVC)
 	target_compile_options(${CRUST_TARGET} PRIVATE /W4 /external:W3)
 	target_compile_definitions(${CRUST_TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
