@@ -284,6 +284,44 @@ static int testAlignedAllocPaddingExceedsHeap(void)
 	return 0;
 }
 
+static int testSizeLimits(void)
+{
+	Crust_Allocator allocator = crustSystemAllocatorInit();
+
+	Crust_HeapNodePool pool;
+	CRUST_TEST_REQUIRE(crustHeapNodePoolAlloc(allocator, &pool, UNIT_NUM_NODES));
+
+	Crust_Heap heap = crustHeapInit(&pool, CRUST_U32_MAX);
+
+	Crust_HeapAllocation largest = crustHeapAlloc(&heap, 0xF0000000u);
+	CRUST_TEST_REQUIRE(largest.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(largest.offset == 0);
+	crustHeapFree(&heap, largest);
+
+	CRUST_TEST_CHECK(crustHeapStageAlloc(&heap, 0xF0000001u).index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(crustHeapStageAlloc(&heap, CRUST_U32_MAX).index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(crustHeapStageAllocAligned(&heap, 0xF0000001u, 16).index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(crustHeapStageAllocAligned(&heap, CRUST_U32_MAX, 1).index == CRUST_U32_MAX);
+
+	Crust_HeapAllocation first = crustHeapAlloc(&heap, 1);
+	CRUST_TEST_REQUIRE(first.index != CRUST_U32_MAX);
+
+	Crust_HeapAllocation aligned = crustHeapStageAllocAligned(&heap, 0xF0000000u, 0x10000000u);
+	CRUST_TEST_CHECK(aligned.index == CRUST_U32_MAX);
+	CRUST_TEST_CHECK(aligned.offset == CRUST_U32_MAX);
+
+	aligned = crustHeapAllocAligned(&heap, 0xE0000000u, 0x10000000u);
+	CRUST_TEST_REQUIRE(aligned.index != CRUST_U32_MAX);
+	CRUST_TEST_CHECK(aligned.offset == 0x10000000u);
+
+	crustHeapFree(&heap, first);
+	crustHeapFree(&heap, aligned);
+	CRUST_TEST_CHECK(pool.count == 1);
+
+	crustHeapNodePoolFree(allocator, &pool);
+	return 0;
+}
+
 static int testNodePoolExhaustion(void)
 {
 	Crust_Allocator allocator = crustSystemAllocatorInit();
@@ -508,6 +546,7 @@ int main(void)
 	CRUST_TEST_RUN(testStageCommit);
 	CRUST_TEST_RUN(testSharedNodePool);
 	CRUST_TEST_RUN(testAlignedAllocPaddingExceedsHeap);
+	CRUST_TEST_RUN(testSizeLimits);
 	CRUST_TEST_RUN(testNodePoolExhaustion);
 	CRUST_TEST_RUN(testNodePoolAllocationFailure);
 	CRUST_TEST_RUN(testFuzz);

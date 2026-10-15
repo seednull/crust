@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `crustHeapStageAlloc`, `crustHeapStageAllocAligned`, `crustHeapAlloc` and `crustHeapAllocAligned` asserted in debug builds for sizes above `0xF0000000`, including padded aligned sizes, because their size class doesn't fit into 32 bits. They now fail, as in release builds.
+
 ## 1.3.0 - 2026-10-15
 
 ### Added
