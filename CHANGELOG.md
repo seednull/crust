@@ -5,6 +5,7 @@
 ### Fixed
 
 - `crustHeapStageAlloc`, `crustHeapStageAllocAligned`, `crustHeapAlloc` and `crustHeapAllocAligned` asserted in debug builds for sizes above `0xF0000000`, including padded aligned sizes, because their size class doesn't fit into 32 bits. They now fail, as in release builds.
+- `crustArenaAlloc` subtracted pointers beyond the attached memory when the alignment padding didn't fit, which is undefined behavior in C. It now computes the padding in integers and forms the pointer only after the capacity check.
 
 ## 1.3.0 - 2026-10-15
 

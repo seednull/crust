@@ -87,6 +87,23 @@ static int testAllocator(void)
 	return 0;
 }
 
+static int testAlignmentBeyondCapacity(void)
+{
+	static CRUST_ALIGNAS(64) u8 memory[2];
+	Crust_Arena arena = crustArenaAttach(memory + 1, 1);
+
+	CRUST_TEST_CHECK(crustArenaAlloc(&arena, 1, 64) == CRUST_NULL);
+	CRUST_TEST_CHECK(arena.size == 0);
+
+	CRUST_TEST_CHECK(crustArenaAlloc(&arena, 1, 1) == memory + 1);
+	CRUST_TEST_CHECK(arena.size == 1);
+
+	CRUST_TEST_CHECK(crustArenaAlloc(&arena, 0, 64) == CRUST_NULL);
+	CRUST_TEST_CHECK(arena.size == 1);
+
+	return 0;
+}
+
 static int testSizeMul(void)
 {
 	static CRUST_ALIGNAS(64) u8 memory[CAPACITY];
@@ -154,6 +171,7 @@ int main(void)
 	CRUST_TEST_RUN(testAlloc);
 	CRUST_TEST_RUN(testReset);
 	CRUST_TEST_RUN(testAllocator);
+	CRUST_TEST_RUN(testAlignmentBeyondCapacity);
 	CRUST_TEST_RUN(testSizeMul);
 	CRUST_TEST_RUN(testFuzz);
 

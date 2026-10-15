@@ -31,19 +31,19 @@ CRUST_APIENTRY void *crustArenaAlloc(Crust_Arena *arena, usize size, usize align
 	CRUST_ASSERT(crustIsPow2USize(alignment));
 
 	u8 *base = (u8 *)arena->memory;
-	u8 *current = base + arena->size;
-	u8 *aligned = (u8 *)crustAlignUpUSize((usize)current, alignment);
+	usize address = (usize)(base + arena->size);
+	usize padding = crustAlignUpUSize(address, alignment) - address;
 
-	usize offset = (usize)(aligned - base);
-
-	if (offset > arena->capacity)
+	if (padding > arena->capacity - arena->size)
 		return CRUST_NULL;
+
+	usize offset = arena->size + padding;
 
 	if (size > arena->capacity - offset)
 		return CRUST_NULL;
 
 	arena->size = offset + size;
-	return (void *)aligned;
+	return (void *)(base + offset);
 }
 
 //
