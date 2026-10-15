@@ -256,9 +256,15 @@ jobs:
 
       - name: Debug
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCRUST_USE_SIMD=${{ matrix.simd }} "-DCMAKE_C_FLAGS=${{ matrix.flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.flags }}" ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
-          cmake --build build --parallel
-          ctest --test-dir build --output-on-failure
+          cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCRUST_USE_SIMD=${{ matrix.simd }} "-DCMAKE_C_FLAGS=${{ matrix.flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.flags }}" ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/debug --parallel
+          ctest --test-dir build/debug --output-on-failure
+
+      - name: Release
+        run: |
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCRUST_USE_SIMD=${{ matrix.simd }} "-DCMAKE_C_FLAGS=${{ matrix.flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.flags }}" ${{ env.CRUST_OPTIONS }} ${{ env.CRUST_C99 }}
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
 
   arm32:
     name: Linux ARM32 GCC (QEMU) SIMD=${{ matrix.simd }}
