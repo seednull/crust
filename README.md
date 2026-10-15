@@ -96,7 +96,3 @@ crustArenaReset(&arena);
 8. [Buffers](docs/buffers.md)
 9. [Containers](docs/containers.md)
 10. [Offset heap](docs/heap.md)
-
-## License
-
-[MIT](LICENSE)
