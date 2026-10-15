@@ -2,9 +2,9 @@
 
 // Version
 #define CRUST_VERSION_MAJOR 1
-#define CRUST_VERSION_MINOR 3
+#define CRUST_VERSION_MINOR 4
 #define CRUST_VERSION_PATCH 0
-#define CRUST_VERSION "1.3.0"
+#define CRUST_VERSION "1.4.0"
 
 // Compiler
 #define CRUST_COMPILER_MSVC 0
