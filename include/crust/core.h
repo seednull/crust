@@ -159,7 +159,11 @@
 	#define CRUST_NULL ((void *)0)
 #endif
 
-#define CRUST_APIENTRY
+#if (CRUST_COMPILER_GCC || CRUST_COMPILER_CLANG) && !CRUST_TOOLCHAIN_MSVC && !CRUST_TOOLCHAIN_MINGW
+	#define CRUST_APIENTRY __attribute__((visibility("hidden")))
+#else
+	#define CRUST_APIENTRY
+#endif
 
 // Types
 #if CRUST_COMPILER_MSVC

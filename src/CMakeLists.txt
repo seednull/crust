@@ -83,7 +83,6 @@ add_library(crust::${CRUST_TARGET} ALIAS ${CRUST_TARGET})
 set_target_properties(${CRUST_TARGET} PROPERTIES DEBUG_POSTFIX d)
 set_target_properties(${CRUST_TARGET} PROPERTIES PUBLIC_HEADER ${CRUST_DIR_API}/crust.h)
 set_target_properties(${CRUST_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(${CRUST_TARGET} PROPERTIES C_VISIBILITY_PRESET hidden)
 
 if (WIN32)
 	set_target_properties(${CRUST_TARGET} PROPERTIES PREFIX "")

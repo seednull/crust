@@ -14,7 +14,7 @@
 
 `CRUST_USE_SIMD=ON` adds a public `CRUST_USE_SIMD=1` definition and, where the target needs them, the backend's compiler flags: `-msse4.2 -mpopcnt` on x86, `-msimd128` on WebAssembly.
 
-Crust is always a static library. It is compiled as position-independent code with hidden symbols, so it can go into your own shared libraries without exporting anything or clashing with another copy of Crust.
+Crust is always a static library. It is compiled as position-independent code, and its functions have hidden visibility, so it can go into your own shared libraries without exporting anything or clashing with another copy of Crust.
 
 ## Building
 
@@ -61,7 +61,7 @@ Include `<crust.h>` for the whole library or a single module with the `crust/` p
 
 ### Without CMake
 
-Compile every file in `src/freestanding` and `src/libc` with `include` on the include path and link `libm` on Unix-like systems. Defines that change the build:
+Compile every file in `src/freestanding` and `src/libc` with `include` on the include path, add `-fPIC` if the result goes into a shared library, and link `libm` on Unix-like systems. Defines that change the build:
 
 | Define | Where | Effect |
 |---|---|---|

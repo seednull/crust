@@ -365,6 +365,11 @@ jobs:
           cmake --build build-package --parallel
           ./build-package/crust_package
 
+      - name: Exports
+        run: |
+          nm -D --defined-only build-package/libcrust_package_shared.so | grep -q packageRun
+          if nm -D --defined-only build-package/libcrust_package_shared.so | grep crust; then exit 1; fi
+
   presets:
     name: Preset ${{ matrix.preset }}
     runs-on: ${{ matrix.runner }}

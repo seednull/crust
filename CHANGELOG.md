@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `CRUST_APIENTRY` gives Crust's functions hidden visibility with GCC and Clang outside Windows, so they stay out of the exports of a shared library that links Crust, whatever builds Crust. The CMake build no longer sets `C_VISIBILITY_PRESET`.
+- Documented `-ffp-contract=off` as the way to keep GCC from fusing multiplies and adds: an ISO mode does this only for C, not for C++. Also documented that the sign and payload of any NaN that arithmetic returns are unspecified, including NaNs passed on from the inputs, and that code including Crust headers must be rebuilt when Crust is updated.
+
 ## 1.4.0 - 2026-10-15
 
 ### Changed
