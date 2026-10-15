@@ -82,7 +82,7 @@ crustArenaReset(&arena);
 - **Memory:** `*Attach` functions wrap memory owned by the caller; `*Alloc`/`*Free`/`*Grow` take the `Crust_Allocator` to use. Nothing is allocated implicitly.
 - **Contracts:** API misuse (out-of-range sizes, invalid handles, double frees, ...) is caught by `CRUST_ASSERT` in debug builds. Release builds don't check, so keep debug builds in your workflow.
 - **Failures:** functions that can fail return `0`, `CRUST_NULL`, `CRUST_USIZE_MAX` or `CRUST_U32_MAX`.
-- **Fields:** struct fields that the docs mention are part of the API, and container fields are for reading only. The others are internal and can change in a minor release.
+- **Fields:** struct fields that the docs mention are part of the API, and container fields are for reading only. The others are internal and can change in a minor release, so rebuild everything that includes Crust headers when you update.
 
 ## Documentation
 

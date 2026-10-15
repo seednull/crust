@@ -218,7 +218,7 @@ Narrowing takes two vectors so that no lanes are wasted: two vectors of eight `i
 
 ### Results are identical on every backend
 
-Every function is specified to produce the same bits on SSE, NEON, WASM and the scalar backend, including NaN propagation by `Min`/`Max`, signed zeros, saturation and wrap-around. The one exception is a NaN that arithmetic creates, such as `0 · ∞`: it is a NaN on every backend, but its sign and payload come from the hardware. The tests check whichever backend is built against scalar reference implementations, bit for bit. Inputs that break a precondition are not covered: out-of-range shift counts, `ConvertI32FromF32` of out-of-range values, misaligned `Aligned` pointers, out-of-range lanes. These are asserted in debug builds. In release builds their results differ between backends, and an out-of-range lane index is undefined behavior. GCC needs FP contraction off for this, and SSE math on 32-bit x86, see [Platform notes](platform.md#platform-notes).
+Every function is specified to produce the same bits on SSE, NEON, WASM and the scalar backend, including NaN propagation by `Min`/`Max`, signed zeros, saturation and wrap-around. The one exception is a NaN that arithmetic returns, whether it creates one, as in `0 · ∞`, or passes one on: it is a NaN on every backend, but its sign and payload are unspecified. The tests check whichever backend is built against scalar reference implementations, bit for bit. Inputs that break a precondition are not covered: out-of-range shift counts, `ConvertI32FromF32` of out-of-range values, misaligned `Aligned` pointers, out-of-range lanes. These are asserted in debug builds. In release builds their results differ between backends, and an out-of-range lane index is undefined behavior. GCC needs FP contraction off for this, and SSE math on 32-bit x86, see [Platform notes](platform.md#platform-notes).
 
 ### Masks
 
@@ -233,7 +233,7 @@ Comparisons produce lanes that are all ones or all zeros. `Select`, `And` and th
 
 - **IEEE semantics** for arithmetic, `Sqrt` and comparisons: comparisons with NaN are false, except `NotEqual`, which is true.
 - **`Min` and `Max`** are defined as `(a < b) ? a : b` and `(a < b) ? b : a`, exactly like `crustMinF32` and `crustMaxF32`. So `Min` returns `b` when either input is NaN or when they compare equal, which makes `Min(+0, −0)` return `−0`. This is not IEEE `minNum`, and it is not what `vminq_f32` or `wasm_f32x4_min` do; Crust picks the instructions that match its own definition.
-- **No fusing.** `crustSimd128AddF32(crustSimd128MulF32(a, b), c)` is a multiply followed by an add, never an FMA, as long as the compiler doesn't contract floating-point expressions across statements. GCC does in its default GNU dialects, see [Platform notes](platform.md#platform-notes).
+- **No fusing.** `crustSimd128AddF32(crustSimd128MulF32(a, b), c)` is a multiply followed by an add, never an FMA, as long as the compiler doesn't contract floating-point expressions across statements. GCC does by default, see [Platform notes](platform.md#platform-notes).
 - **Default floating-point environment.** Crust does not change rounding modes or flush denormals. The SSE backend uses explicit rounding immediates, so `RoundEven` rounds to nearest even regardless of `MXCSR`. Denormal handling follows the current FTZ/DAZ settings, which Crust leaves alone.
 
 ## Performance notes

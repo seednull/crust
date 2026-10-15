@@ -140,11 +140,24 @@ static int testInline()
 	return 0;
 }
 
+static int testMulAddRoundsTwice()
+{
+	volatile f32 a = 1.0f + 1.0f / 4096.0f;
+	volatile f32 c = -(1.0f + 1.0f / 2048.0f);
+
+	Crust_Simd128 v = crustSimd128SplatF32(a);
+	Crust_Simd128 result = crustSimd128AddF32(crustSimd128MulF32(v, v), crustSimd128SplatF32(c));
+	CRUST_TEST_CHECK(crustSimd128GetLaneF32(result, 0) == 0.0f);
+
+	return 0;
+}
+
 int main()
 {
 	CRUST_TEST_RUN(testBuffers);
 	CRUST_TEST_RUN(testContainers);
 	CRUST_TEST_RUN(testInline);
+	CRUST_TEST_RUN(testMulAddRoundsTwice);
 
 	return crustTestResult();
 }

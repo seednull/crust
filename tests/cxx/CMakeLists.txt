@@ -17,6 +17,10 @@ else()
 	target_compile_options(${CRUST_TEST_CXX_TARGET} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	target_compile_options(${CRUST_TEST_CXX_TARGET} PRIVATE -ffp-contract=off)
+endif()
+
 # ==================================================================================================
 # Libraries
 # ==================================================================================================
