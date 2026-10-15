@@ -8,6 +8,7 @@ enum
 	FUZZ_INITIAL_CAPACITY = 8,
 	FUZZ_MAX_CAPACITY = 256,
 	FUZZ_STEPS = 100000,
+	FOOTPRINT_MEMORY = 32 * 1024,
 };
 
 static usize countUsed(const Crust_GenerationalHandlePool *pool)
@@ -326,6 +327,31 @@ static int testCheckAnyHandle(void)
 	return 0;
 }
 
+static int testFootprint(void)
+{
+	static CRUST_ALIGNAS(64) u8 memory[FOOTPRINT_MEMORY];
+	static const usize capacities[] = { 1, 31, 32, 33, 1000 };
+
+	for (usize i = 0; i < sizeof(capacities) / sizeof(capacities[0]); ++i)
+	{
+		usize footprint = crustGenerationalHandlePoolFootprint(capacities[i]);
+
+		for (usize offset = 0; offset < 16; ++offset)
+		{
+			CRUST_TEST_REQUIRE(offset + footprint <= sizeof(memory));
+
+			Crust_Arena arena = crustArenaAttach(memory + offset, footprint);
+			Crust_Allocator allocator = crustArenaAllocatorInit(&arena);
+
+			Crust_GenerationalHandlePool pool;
+			CRUST_TEST_CHECK(crustGenerationalHandlePoolAlloc(allocator, &pool, capacities[i]) != 0);
+			crustGenerationalHandlePoolFree(allocator, &pool);
+		}
+	}
+
+	return 0;
+}
+
 static int testFuzz(void)
 {
 	Crust_Allocator allocator = crustSystemAllocatorInit();
@@ -381,6 +407,7 @@ int main(void)
 	CRUST_TEST_RUN(testAddToFullPool);
 	CRUST_TEST_RUN(testAllocationFailure);
 	CRUST_TEST_RUN(testCheckAnyHandle);
+	CRUST_TEST_RUN(testFootprint);
 	CRUST_TEST_RUN(testFuzz);
 
 	return crustTestResult();

@@ -63,6 +63,13 @@ static u8 crustHeapNodePoolIsUsed(const Crust_HeapNodePool *pool, u32 index)
 }
 
 //
+CRUST_APIENTRY usize crustHeapNodePoolFootprint(u32 capacity)
+{
+	CRUST_ASSERT(capacity > 0);
+
+	return sizeof(Crust_HeapNode) * capacity + CRUST_ALIGNOF(Crust_HeapNode) - 1;
+}
+
 CRUST_APIENTRY u8 crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);

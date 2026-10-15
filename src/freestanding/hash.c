@@ -191,6 +191,25 @@ CRUST_APIENTRY Crust_HashIndexMap crustHashIndexMapInit(void *context, const Cru
 	return result;
 }
 
+CRUST_APIENTRY usize crustHashIndexMapFootprint(usize key_size, usize key_alignment, usize capacity)
+{
+	CRUST_ASSERT(key_size > 0);
+	CRUST_ASSERT(key_alignment > 0);
+	CRUST_ASSERT(crustIsPow2USize(key_alignment) != 0);
+
+	CRUST_ASSERT(capacity > 0);
+
+	usize key_stride = crustAlignUpUSize(key_size, key_alignment);
+	usize masks_capacity = crustAlignUpUSize(capacity, 32) / 32;
+
+	usize keys = key_stride * capacity + key_alignment - 1;
+	usize hashes = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
+	usize indices = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
+	usize masks = sizeof(u32) * masks_capacity + CRUST_ALIGNOF(u32) - 1;
+
+	return keys + hashes + indices + masks;
+}
+
 CRUST_APIENTRY u8 crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity)
 {
 	CRUST_ASSERT(hash_map != CRUST_NULL);

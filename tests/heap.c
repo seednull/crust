@@ -9,6 +9,7 @@ enum
 	FUZZ_MAX_LIVE = 256,
 	FUZZ_NUM_NODES = FUZZ_NUM_HEAPS * (2 * FUZZ_MAX_LIVE + 1),
 	FUZZ_STEPS = 300000,
+	FOOTPRINT_MEMORY = 32 * 1024,
 };
 
 typedef struct Live_t
@@ -322,6 +323,31 @@ static int testSizeLimits(void)
 	return 0;
 }
 
+static int testNodePoolFootprint(void)
+{
+	static CRUST_ALIGNAS(64) u8 memory[FOOTPRINT_MEMORY];
+	static const u32 capacities[] = { 1, 1000 };
+
+	for (usize i = 0; i < sizeof(capacities) / sizeof(capacities[0]); ++i)
+	{
+		usize footprint = crustHeapNodePoolFootprint(capacities[i]);
+
+		for (usize offset = 0; offset < 16; ++offset)
+		{
+			CRUST_TEST_REQUIRE(offset + footprint <= sizeof(memory));
+
+			Crust_Arena arena = crustArenaAttach(memory + offset, footprint);
+			Crust_Allocator allocator = crustArenaAllocatorInit(&arena);
+
+			Crust_HeapNodePool pool;
+			CRUST_TEST_CHECK(crustHeapNodePoolAlloc(allocator, &pool, capacities[i]) != 0);
+			crustHeapNodePoolFree(allocator, &pool);
+		}
+	}
+
+	return 0;
+}
+
 static int testNodePoolExhaustion(void)
 {
 	Crust_Allocator allocator = crustSystemAllocatorInit();
@@ -547,6 +573,7 @@ int main(void)
 	CRUST_TEST_RUN(testSharedNodePool);
 	CRUST_TEST_RUN(testAlignedAllocPaddingExceedsHeap);
 	CRUST_TEST_RUN(testSizeLimits);
+	CRUST_TEST_RUN(testNodePoolFootprint);
 	CRUST_TEST_RUN(testNodePoolExhaustion);
 	CRUST_TEST_RUN(testNodePoolAllocationFailure);
 	CRUST_TEST_RUN(testFuzz);

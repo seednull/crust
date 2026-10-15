@@ -47,6 +47,7 @@ if (pool.capacity - pool.count < 2)
 
 | Function | Behavior |
 |---|---|
+| `crustHeapNodePoolFootprint(capacity)` | Upper bound of the arena bytes that `Alloc` takes for `capacity`, wherever the arena's free space starts |
 | `crustHeapNodePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` nodes. Returns `0` if the allocator fails, leaving the pool empty |
 | `crustHeapNodePoolGrow(allocator, pool, new_capacity)` | Adds nodes; `pool.nodes` may move. Returns `0` if the allocator fails, leaving the pool untouched |
 | `crustHeapNodePoolFree(allocator, pool)` | Frees the nodes of every heap that uses the pool |

@@ -78,6 +78,20 @@ static u8 crustGenerationalHandlePoolAllocStorage(Crust_Allocator allocator, Cru
 }
 
 //
+CRUST_APIENTRY usize crustGenerationalHandlePoolFootprint(usize capacity)
+{
+	CRUST_ASSERT(capacity > 0);
+
+	usize masks_capacity = crustAlignUpUSize(capacity, 32) / 32;
+
+	usize generations = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
+	usize prevs = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
+	usize nexts = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
+	usize masks = sizeof(u32) * masks_capacity + CRUST_ALIGNOF(u32) - 1;
+
+	return generations + prevs + nexts + masks;
+}
+
 CRUST_APIENTRY u8 crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);

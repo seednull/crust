@@ -102,6 +102,7 @@ crustHashIndexMapFree(allocator, &map);
 | Function | Behavior |
 |---|---|
 | `crustHashIndexMapInit(context, vtbl, key_size, key_alignment)` | Sets up an empty map without allocating |
+| `crustHashIndexMapFootprint(key_size, key_alignment, capacity)` | Upper bound of the arena bytes that `Alloc` takes for `capacity`, wherever the arena's free space starts |
 | `crustHashIndexMapAlloc(allocator, map, capacity)` | Allocates `capacity` buckets. The map must be empty and unallocated. Returns `0` if the allocator fails, leaving the map unallocated |
 | `crustHashIndexMapGrow(allocator, map, new_capacity)` | Rehashes into a larger table, moving keys with `move`. `new_capacity` must be larger. Returns `0` if the allocator fails, leaving the map untouched |
 | `crustHashIndexMapFree(allocator, map)` | Destroys every key and frees the storage |
@@ -160,6 +161,7 @@ crustGenerationalHandlePoolFree(allocator, &pool);
 
 | Function | Behavior |
 |---|---|
+| `crustGenerationalHandlePoolFootprint(capacity)` | Upper bound of the arena bytes that `Alloc` takes for `capacity`, wherever the arena's free space starts |
 | `crustGenerationalHandlePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` free slots. Returns `0` if the allocator fails, leaving the pool empty |
 | `crustGenerationalHandlePoolGrow(allocator, pool, new_capacity)` | Adds slots. Existing handles stay valid. Returns `0` if the allocator fails, leaving the pool untouched |
 | `crustGenerationalHandlePoolFree(allocator, pool)` | Frees the pool |

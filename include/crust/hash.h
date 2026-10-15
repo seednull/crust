@@ -40,6 +40,7 @@ typedef struct Crust_HashIndexMap_t
 } Crust_HashIndexMap;
 
 CRUST_APIENTRY Crust_HashIndexMap crustHashIndexMapInit(void *context, const Crust_HashIndexMapVtbl *vtbl, usize key_size, usize key_alignment);
+CRUST_APIENTRY usize crustHashIndexMapFootprint(usize key_size, usize key_alignment, usize capacity);
 CRUST_APIENTRY u8 crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity);
 CRUST_APIENTRY void crustHashIndexMapFree(Crust_Allocator allocator, Crust_HashIndexMap *hash_map);
 CRUST_APIENTRY u8 crustHashIndexMapGrow(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize new_capacity);

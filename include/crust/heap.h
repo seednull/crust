@@ -25,6 +25,7 @@ typedef struct Crust_HeapNodePool_t
 	u32 capacity;
 } Crust_HeapNodePool;
 
+CRUST_APIENTRY usize crustHeapNodePoolFootprint(u32 capacity);
 CRUST_APIENTRY u8 crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 capacity);
 CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapNodePool *pool);
 CRUST_APIENTRY u8 crustHeapNodePoolGrow(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 new_capacity);

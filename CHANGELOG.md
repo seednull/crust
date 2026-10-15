@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `crustGenerationalHandlePoolFootprint`, `crustHashIndexMapFootprint` and `crustHeapNodePoolFootprint` return an upper bound of the bytes that the matching `Alloc` takes from an arena for a given capacity, wherever the arena's free space starts, so a memory block for the containers can be sized before they are created.
+
 ### Changed
 
 - `crustGenerationalHandlePoolCheck` returns `0` for a handle whose index is out of range instead of asserting, so handles from untrusted input can be checked directly.

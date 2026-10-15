@@ -10,6 +10,7 @@ enum
 	INITIAL_CAPACITY = 16,
 	STORAGE_BLOCKS = 4,
 	STEPS = 30000,
+	FOOTPRINT_MEMORY = 64 * 1024,
 };
 
 static i32 live_keys = 0;
@@ -177,10 +178,44 @@ static int testAllocationFailure(void)
 	return 0;
 }
 
+static int testFootprint(void)
+{
+	static const Crust_HashIndexMapVtbl vtbl = { hashKey, equalKeys, copyKey, moveKey, destroyKey };
+	static CRUST_ALIGNAS(64) u8 memory[FOOTPRINT_MEMORY];
+	static const usize capacities[] = { 1, 31, 32, 33, 1000 };
+	static const usize key_layouts[][2] = { { 1, 1 }, { 3, 1 }, { 12, 4 }, { 32, 16 } };
+
+	for (usize k = 0; k < sizeof(key_layouts) / sizeof(key_layouts[0]); ++k)
+	{
+		usize key_size = key_layouts[k][0];
+		usize key_alignment = key_layouts[k][1];
+
+		for (usize i = 0; i < sizeof(capacities) / sizeof(capacities[0]); ++i)
+		{
+			usize footprint = crustHashIndexMapFootprint(key_size, key_alignment, capacities[i]);
+
+			for (usize offset = 0; offset < 16; ++offset)
+			{
+				CRUST_TEST_REQUIRE(offset + footprint <= sizeof(memory));
+
+				Crust_Arena arena = crustArenaAttach(memory + offset, footprint);
+				Crust_Allocator allocator = crustArenaAllocatorInit(&arena);
+
+				Crust_HashIndexMap map = crustHashIndexMapInit(CRUST_NULL, &vtbl, key_size, key_alignment);
+				CRUST_TEST_CHECK(crustHashIndexMapAlloc(allocator, &map, capacities[i]) != 0);
+				crustHashIndexMapFree(allocator, &map);
+			}
+		}
+	}
+
+	return 0;
+}
+
 int main(void)
 {
 	CRUST_TEST_RUN(testFuzz);
 	CRUST_TEST_RUN(testAllocationFailure);
+	CRUST_TEST_RUN(testFootprint);
 
 	return crustTestResult();
 }
