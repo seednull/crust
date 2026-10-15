@@ -179,7 +179,9 @@ CRUST_APIENTRY u8 crustGenerationalHandlePoolGrow(Crust_Allocator allocator, Cru
 CRUST_APIENTRY u32 crustGenerationalHandlePoolCheck(const Crust_GenerationalHandlePool *pool, Crust_GenerationalHandle handle)
 {
 	CRUST_ASSERT(pool != CRUST_NULL);
-	CRUST_ASSERT(handle.index < pool->capacity);
+
+	if (handle.index >= pool->capacity)
+		return 0;
 
 	usize generation = pool->generations[handle.index];
 

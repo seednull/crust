@@ -165,7 +165,7 @@ crustGenerationalHandlePoolFree(allocator, &pool);
 | `crustGenerationalHandlePoolFree(allocator, pool)` | Frees the pool |
 | `crustGenerationalHandlePoolAdd(pool, max_generation)` | Takes a free slot and returns its new handle, or a zeroed handle when the pool is full |
 | `crustGenerationalHandlePoolRemove(pool, handle)` | Frees the slot. The handle must be valid (asserted) |
-| `crustGenerationalHandlePoolCheck(pool, handle)` | `1` if the handle refers to a live slot with the same generation |
+| `crustGenerationalHandlePoolCheck(pool, handle)` | `1` if the handle refers to a live slot with the same generation, `0` for any other handle, even with an index out of range |
 
 ### Rules
 
@@ -181,8 +181,7 @@ crustGenerationalHandlePoolFree(allocator, &pool);
   ```
 
 - **Generations wrap.** A slot's generation goes 1, 2, …, `max_generation − 1`, then back to 1. A stale handle is detected as long as its slot hasn't been reused `max_generation − 1` times since. Pass a large value, such as `CRUST_USIZE_MAX`, or the largest value your packed handle format can hold. With `max_generation` of 1 or 2 every generation is 1 and stale handles are never detected.
-- **Generation 0 is never valid.** A zeroed `Crust_GenerationalHandle` works as a null handle for `Check`, provided the pool has at least one slot.
-- **`Check` asserts that the index is in range.** Handles from another, larger pool are a contract violation, not just a failed check.
+- **Generation 0 is never valid.** A zeroed `Crust_GenerationalHandle` works as a null handle for `Check`.
 - **Freed slots are reused first**, most recently freed first, which keeps the used part of your arrays compact.
 
 ### Iterating live handles
