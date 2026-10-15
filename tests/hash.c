@@ -8,6 +8,7 @@ enum
 {
 	NUM_KEYS = 300,
 	INITIAL_CAPACITY = 16,
+	STORAGE_BLOCKS = 4,
 	STEPS = 30000,
 };
 
@@ -125,30 +126,40 @@ static int testAllocationFailure(void)
 	static const Crust_HashIndexMapVtbl vtbl = { hashKey, equalKeys, copyKey, moveKey, destroyKey };
 
 	CrustTest_Allocator test_allocator;
-	Crust_Allocator allocator = crustTestAllocatorInit(&test_allocator, 3);
+	Crust_Allocator allocator = crustTestAllocatorInit(&test_allocator, 0);
 
 	Crust_HashIndexMap map = crustHashIndexMapInit(CRUST_NULL, &vtbl, sizeof(u32), sizeof(u32));
-	CRUST_TEST_CHECK(crustHashIndexMapAlloc(allocator, &map, INITIAL_CAPACITY) == 0);
-	CRUST_TEST_CHECK(map.capacity == 0);
-	CRUST_TEST_CHECK(map.keys == CRUST_NULL);
-	CRUST_TEST_CHECK(map.masks == CRUST_NULL);
-	CRUST_TEST_CHECK(test_allocator.blocks == 0);
 
-	test_allocator.budget = 4 + 3;
+	for (usize budget = 0; budget < STORAGE_BLOCKS; ++budget)
+	{
+		test_allocator.budget = budget;
+		CRUST_TEST_CHECK(crustHashIndexMapAlloc(allocator, &map, INITIAL_CAPACITY) == 0);
+		CRUST_TEST_CHECK(map.capacity == 0);
+		CRUST_TEST_CHECK(map.keys == CRUST_NULL);
+		CRUST_TEST_CHECK(map.masks == CRUST_NULL);
+		CRUST_TEST_CHECK(test_allocator.blocks == 0);
+	}
+
+	test_allocator.budget = STORAGE_BLOCKS;
 	CRUST_TEST_REQUIRE(crustHashIndexMapAlloc(allocator, &map, INITIAL_CAPACITY));
 
 	for (u32 key = 0; key < 8; ++key)
 		CRUST_TEST_REQUIRE(crustHashIndexMapAdd(&map, &key, sizeof(key), key + 100) == key + 100);
 
-	u8 *keys = map.keys;
-	CRUST_TEST_CHECK(crustHashIndexMapGrow(allocator, &map, INITIAL_CAPACITY * 2) == 0);
-	CRUST_TEST_CHECK(map.keys == keys);
-	CRUST_TEST_CHECK(map.capacity == INITIAL_CAPACITY);
-	CRUST_TEST_CHECK(map.count == 8);
-	CRUST_TEST_CHECK(test_allocator.blocks == 4);
+	for (usize budget = 0; budget < STORAGE_BLOCKS; ++budget)
+	{
+		u8 *keys = map.keys;
 
-	for (u32 key = 0; key < 8; ++key)
-		CRUST_TEST_CHECK(crustHashIndexMapFind(&map, &key, sizeof(key)) == key + 100);
+		test_allocator.budget = budget;
+		CRUST_TEST_CHECK(crustHashIndexMapGrow(allocator, &map, INITIAL_CAPACITY * 2) == 0);
+		CRUST_TEST_CHECK(map.keys == keys);
+		CRUST_TEST_CHECK(map.capacity == INITIAL_CAPACITY);
+		CRUST_TEST_CHECK(map.count == 8);
+		CRUST_TEST_CHECK(test_allocator.blocks == STORAGE_BLOCKS);
+
+		for (u32 key = 0; key < 8; ++key)
+			CRUST_TEST_CHECK(crustHashIndexMapFind(&map, &key, sizeof(key)) == key + 100);
+	}
 
 	test_allocator.budget = CRUST_USIZE_MAX;
 	CRUST_TEST_REQUIRE(crustHashIndexMapGrow(allocator, &map, INITIAL_CAPACITY * 2));
