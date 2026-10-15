@@ -323,6 +323,30 @@ static int testSizeLimits(void)
 	return 0;
 }
 
+static int testNodePoolInit(void)
+{
+	Crust_Allocator allocator = crustSystemAllocatorInit();
+	Crust_HeapNodePool pool = crustHeapNodePoolInit();
+
+	CRUST_TEST_CHECK(pool.count == 0);
+	CRUST_TEST_CHECK(pool.capacity == 0);
+
+	crustHeapNodePoolFree(allocator, &pool);
+	CRUST_TEST_REQUIRE(crustHeapNodePoolGrow(allocator, &pool, UNIT_NUM_NODES));
+	CRUST_TEST_CHECK(countFreeNodes(&pool) == UNIT_NUM_NODES);
+
+	Crust_Heap heap = crustHeapInit(&pool, 1024);
+	Crust_HeapAllocation allocation = crustHeapAlloc(&heap, 100);
+	CRUST_TEST_CHECK(allocation.offset == 0);
+	CRUST_TEST_CHECK(checkNodeCount(&pool));
+
+	crustHeapFree(&heap, allocation);
+	CRUST_TEST_CHECK(checkNodeCount(&pool));
+
+	crustHeapNodePoolFree(allocator, &pool);
+	return 0;
+}
+
 static int testNodePoolFootprint(void)
 {
 	static CRUST_ALIGNAS(64) u8 memory[FOOTPRINT_MEMORY];
@@ -573,6 +597,7 @@ int main(void)
 	CRUST_TEST_RUN(testSharedNodePool);
 	CRUST_TEST_RUN(testAlignedAllocPaddingExceedsHeap);
 	CRUST_TEST_RUN(testSizeLimits);
+	CRUST_TEST_RUN(testNodePoolInit);
 	CRUST_TEST_RUN(testNodePoolFootprint);
 	CRUST_TEST_RUN(testNodePoolExhaustion);
 	CRUST_TEST_RUN(testNodePoolAllocationFailure);

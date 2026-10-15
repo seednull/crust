@@ -5,10 +5,12 @@
 ### Added
 
 - `crustGenerationalHandlePoolFootprint`, `crustHashIndexMapFootprint` and `crustHeapNodePoolFootprint` return an upper bound of the bytes that the matching `Alloc` takes from an arena for a given capacity, wherever the arena's free space starts, so a memory block for the containers can be sized before they are created.
+- `crustGenerationalHandlePoolInit` and `crustHeapNodePoolInit` return an empty pool without allocating, the same state that `Free` leaves, and `Grow` on it works like `Alloc`. A zero-initialized pool is not empty, because its lists end with `CRUST_USIZE_MAX` or `CRUST_U32_MAX`.
 
 ### Changed
 
 - `crustGenerationalHandlePoolCheck` returns `0` for a handle whose index is out of range instead of asserting, so handles from untrusted input can be checked directly.
+- `crustGenerationalHandlePoolHead`, `crustGenerationalHandlePoolTail` and `crustGenerationalHandlePoolAdd` no longer assert on a pool without storage: `Head` and `Tail` return the end of the list and `Add` returns a zeroed handle, as for a full pool.
 - `CRUST_APIENTRY` gives Crust's functions hidden visibility with GCC and Clang outside Windows, so they stay out of the exports of a shared library that links Crust, whatever builds Crust. The CMake build no longer sets `C_VISIBILITY_PRESET`.
 - Documented `-ffp-contract=off` as the way to keep GCC from fusing multiplies and adds: an ISO mode does this only for C, not for C++. Also documented that the sign and payload of any NaN that arithmetic returns are unspecified, including NaNs passed on from the inputs, and that code including Crust headers must be rebuilt when Crust is updated.
 - CMake 3.12 or newer is required. The `crust` target declares `c_std_99` as a public compile feature, so code that links it is compiled as C99 or newer even when the parent project asks for an older standard.

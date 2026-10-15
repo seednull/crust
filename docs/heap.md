@@ -47,6 +47,7 @@ if (pool.capacity - pool.count < 2)
 
 | Function | Behavior |
 |---|---|
+| `crustHeapNodePoolInit()` | Returns an empty pool without allocating, the same state that `Free` leaves. `Grow` on it works like `Alloc`. A zeroed struct is not an empty pool |
 | `crustHeapNodePoolFootprint(capacity)` | Upper bound of the arena bytes that `Alloc` takes for `capacity`, wherever the arena's free space starts |
 | `crustHeapNodePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` nodes. Returns `0` if the allocator fails, leaving the pool empty |
 | `crustHeapNodePoolGrow(allocator, pool, new_capacity)` | Adds nodes; `pool.nodes` may move. Returns `0` if the allocator fails, leaving the pool untouched |

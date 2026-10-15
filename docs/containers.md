@@ -161,6 +161,7 @@ crustGenerationalHandlePoolFree(allocator, &pool);
 
 | Function | Behavior |
 |---|---|
+| `crustGenerationalHandlePoolInit()` | Returns an empty pool without allocating, the same state that `Free` leaves. `Grow` on it works like `Alloc`. A zeroed struct is not an empty pool |
 | `crustGenerationalHandlePoolFootprint(capacity)` | Upper bound of the arena bytes that `Alloc` takes for `capacity`, wherever the arena's free space starts |
 | `crustGenerationalHandlePoolAlloc(allocator, pool, capacity)` | Allocates `capacity` free slots. Returns `0` if the allocator fails, leaving the pool empty |
 | `crustGenerationalHandlePoolGrow(allocator, pool, new_capacity)` | Adds slots. Existing handles stay valid. Returns `0` if the allocator fails, leaving the pool untouched |

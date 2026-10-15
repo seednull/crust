@@ -306,6 +306,37 @@ static int testAllocationFailure(void)
 	return 0;
 }
 
+static int testInit(void)
+{
+	Crust_Allocator allocator = crustSystemAllocatorInit();
+	Crust_GenerationalHandlePool pool = crustGenerationalHandlePoolInit();
+
+	Crust_GenerationalHandle handle;
+	handle.index = 0;
+	handle.generation = 1;
+
+	CRUST_TEST_CHECK(crustGenerationalHandlePoolCheck(&pool, handle) == 0);
+	CRUST_TEST_CHECK(crustGenerationalHandlePoolHead(&pool).index == CRUST_USIZE_MAX);
+	CRUST_TEST_CHECK(crustGenerationalHandlePoolTail(&pool).index == CRUST_USIZE_MAX);
+	CRUST_TEST_CHECK(crustGenerationalHandlePoolAdd(&pool, MAX_GENERATION).generation == 0);
+
+	crustGenerationalHandlePoolFree(allocator, &pool);
+	CRUST_TEST_REQUIRE(crustGenerationalHandlePoolGrow(allocator, &pool, NUM_HANDLES));
+
+	for (u32 i = 0; i < NUM_HANDLES; ++i)
+	{
+		handle = crustGenerationalHandlePoolAdd(&pool, MAX_GENERATION);
+		CRUST_TEST_CHECK(handle.index == i);
+		CRUST_TEST_CHECK(crustGenerationalHandlePoolCheck(&pool, handle) != 0);
+	}
+
+	CRUST_TEST_CHECK(crustGenerationalHandlePoolAdd(&pool, MAX_GENERATION).generation == 0);
+	CRUST_TEST_CHECK(countUsed(&pool) == NUM_HANDLES);
+
+	crustGenerationalHandlePoolFree(allocator, &pool);
+	return 0;
+}
+
 static int testCheckAnyHandle(void)
 {
 	Crust_Allocator allocator = crustSystemAllocatorInit();
@@ -406,6 +437,7 @@ int main(void)
 	CRUST_TEST_RUN(testGrowKeepsHandles);
 	CRUST_TEST_RUN(testAddToFullPool);
 	CRUST_TEST_RUN(testAllocationFailure);
+	CRUST_TEST_RUN(testInit);
 	CRUST_TEST_RUN(testCheckAnyHandle);
 	CRUST_TEST_RUN(testFootprint);
 	CRUST_TEST_RUN(testFuzz);

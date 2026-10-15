@@ -63,6 +63,17 @@ static u8 crustHeapNodePoolIsUsed(const Crust_HeapNodePool *pool, u32 index)
 }
 
 //
+CRUST_APIENTRY Crust_HeapNodePool crustHeapNodePoolInit(void)
+{
+	Crust_HeapNodePool result;
+	result.nodes = CRUST_NULL;
+	result.free_head = CRUST_U32_MAX;
+	result.count = 0;
+	result.capacity = 0;
+
+	return result;
+}
+
 CRUST_APIENTRY usize crustHeapNodePoolFootprint(u32 capacity)
 {
 	CRUST_ASSERT(capacity > 0);
@@ -75,10 +86,8 @@ CRUST_APIENTRY u8 crustHeapNodePoolAlloc(Crust_Allocator allocator, Crust_HeapNo
 	CRUST_ASSERT(pool != CRUST_NULL);
 	CRUST_ASSERT(capacity > 0);
 
+	*pool = crustHeapNodePoolInit();
 	pool->nodes = crustAllocArray(allocator, Crust_HeapNode, capacity);
-	pool->free_head = CRUST_U32_MAX;
-	pool->count = 0;
-	pool->capacity = 0;
 
 	if (pool->nodes == CRUST_NULL)
 		return 0;
@@ -94,12 +103,7 @@ CRUST_APIENTRY void crustHeapNodePoolFree(Crust_Allocator allocator, Crust_HeapN
 	CRUST_ASSERT(pool != CRUST_NULL);
 
 	crustFreeArray(allocator, pool->nodes, Crust_HeapNode, pool->capacity);
-
-	pool->nodes = CRUST_NULL;
-
-	pool->free_head = CRUST_U32_MAX;
-	pool->count = 0;
-	pool->capacity = 0;
+	*pool = crustHeapNodePoolInit();
 }
 
 CRUST_APIENTRY u8 crustHeapNodePoolGrow(Crust_Allocator allocator, Crust_HeapNodePool *pool, u32 new_capacity)

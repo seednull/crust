@@ -26,6 +26,7 @@ typedef struct Crust_GenerationalHandlePool_t
 	usize used_tail;
 } Crust_GenerationalHandlePool;
 
+CRUST_APIENTRY Crust_GenerationalHandlePool crustGenerationalHandlePoolInit(void);
 CRUST_APIENTRY usize crustGenerationalHandlePoolFootprint(usize capacity);
 CRUST_APIENTRY u8 crustGenerationalHandlePoolAlloc(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool, usize capacity);
 CRUST_APIENTRY void crustGenerationalHandlePoolFree(Crust_Allocator allocator, Crust_GenerationalHandlePool *pool);
