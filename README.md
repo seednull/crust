@@ -47,33 +47,37 @@ add_subdirectory(crust)
 target_link_libraries(app PRIVATE crust::crust)
 ```
 
-and include the whole library, or only the modules you need from `include/crust`:
+Then include `<crust.h>`.
 
-```c
-#include <crust.h>
-#include <crust/simd.h>
-```
-
-Options, presets, installation and building without CMake are covered in [building.md](docs/building.md).
+Other ways to link Crust, options, presets and building without CMake are covered in [building.md](docs/building.md).
 
 ## A taste
 
 ```c
-static u8 memory[64 * 1024];
+#include <crust.h>
 
-Crust_Arena arena = crustArenaAttach(memory, sizeof(memory));
-Crust_Allocator allocator = crustArenaAllocatorInit(&arena);
-
-f32 *values = crustAllocArray(allocator, f32, 1024);
-
-// four lanes at a time, identical results with and without CRUST_USE_SIMD
-for (usize i = 0; i < 1024; i += 4)
+int main(void)
 {
-	Crust_Simd128 v = crustSimd128LoadF32(values + i);
-	crustSimd128StoreF32(values + i, crustSimd128MaxF32(v, crustSimd128AllZeros()));
-}
+	static u8 memory[64 * 1024];
 
-crustArenaReset(&arena);
+	Crust_Arena arena = crustArenaAttach(memory, sizeof(memory));
+	Crust_Allocator allocator = crustArenaAllocatorInit(&arena);
+
+	f32 *values = crustAllocArray(allocator, f32, 1024);
+
+	for (usize i = 0; i < 1024; ++i)
+		values[i] = (f32)i - 512.0f;
+
+	// four lanes at a time, identical results with and without CRUST_USE_SIMD
+	for (usize i = 0; i < 1024; i += 4)
+	{
+		Crust_Simd128 v = crustSimd128LoadF32(values + i);
+		crustSimd128StoreF32(values + i, crustSimd128MaxF32(v, crustSimd128AllZeros()));
+	}
+
+	crustArenaReset(&arena);
+	return 0;
+}
 ```
 
 ## Conventions
