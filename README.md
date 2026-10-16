@@ -47,7 +47,11 @@ add_subdirectory(crust)
 target_link_libraries(app PRIVATE crust::crust)
 ```
 
-Then include `<crust.h>`.
+Then include it:
+
+```c
+#include <crust.h>
+```
 
 Other ways to link Crust, options, presets and building without CMake are covered in [building.md](docs/building.md).
 
