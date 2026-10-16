@@ -92,6 +92,16 @@ static CRUST_INLINE usize crustAllocatorSizeMul(usize a, usize b)
 	return a * b;
 }
 
+static CRUST_INLINE usize crustAllocatorSizeAdd(usize a, usize b)
+{
+	CRUST_ASSERT(a <= CRUST_USIZE_MAX - b);
+
+	if (a > CRUST_USIZE_MAX - b)
+		return CRUST_USIZE_MAX;
+
+	return a + b;
+}
+
 #define crustAlloc(allocator, T)                                     \
 	((T *)crustAllocatorAlloc(                                       \
 		(allocator),                                                 \

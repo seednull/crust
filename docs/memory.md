@@ -53,6 +53,8 @@ crustFreeArray(allocator, ps, Particle, count * 2);
 crustFree(allocator, p, Particle);
 ```
 
+For sizes you compute yourself, use `crustAllocatorSizeMul(a, b)` and `crustAllocatorSizeAdd(a, b)`: on overflow they return `CRUST_USIZE_MAX` (asserted), which every allocator fails.
+
 Because a failed realloc keeps the old block, assigning the result straight back loses it on failure. When failure is possible, keep the old pointer until the call succeeds:
 
 ```c

@@ -126,6 +126,16 @@ static int testSizeMul(void)
 	return 0;
 }
 
+static int testSizeAdd(void)
+{
+	CRUST_TEST_CHECK(crustAllocatorSizeAdd(0, 0) == 0);
+	CRUST_TEST_CHECK(crustAllocatorSizeAdd(12, 10) == 22);
+	CRUST_TEST_CHECK(crustAllocatorSizeAdd(CRUST_USIZE_MAX, 0) == CRUST_USIZE_MAX);
+	CRUST_TEST_CHECK(crustAllocatorSizeAdd(CRUST_USIZE_MAX - 1, 1) == CRUST_USIZE_MAX);
+
+	return 0;
+}
+
 static int testFuzz(void)
 {
 	static CRUST_ALIGNAS(64) u8 memory[FUZZ_CAPACITY];
@@ -173,6 +183,7 @@ int main(void)
 	CRUST_TEST_RUN(testAllocator);
 	CRUST_TEST_RUN(testAlignmentBeyondCapacity);
 	CRUST_TEST_RUN(testSizeMul);
+	CRUST_TEST_RUN(testSizeAdd);
 	CRUST_TEST_RUN(testFuzz);
 
 	return crustTestResult();

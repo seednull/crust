@@ -202,12 +202,12 @@ CRUST_APIENTRY usize crustHashIndexMapFootprint(usize key_size, usize key_alignm
 	usize key_stride = crustAlignUpUSize(key_size, key_alignment);
 	usize masks_capacity = crustAlignUpUSize(capacity, 32) / 32;
 
-	usize keys = key_stride * capacity + key_alignment - 1;
-	usize hashes = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
-	usize indices = sizeof(usize) * capacity + CRUST_ALIGNOF(usize) - 1;
-	usize masks = sizeof(u32) * masks_capacity + CRUST_ALIGNOF(u32) - 1;
+	usize keys = crustAllocatorSizeAdd(crustAllocatorSizeMul(key_stride, capacity), key_alignment - 1);
+	usize hashes = crustAllocatorSizeAdd(crustAllocatorSizeMul(sizeof(usize), capacity), CRUST_ALIGNOF(usize) - 1);
+	usize indices = crustAllocatorSizeAdd(crustAllocatorSizeMul(sizeof(usize), capacity), CRUST_ALIGNOF(usize) - 1);
+	usize masks = crustAllocatorSizeAdd(crustAllocatorSizeMul(sizeof(u32), masks_capacity), CRUST_ALIGNOF(u32) - 1);
 
-	return keys + hashes + indices + masks;
+	return crustAllocatorSizeAdd(crustAllocatorSizeAdd(keys, hashes), crustAllocatorSizeAdd(indices, masks));
 }
 
 CRUST_APIENTRY u8 crustHashIndexMapAlloc(Crust_Allocator allocator, Crust_HashIndexMap *hash_map, usize capacity)
