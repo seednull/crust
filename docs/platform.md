@@ -9,9 +9,9 @@ Header: `<crust/core.h>`, which every other Crust header includes.
 | Macro | Value |
 |---|---|
 | `CRUST_VERSION_MAJOR` | `1` |
-| `CRUST_VERSION_MINOR` | `5` |
+| `CRUST_VERSION_MINOR` | `6` |
 | `CRUST_VERSION_PATCH` | `0` |
-| `CRUST_VERSION` | `"1.5.0"` |
+| `CRUST_VERSION` | `"1.6.0"` |
 
 ## Detection macros
 
