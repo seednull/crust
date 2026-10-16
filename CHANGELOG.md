@@ -6,6 +6,10 @@
 
 - `crustAllocatorSizeAdd(a, b)`, the addition counterpart of `crustAllocatorSizeMul`: it asserts on overflow and returns `CRUST_USIZE_MAX` in release builds.
 
+### Changed
+
+- `CRUST_DEBUG_BREAK()` is `__builtin_debugtrap()` with Clang, a breakpoint that a debugger can continue past, like `__debugbreak()` with MSVC. Before, it was `__builtin_trap()`, which ends the program. Failed assertions call `CRUST_DEBUG_BREAK()` and behave as before.
+
 ### Fixed
 
 - With MSVC, `SEQ_CST` atomic loads were compare-and-swap operations: about 8 times slower than other loads, writing to the cache line, so that concurrent readers contended, and faulting on read-only memory. They are now plain loads on x86 and x64 and `ldar` on ARM64, as with GCC and Clang.

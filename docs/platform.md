@@ -73,7 +73,7 @@ Exactly one of `CRUST_SIMD_SSE`, `CRUST_SIMD_NEON`, `CRUST_SIMD_WASM` and `CRUST
 | `CRUST_RESTRICT` | `__restrict` | `__restrict__` |
 | `CRUST_ALIGNOF(type)` | `__alignof(type)` | `__alignof__(type)` |
 | `CRUST_ALIGNAS(n)` | `__declspec(align(n))` | `__attribute__((aligned(n)))` |
-| `CRUST_DEBUG_BREAK()` | `__debugbreak()` | `__builtin_trap()` |
+| `CRUST_DEBUG_BREAK()` | `__debugbreak()` | `__builtin_debugtrap()` on Clang, `__builtin_trap()` on GCC |
 
 `CRUST_ALIGNAS` goes in front of the declaration, which works for both compilers: `CRUST_ALIGNAS(16) u8 bytes[16];`.
 
@@ -100,7 +100,7 @@ Running out of something the caller can't cheaply predict, such as memory or hea
 #endif
 ```
 
-- **On failure** Crust stops in the debugger without printing anything; the expression, file and line are arguments of `crustAssertFailure`.
+- **On failure** Crust calls `CRUST_DEBUG_BREAK()` without printing anything; the expression, file and line are arguments of `crustAssertFailure`.
 - **With `NDEBUG`** the checks disappear completely and the expression is not evaluated. Violating a contract in a release build is undefined behavior: out-of-bounds access, corrupted containers, wrong results.
 - **Two configurations.** Assertions in header functions follow the `NDEBUG` setting of *your* translation unit, while assertions inside the compiled library follow the configuration Crust itself was built with.
 

@@ -134,15 +134,21 @@
 #if CRUST_COMPILER_MSVC
 	#define CRUST_ALIGNOF(x) __alignof(x)
 	#define CRUST_ALIGNAS(n) __declspec(align(n))
-	#define CRUST_DEBUG_BREAK() __debugbreak()
 	#define CRUST_INLINE __forceinline
 	#define CRUST_RESTRICT __restrict
 #else
 	#define CRUST_ALIGNOF(x) __alignof__(x)
 	#define CRUST_ALIGNAS(n) __attribute__((aligned(n)))
-	#define CRUST_DEBUG_BREAK() __builtin_trap()
 	#define CRUST_INLINE inline __attribute__((always_inline))
 	#define CRUST_RESTRICT __restrict__
+#endif
+
+#if CRUST_COMPILER_MSVC
+	#define CRUST_DEBUG_BREAK() __debugbreak()
+#elif CRUST_COMPILER_CLANG
+	#define CRUST_DEBUG_BREAK() __builtin_debugtrap()
+#else
+	#define CRUST_DEBUG_BREAK() __builtin_trap()
 #endif
 
 #define CRUST_CACHE_LINE_SIZE 128
@@ -256,13 +262,7 @@ static CRUST_INLINE void crustAssertFailure(const char *expression, const char *
 	CRUST_UNUSED(file);
 	CRUST_UNUSED(line);
 
-#if CRUST_COMPILER_MSVC
-	__debugbreak();
-#elif CRUST_COMPILER_CLANG
-	__builtin_debugtrap();
-#else
-	__builtin_trap();
-#endif
+	CRUST_DEBUG_BREAK();
 }
 
 //
