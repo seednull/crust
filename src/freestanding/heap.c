@@ -586,7 +586,7 @@ CRUST_APIENTRY void crustHeapFree(Crust_Heap *heap, Crust_HeapAllocation allocat
 	Crust_HeapNode *node = &pool->nodes[allocation.index];
 	CRUST_ASSERT(node != CRUST_NULL);
 	CRUST_ASSERT(crustHeapNodePoolIsUsed(pool, allocation.index) != 0);
-	CRUST_ASSERT(allocation.offset >= node->offset);
+	CRUST_ASSERT(allocation.offset == node->offset);
 
 	u32 prev_index = node->prev_neighbour;
 	u32 next_index = node->next_neighbour;

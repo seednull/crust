@@ -9,6 +9,7 @@
 ### Changed
 
 - `CRUST_DEBUG_BREAK()` is `__builtin_debugtrap()` with Clang, a breakpoint that a debugger can continue past, like `__debugbreak()` with MSVC. Before, it was `__builtin_trap()`, which ends the program. Failed assertions call `CRUST_DEBUG_BREAK()` and behave as before.
+- `crustHeapFree` asserts that `allocation.offset` is the offset the block was allocated at.
 
 ### Fixed
 
