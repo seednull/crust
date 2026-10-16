@@ -241,7 +241,7 @@ static u8 crustHeapFindBinForSize(const Crust_Heap *heap, u32 size)
 	}
 
 	CRUST_ASSERT(linear_bin_index != CRUST_U8_MAX);
-	return (sparse_bin_index << CRUST_HEAP_PARAMETERS_MANTISSA_BITS) | (linear_bin_index & CRUST_HEAP_PARAMETERS_MANTISSA_MASK);
+	return (u8)((sparse_bin_index << CRUST_HEAP_PARAMETERS_MANTISSA_BITS) | (linear_bin_index & CRUST_HEAP_PARAMETERS_MANTISSA_MASK));
 }
 
 static void crustHeapAddNodeToBin(Crust_Heap *heap, u32 index, u32 size, u32 offset)
@@ -334,7 +334,7 @@ static void crustHeapRemoveNodeFromBin(Crust_Heap *heap, u32 index)
 		u8 linear_bin_mask = heap->used_linear_bins[sparse_bin_index];
 		u32 sparse_bin_mask = heap->used_sparse_bins;
 
-		linear_bin_mask &= ~(1u << linear_bin_index);
+		linear_bin_mask &= ~(u8)(1u << linear_bin_index);
 		if (linear_bin_mask == 0)
 			sparse_bin_mask &= ~(1u << sparse_bin_index);
 
