@@ -21,30 +21,25 @@ CRUST_APIENTRY void crustRingBufferReset(Crust_RingBuffer *ring);
 CRUST_APIENTRY void crustRingBufferRead(Crust_RingBuffer *ring, void *data, usize size);
 CRUST_APIENTRY void crustRingBufferWrite(Crust_RingBuffer *ring, const void *data, usize size);
 
-#if CRUST_COMPILER_MSVC
-	#pragma warning(push)
-	#pragma warning(disable: 4324)
-#endif
-
 //
 typedef struct Crust_SpscRingBuffer_t
 {
 	void *memory;
 	usize capacity;
 	usize mask;
+	u8 padding0[128 - sizeof(void *) - 2 * sizeof(usize)];
 
 	CRUST_ALIGNAS(128) volatile usize read;
+	u8 padding1[128 - sizeof(usize)];
+
 	CRUST_ALIGNAS(128) volatile usize write;
+	u8 padding2[128 - sizeof(usize)];
 } Crust_SpscRingBuffer;
 
 CRUST_APIENTRY Crust_SpscRingBuffer crustSpscRingBufferAttach(void *memory, usize capacity);
 CRUST_APIENTRY void crustSpscRingBufferReset(Crust_SpscRingBuffer *ring);
 CRUST_APIENTRY usize crustSpscRingBufferRead(Crust_SpscRingBuffer *ring, void *data, usize size);
 CRUST_APIENTRY usize crustSpscRingBufferWrite(Crust_SpscRingBuffer *ring, const void *data, usize size);
-
-#if CRUST_COMPILER_MSVC
-	#pragma warning(pop)
-#endif
 
 #ifdef __cplusplus
 }

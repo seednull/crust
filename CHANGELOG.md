@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `Crust_SpscRingBuffer` and `Crust_SpscBipBuffer` fill the space up to their 128-byte boundaries with explicit internal padding fields instead of padding that the compiler inserts, so their headers no longer disable MSVC warning C4324 and stay clean with `/Wall` and `-Wpadded`. Their size, alignment and the offsets of the other fields are unchanged.
+
 ## 1.5.0 - 2026-10-15
 
 ### Added
