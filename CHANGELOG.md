@@ -5,6 +5,7 @@
 ### Fixed
 
 - With MSVC, `SEQ_CST` atomic loads were compare-and-swap operations: about 8 times slower than other loads, writing to the cache line, so that concurrent readers contended, and faulting on read-only memory. They are now plain loads on x86 and x64 and `ldar` on ARM64, as with GCC and Clang.
+- The GCC and Clang atomics cast away `volatile` before calling the `__atomic` builtins, which take `volatile` pointers themselves, so code including `<crust/atomic.h>` got `-Wcast-qual` warnings.
 
 ## 1.6.0 - 2026-10-16
 
