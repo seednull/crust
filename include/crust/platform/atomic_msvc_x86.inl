@@ -19,9 +19,6 @@ static CRUST_INLINE u32 crustAtomicLoadU32(volatile u32 *p, Crust_MemoryOrder or
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
 
-	if (order == CRUST_MEMORY_ORDER_SEQ_CST)
-		return (u32)_InterlockedCompareExchange((volatile long *)p, 0, 0);
-
 	if (order == CRUST_MEMORY_ORDER_RELAXED)
 		return (u32)__iso_volatile_load32((const volatile int *)p);
 
@@ -101,9 +98,6 @@ static CRUST_INLINE u64 crustAtomicLoadU64(volatile u64 *p, Crust_MemoryOrder or
 	CRUST_ASSERT(crustIsAlignedUSize((usize)p, sizeof(u64)));
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_RELEASE);
 	CRUST_ASSERT(order != CRUST_MEMORY_ORDER_ACQ_REL);
-
-	if (order == CRUST_MEMORY_ORDER_SEQ_CST)
-		return (u64)_InterlockedCompareExchange64((volatile long long *)p, 0, 0);
 
 	if (order == CRUST_MEMORY_ORDER_RELAXED)
 		return (u64)__iso_volatile_load64((const volatile long long *)p);
