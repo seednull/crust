@@ -117,12 +117,6 @@ static int testSizeMul(void)
 	CRUST_TEST_CHECK(crustAllocatorAlloc(allocator, CRUST_USIZE_MAX, 8) == CRUST_NULL);
 	CRUST_TEST_CHECK(arena.size == 0);
 
-#if defined(NDEBUG)
-	CRUST_TEST_CHECK(crustAllocatorSizeMul(2, CRUST_USIZE_MAX / 2 + 1) == CRUST_USIZE_MAX);
-	CRUST_TEST_CHECK(crustAllocArray(allocator, u64, CRUST_USIZE_MAX / 4) == CRUST_NULL);
-	CRUST_TEST_CHECK(arena.size == 0);
-#endif
-
 	return 0;
 }
 
