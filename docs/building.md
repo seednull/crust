@@ -3,6 +3,7 @@
 ## Requirements
 
 - A C99 compiler: MSVC, GCC or Clang. The headers also compile as C++.
+- The tests also need a C++ compiler.
 - CMake 3.12 or newer. The presets in `CMakePresets.json` need CMake 3.28 or newer.
 
 ## Options
