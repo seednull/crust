@@ -119,6 +119,7 @@ Crust headers include only compiler intrinsic headers, never a C library header 
 | Target | Note |
 |---|---|
 | MSVC, x86 and x64 | `crustFloor*`, `crustCeil*`, `crustRoundEven*` and `crustTruncate*` use SSE4.1 and `crustPopcntU32` uses `POPCNT`, unconditionally. Any CPU from about 2011 on has both |
+| GCC and Clang | With the scalar SIMD backend, `<crust/simd.h>` compares floats with `==` and `!=` on purpose, which `-Wfloat-equal` reports |
 | GCC | Compile with `-ffp-contract=off`. By default GCC fuses multiplies and adds into FMA instructions wherever the target has them, even across inlined Crust calls: always on ARM64, on x86 with `-mfma` or `-march=haswell` and later. Results then differ in the last bit. C in an ISO mode (`-std=c99`, or `CMAKE_C_EXTENSIONS OFF`) turns fusing off by itself, C++ doesn't |
 | 32-bit x86 with GCC | Compile with `-msse2 -mfpmath=sse`. GCC's default x87 math rounds twice, so results can differ from the other targets in the last bit. Crust doesn't add these flags itself, because they change the arithmetic of all your code |
 | MinGW with GCC, `msvcrt.dll` | Without optimization, `crustSqrtF64` calls the C library's `sqrt`, which mingw-w64 computes with x87 instructions and rounds twice, so results can be one bit off. Link `CRT_fp8.o` to avoid it, or use a UCRT toolchain such as MSYS2 UCRT64 |

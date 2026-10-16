@@ -12,6 +12,7 @@
 - `crustHeapFree` asserts that `allocation.offset` is the offset the block was allocated at.
 - `CRUST_BUILD_TESTS` requires a C++ compiler. Before, the C++ header test was silently skipped when CMake didn't find one.
 - Documented that unoptimized MinGW builds for `msvcrt.dll` can compute `crustSqrtF64` one bit off.
+- Documented that `-Wfloat-equal` reports the intended float comparisons of the scalar SIMD backend.
 
 ### Fixed
 
