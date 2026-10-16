@@ -49,14 +49,28 @@ find_package(crust CONFIG REQUIRED)
 target_link_libraries(app PRIVATE crust::crust)
 ```
 
-As a subdirectory:
+Fetched at configure time, with CMake 3.14 or newer:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(crust
+	GIT_REPOSITORY https://github.com/seednull/crust.git
+	GIT_TAG v1.7.0
+)
+FetchContent_MakeAvailable(crust)
+
+target_link_libraries(app PRIVATE crust::crust)
+```
+
+As a subdirectory, for example a git submodule:
 
 ```cmake
 add_subdirectory(crust)
 target_link_libraries(app PRIVATE crust::crust)
 ```
 
-To turn an option on from the parent project, set the cache variable before `add_subdirectory`, for example `set(CRUST_USE_SIMD ON CACHE BOOL "")`.
+To turn an option on from the parent project, set the cache variable before `FetchContent_MakeAvailable` or `add_subdirectory`, for example `set(CRUST_USE_SIMD ON CACHE BOOL "")`.
 
 Include `<crust.h>` for the whole library or a single module with the `crust/` prefix, such as `<crust/ring.h>`; never put `include/crust` itself on the include path. Every module header includes what it depends on through paths relative to itself, so a copy of `include` works without any setup.
 
