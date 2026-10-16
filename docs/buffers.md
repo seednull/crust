@@ -156,4 +156,4 @@ Make message sizes keep the alignment you need: the buffer places data right aft
 
 ### Layout
 
-The producer's and the consumer's indices are placed on separate 128-byte cache lines to avoid false sharing. Both structs are therefore large and **128-byte aligned**. Static and stack variables get that alignment from the compiler. When allocating them dynamically, use `crustAlloc`, which passes `CRUST_ALIGNOF(T)` to the allocator; plain `malloc` doesn't guarantee 128 bytes.
+The producer's and the consumer's indices are placed on separate cache lines of `CRUST_CACHE_LINE_SIZE` (128) bytes to avoid false sharing. Both structs are therefore large and **128-byte aligned**. Static and stack variables get that alignment from the compiler. When allocating them dynamically, use `crustAlloc`, which passes `CRUST_ALIGNOF(T)` to the allocator; plain `malloc` doesn't guarantee 128 bytes.

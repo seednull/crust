@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `CRUST_CACHE_LINE_SIZE` (`128`) is the distance that keeps data written by different threads off the same cache line. `Crust_SpscRingBuffer` and `Crust_SpscBipBuffer` use it for their alignment and padding.
+
 ### Changed
 
 - `Crust_SpscRingBuffer` and `Crust_SpscBipBuffer` fill the space up to their 128-byte boundaries with explicit internal padding fields instead of padding that the compiler inserts, so their headers no longer disable MSVC warning C4324 and stay clean with `/Wall` and `-Wpadded`. Their size, alignment and the offsets of the other fields are unchanged.

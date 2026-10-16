@@ -27,13 +27,13 @@ typedef struct Crust_SpscRingBuffer_t
 	void *memory;
 	usize capacity;
 	usize mask;
-	u8 padding0[128 - sizeof(void *) - 2 * sizeof(usize)];
+	u8 padding0[CRUST_CACHE_LINE_SIZE - sizeof(void *) - 2 * sizeof(usize)];
 
-	CRUST_ALIGNAS(128) volatile usize read;
-	u8 padding1[128 - sizeof(usize)];
+	CRUST_ALIGNAS(CRUST_CACHE_LINE_SIZE) volatile usize read;
+	u8 padding1[CRUST_CACHE_LINE_SIZE - sizeof(usize)];
 
-	CRUST_ALIGNAS(128) volatile usize write;
-	u8 padding2[128 - sizeof(usize)];
+	CRUST_ALIGNAS(CRUST_CACHE_LINE_SIZE) volatile usize write;
+	u8 padding2[CRUST_CACHE_LINE_SIZE - sizeof(usize)];
 } Crust_SpscRingBuffer;
 
 CRUST_APIENTRY Crust_SpscRingBuffer crustSpscRingBufferAttach(void *memory, usize capacity);

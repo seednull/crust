@@ -83,6 +83,7 @@ Other macros:
 |---|---|
 | `CRUST_NULL` | `((void *)0)` in C, `0` in C++ |
 | `CRUST_UNUSED(x)` | Silences unused-variable warnings |
+| `CRUST_CACHE_LINE_SIZE` | `128`: the distance that keeps data written by different threads out of each other's cache lines. x86 lines are 64 bytes, but the hardware prefetches them in 128-byte pairs; Apple ARM64 lines are 128 bytes |
 | `CRUST_APIENTRY` | Marks the functions implemented in Crust's sources. With GCC and Clang outside Windows it gives them hidden visibility, so they never leave a shared library that links Crust; empty otherwise |
 
 ## Assertions

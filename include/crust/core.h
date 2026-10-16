@@ -145,6 +145,8 @@
 	#define CRUST_RESTRICT __restrict__
 #endif
 
+#define CRUST_CACHE_LINE_SIZE 128
+
 #if defined(NDEBUG)
 	#define CRUST_ASSERT(x) ((void)0)
 #else

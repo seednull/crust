@@ -31,17 +31,17 @@ typedef struct Crust_SpscBipBuffer_t
 {
 	void *memory;
 	usize capacity;
-	u8 padding0[128 - sizeof(void *) - sizeof(usize)];
+	u8 padding0[CRUST_CACHE_LINE_SIZE - sizeof(void *) - sizeof(usize)];
 
-	CRUST_ALIGNAS(128) volatile usize begin[2];
+	CRUST_ALIGNAS(CRUST_CACHE_LINE_SIZE) volatile usize begin[2];
 	volatile usize reader;
 	usize read_staged;
-	u8 padding1[128 - 4 * sizeof(usize)];
+	u8 padding1[CRUST_CACHE_LINE_SIZE - 4 * sizeof(usize)];
 
-	CRUST_ALIGNAS(128) volatile usize end[2];
+	CRUST_ALIGNAS(CRUST_CACHE_LINE_SIZE) volatile usize end[2];
 	volatile usize writer;
 	usize write_staged;
-	u8 padding2[128 - 4 * sizeof(usize)];
+	u8 padding2[CRUST_CACHE_LINE_SIZE - 4 * sizeof(usize)];
 } Crust_SpscBipBuffer;
 
 CRUST_APIENTRY Crust_SpscBipBuffer crustSpscBipBufferAttach(void *memory, usize capacity);
