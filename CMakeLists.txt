@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(crust VERSION 1.6.0 LANGUAGES C)
+project(crust VERSION 1.7.0 LANGUAGES C)
 
 # ==================================================================================================
 # Global includes
