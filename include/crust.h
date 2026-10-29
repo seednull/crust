@@ -8,6 +8,7 @@
 #include "crust/quat.h"
 #include "crust/transform.h"
 #include "crust/lock.h"
+#include "crust/mat.h"
 #include "crust/memory.h"
 #include "crust/allocator.h"
 #include "crust/arena.h"
