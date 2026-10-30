@@ -141,6 +141,13 @@ static CRUST_INLINE Crust_Mat2 crustMat2Invert(Crust_Mat2 m)
 	return result;
 }
 
+static CRUST_INLINE f32 crustMat2Determinant(Crust_Mat2 m)
+{
+	const f32 *p = m.m;
+
+	return p[0] * p[3] - p[1] * p[2];
+}
+
 //
 typedef struct Crust_Mat3_t
 {
@@ -293,6 +300,13 @@ static CRUST_INLINE Crust_Mat3 crustMat3Invert(Crust_Mat3 m)
 		result.m[i] *= inv_det;
 
 	return result;
+}
+
+static CRUST_INLINE f32 crustMat3Determinant(Crust_Mat3 m)
+{
+	const f32 *p = m.m;
+
+	return p[0] * (p[4] * p[8] - p[5] * p[7]) - p[3] * (p[1] * p[8] - p[2] * p[7]) + p[6] * (p[1] * p[5] - p[2] * p[4]);
 }
 
 //
@@ -487,6 +501,25 @@ static CRUST_INLINE Crust_Mat4 crustMat4Invert(Crust_Mat4 m)
 		result.m[i] *= inv_det;
 
 	return result;
+}
+
+static CRUST_INLINE f32 crustMat4Determinant(Crust_Mat4 m)
+{
+	const f32 *p = m.m;
+
+	f32 c1 = p[10] * p[15] - p[11] * p[14];
+	f32 c2 = p[7 ] * p[14] - p[6 ] * p[15];
+	f32 c3 = p[6 ] * p[11] - p[7 ] * p[10];
+	f32 c4 = p[3 ] * p[14] - p[2 ] * p[15];
+	f32 c5 = p[2 ] * p[11] - p[3 ] * p[10];
+	f32 c6 = p[2 ] * p[7 ] - p[3 ] * p[6 ];
+
+	f32 m0 =  p[5] * c1 + p[9] * c2 + p[13] * c3;
+	f32 m1 = -p[1] * c1 - p[9] * c4 - p[13] * c5;
+	f32 m2 = -p[1] * c2 + p[5] * c4 + p[13] * c6;
+	f32 m3 = -p[1] * c3 + p[5] * c5 - p[9 ] * c6;
+
+	return p[0] * m0 + p[4] * m1 + p[8] * m2 + p[12] * m3;
 }
 
 #ifdef __cplusplus
