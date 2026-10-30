@@ -119,7 +119,7 @@ static CRUST_INLINE Crust_Mat2 crustMat2Transpose(Crust_Mat2 m)
 	return result;
 }
 
-static CRUST_INLINE Crust_Mat2 crustMat2Inverse(Crust_Mat2 m)
+static CRUST_INLINE Crust_Mat2 crustMat2Invert(Crust_Mat2 m)
 {
 	const f32 *p = m.m;
 	Crust_Mat2 result;
@@ -267,7 +267,7 @@ static CRUST_INLINE Crust_Mat3 crustMat3Transpose(Crust_Mat3 m)
 	return result;
 }
 
-static CRUST_INLINE Crust_Mat3 crustMat3Inverse(Crust_Mat3 m)
+static CRUST_INLINE Crust_Mat3 crustMat3Invert(Crust_Mat3 m)
 {
 	const f32 *p = m.m;
 	Crust_Mat3 result;
@@ -439,7 +439,7 @@ static CRUST_INLINE Crust_Mat4 crustMat4Transpose(Crust_Mat4 m)
 	return result;
 }
 
-static CRUST_INLINE Crust_Mat4 crustMat4Inverse(Crust_Mat4 m)
+static CRUST_INLINE Crust_Mat4 crustMat4Invert(Crust_Mat4 m)
 {
 	const f32 *p = m.m;
 	Crust_Mat4 result;
